@@ -272,245 +272,87 @@ if('serviceWorker' in navigator){
 
 <!-- ══════════════════ NUTRITION SCREEN ══════════════════ -->
 <div class="screen" id="screen-nutrition">
-<div style="max-width:480px;margin:0 auto;padding:0 16px">
+<div style="max-width:480px;margin:0 auto;padding:0 16px 100px">
 
-  <!-- Header + user -->
+  <!-- Header -->
   <div style="padding:24px 0 12px;display:flex;align-items:center;justify-content:space-between">
     <div>
       <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase">Nutrition</div>
-      <div style="font-size:24px;font-weight:800;margin-top:2px" id="nut-title">Mike's Plan</div>
+      <div style="font-size:24px;font-weight:800;margin-top:2px" id="nut-title">Today's Plan</div>
+      <div style="font-size:12px;color:var(--muted)" id="nut-date"></div>
     </div>
-    <button onclick="openNutSettings()" style="background:var(--soft);border-radius:10px;padding:8px 12px;font-size:18px">⚙️</button>
+    <button onclick="showScreen('profile')" style="width:40px;height:40px;border-radius:50%;background:var(--soft);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--lime)" id="nut-avatar">M</button>
   </div>
 
-  <!-- Tab bar — scrollable -->
-  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:14px">
-    <div style="display:flex;background:var(--surface);border-radius:12px;padding:4px;width:max-content;min-width:100%">
-      <button onclick="setNutTab('today')" id="nut-tab-today" style="flex:1;min-width:70px;padding:8px;border-radius:9px;font-size:11px;font-weight:700;background:var(--card);color:var(--text);border:none;cursor:pointer">Today</button>
-      <button onclick="setNutTab('meals')" id="nut-tab-meals" style="flex:1;min-width:70px;padding:8px;border-radius:9px;font-size:11px;font-weight:700;background:transparent;color:var(--muted);border:none;cursor:pointer">Saved Meals</button>
-      <button onclick="setNutTab('week')" id="nut-tab-week" style="flex:1;min-width:70px;padding:8px;border-radius:9px;font-size:11px;font-weight:700;background:transparent;color:var(--muted);border:none;cursor:pointer">Meal Plan</button>
-      <button onclick="setNutTab('trends')" id="nut-tab-trends" style="flex:1;min-width:70px;padding:8px;border-radius:9px;font-size:11px;font-weight:700;background:transparent;color:var(--muted);border:none;cursor:pointer">Trends</button>
-      <button onclick="setNutTab('body')" id="nut-tab-body" style="flex:1;min-width:70px;padding:8px;border-radius:9px;font-size:11px;font-weight:700;background:transparent;color:var(--muted);border:none;cursor:pointer">Body Stats</button>
+  <!-- Calorie ring -->
+  <div class="card" style="margin-bottom:14px;text-align:center;padding:20px">
+    <div style="position:relative;display:inline-block;margin-bottom:12px">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="68" fill="none" stroke="var(--soft)" stroke-width="12"/>
+        <circle cx="80" cy="80" r="68" fill="none" stroke="var(--lime)" stroke-width="12" stroke-linecap="round"
+          stroke-dasharray="427" id="nut-cal-ring" stroke-dashoffset="427" transform="rotate(-90 80 80)" style="transition:stroke-dashoffset .6s"/>
+      </svg>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+        <div style="font-size:32px;font-weight:800;color:var(--lime)" id="nut-cal-consumed">0</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700">of <span id="nut-cal-target">2000</span> kcal</div>
+      </div>
     </div>
-  </div>
-
-  <!-- TODAY TAB -->
-  <div id="nut-today">
-    <!-- Calorie summary -->
-    <div id="nut-cal-summary"></div>
     <!-- Macro bars -->
-    <div class="card" style="margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:12px">Macros</div>
-      <div id="macro-bars"></div>
-    </div>
-    <!-- Micronutrients -->
-    <div class="card" style="margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px">Micronutrients</div>
-      <div id="micro-bars"></div>
-    </div>
-    <!-- Meal timing -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:16px;font-weight:800">Today's Meals</div>
-      <button onclick="openAddMeal()" style="background:var(--lime);color:#050508;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ Add</button>
-    </div>
-    <div id="meal-log"></div>
-    <button onclick="openSaveMealTemplate()" style="width:100%;background:var(--soft);color:var(--muted);border:1px dashed var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-top:8px">💾 Save Today's Meals as a Template</button>
-    <!-- Suggestions -->
-    <div style="font-size:16px;font-weight:800;margin:16px 0 10px">Suggested for You</div>
-    <div id="meal-suggestions"></div>
-  </div>
-
-  <!-- SAVED MEALS TAB -->
-  <div id="nut-meals" style="display:none">
-    <div id="nut-meals-content"></div>
-  </div>
-
-  <!-- MEAL PLAN TAB -->
-  <div id="nut-week" style="display:none">
-    <div id="nut-week-content"></div>
-  </div>
-
-  <!-- TRENDS TAB -->
-  <div id="nut-trends" style="display:none">
-    <div id="nut-trends-content"></div>
-  </div>
-
-  <!-- BODY STATS TAB -->
-  <div id="nut-body" style="display:none">
-    <div id="nut-body-content"></div>
-  </div>
-
-  <div style="height:20px"></div>
-</div>
-</div>
-
-<!-- ══════════════════ PROFILE SCREEN ══════════════════ -->
-<div class="screen" id="screen-profile">
-<div style="max-width:480px;margin:0 auto;padding:0 16px">
-  <div style="padding:24px 0 16px">
-    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase">Settings</div>
-    <div style="font-size:24px;font-weight:800;margin-top:2px">Profile</div>
-  </div>
-
-  <div id="profile-cards"></div>
-<div id="profile-privacy"></div>
-
-  <!-- HR Zones -->
-  <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Heart Rate Zones</div>
-  <div class="card" style="margin-bottom:14px">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Set your target zones. App alerts you when you drift outside.</div>
-    <div id="hr-zone-settings"></div>
-  </div>
-
-  <!-- Devices -->
-  <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Devices & Integrations</div>
-  <div id="device-settings"></div>
-  <div style="height:20px"></div>
-</div>
-</div>
-
-<!-- ══════════════════ WORKOUT ACTIVE SCREEN ══════════════════ -->
-<div class="screen" id="screen-workout">
-<div style="max-width:480px;margin:0 auto;padding:0 16px">
-  <div style="padding:20px 0 0;display:flex;align-items:center;gap:12px">
-    <button onclick="exitWorkout()" style="background:var(--soft);border-radius:10px;padding:8px 12px;font-size:18px">←</button>
-    <div style="flex:1">
-      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Active Workout</div>
-      <div style="font-size:18px;font-weight:800" id="workout-title">—</div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:26px;font-weight:800;color:var(--lime);font-variant-numeric:tabular-nums" id="workout-timer">0:00</div>
-      <div style="font-size:10px;color:var(--muted)">elapsed</div>
-    </div>
-    <button onclick="openWatchMode()" title="Apple Watch view" style="background:var(--soft);border-radius:10px;padding:8px 10px;font-size:18px;border:1px solid var(--border);flex-shrink:0">⌚</button>
-  </div>
-
-  <!-- Live HR -->
-  <div style="display:flex;gap:8px;margin:14px 0">
-    <div class="card-sm" style="flex:1;text-align:center">
-      <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px">HEART RATE</div>
-      <div style="font-size:26px;font-weight:800;color:var(--red)" id="workout-hr">134</div>
-      <div style="font-size:10px;color:var(--muted)">bpm · Zone 3</div>
-    </div>
-    <div class="card-sm" style="flex:1;text-align:center">
-      <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px">CALORIES</div>
-      <div style="font-size:26px;font-weight:800;color:var(--michelle)" id="workout-cals">0</div>
-      <div style="font-size:10px;color:var(--muted)">kcal burned</div>
-    </div>
-    <div class="card-sm" style="flex:1;text-align:center">
-      <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px">SETS DONE</div>
-      <div style="font-size:26px;font-weight:800;color:var(--purple)" id="workout-sets-done">0</div>
-      <div style="font-size:10px;color:var(--muted)" id="workout-sets-total">of 0</div>
-    </div>
-  </div>
-
-  <!-- Rest time + Voice bar -->
-  <div class="card-sm" style="margin-bottom:14px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <button id="voice-btn" onclick="toggleVoice()" style="width:44px;height:44px;border-radius:50%;background:var(--soft);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🎙️</button>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700">Voice Log</div>
-        <div style="font-size:11px;color:var(--muted)" id="voice-status">Say "bench press 4 sets 8 reps"</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div style="text-align:center">
+        <div style="font-size:16px;font-weight:800;color:#FF8C42" id="nut-protein-val">0g</div>
+        <div style="height:4px;background:var(--soft);border-radius:2px;margin:4px 0"><div id="nut-protein-bar" style="height:4px;background:#FF8C42;border-radius:2px;width:0%;transition:width .6s"></div></div>
+        <div style="font-size:10px;color:var(--muted)">Protein <span id="nut-protein-target">150g</span></div>
       </div>
-    </div>
-    <div style="border-top:1px solid var(--border);padding-top:10px">
-      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">REST BETWEEN SETS</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap" id="rest-preset-btns">
-        <button onclick="setRestTime(30)" class="rest-preset" data-secs="30" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">30s</button>
-        <button onclick="setRestTime(45)" class="rest-preset" data-secs="45" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">45s</button>
-        <button onclick="setRestTime(60)" class="rest-preset" data-secs="60" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--lime);background:rgba(200,241,53,.12);color:var(--lime)">60s ✓</button>
-        <button onclick="setRestTime(90)" class="rest-preset" data-secs="90" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">90s</button>
-        <button onclick="setRestTime(120)" class="rest-preset" data-secs="120" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">2min</button>
-        <button onclick="setRestTime(180)" class="rest-preset" data-secs="180" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">3min</button>
+      <div style="text-align:center">
+        <div style="font-size:16px;font-weight:800;color:#6C63FF" id="nut-carbs-val">0g</div>
+        <div style="height:4px;background:var(--soft);border-radius:2px;margin:4px 0"><div id="nut-carbs-bar" style="height:4px;background:#6C63FF;border-radius:2px;width:0%;transition:width .6s"></div></div>
+        <div style="font-size:10px;color:var(--muted)">Carbs <span id="nut-carbs-target">200g</span></div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
-        <span style="font-size:11px;color:var(--muted)">Custom:</span>
-        <input type="number" id="rest-custom-input" placeholder="secs" min="5" max="600"
-          style="width:70px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-size:13px;text-align:center">
-        <button onclick="setRestCustom()" style="background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700">Set</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:auto">Current: <span id="rest-current-label" style="color:var(--lime);font-weight:700">60s</span></span>
+      <div style="text-align:center">
+        <div style="font-size:16px;font-weight:800;color:#FF4444" id="nut-fat-val">0g</div>
+        <div style="height:4px;background:var(--soft);border-radius:2px;margin:4px 0"><div id="nut-fat-bar" style="height:4px;background:#FF4444;border-radius:2px;width:0%;transition:width .6s"></div></div>
+        <div style="font-size:10px;color:var(--muted)">Fat <span id="nut-fat-target">65g</span></div>
       </div>
     </div>
   </div>
 
-  <div id="workout-exercises"></div>
-
-  <div style="margin-top:16px">
-    <button class="btn-primary" onclick="finishWorkout()" id="finish-btn">Finish Workout</button>
-  </div>
-  <div style="height:20px"></div>
-</div>
-</div>
-
-<!-- REST TIMER OVERLAY -->
-<div id="rest-overlay" style="display:none;position:fixed;inset:0;background:rgba(8,8,14,.97);z-index:300;flex-direction:column;align-items:center;justify-content:center">
-  <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px">REST</div>
-
-  <!-- Circular countdown -->
-  <div style="position:relative;width:200px;height:200px;margin-bottom:16px">
-    <svg width="200" height="200" viewBox="0 0 200 200" style="position:absolute;inset:0">
-      <circle cx="100" cy="100" r="88" fill="none" stroke="var(--border)" stroke-width="10"/>
-      <circle cx="100" cy="100" r="88" fill="none" stroke="var(--lime)" stroke-width="10"
-        stroke-dasharray="553" id="rest-ring" stroke-linecap="round" transform="rotate(-90 100 100)"
-        style="transition:stroke-dashoffset .95s linear;transition-timing-function:linear"/>
-    </svg>
-    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-      <div style="font-size:64px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums" id="rest-countdown">60</div>
-      <div style="font-size:13px;color:var(--muted);margin-top:4px">seconds</div>
+  <!-- Workout burn + water -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:22px;font-weight:800;color:var(--lime)" id="nut-burned">0</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">kcal burned</div>
+      <div style="font-size:10px;color:var(--muted)" id="nut-net">Net: 0 kcal</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px;cursor:pointer" onclick="openWaterLog()">
+      <div style="font-size:22px;font-weight:800;color:#4FC3F7" id="nut-water-val">0ml</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">of <span id="nut-water-target">2500</span>ml</div>
+      <div style="height:4px;background:var(--soft);border-radius:2px;margin-top:6px"><div id="nut-water-bar" style="height:4px;background:#4FC3F7;border-radius:2px;width:0%;transition:width .6s"></div></div>
     </div>
   </div>
 
-  <!-- Next exercise label -->
-  <div style="font-size:14px;color:var(--muted);margin-bottom:8px">Up next</div>
-  <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:32px;text-align:center;padding:0 24px" id="rest-next-label">Bench Press</div>
-
-  <!-- Controls -->
-  <div style="display:flex;gap:12px;margin-bottom:16px">
-    <button onclick="skipRest()" style="background:var(--lime);color:#050508;border:none;border-radius:14px;padding:14px 32px;font-size:16px;font-weight:800;min-width:120px">GO! →</button>
-    <button onclick="addRestTime(15)" style="background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:14px 20px;font-size:15px;font-weight:700">+15s</button>
-  </div>
-  <div style="font-size:11px;color:var(--muted)">Tap GO when you're ready — or wait for the beep</div>
-</div>
-
-<!-- ══════════════════ APPLE WATCH COMPANION ══════════════════ -->
-<div id="watch-overlay" style="display:none;position:fixed;inset:0;background:#000;z-index:400;align-items:center;justify-content:center;flex-direction:column">
-
-  <!-- Watch bezel -->
-  <div style="position:relative;width:220px;height:268px">
-
-    <!-- Watch body -->
-    <div style="position:absolute;inset:0;background:#1a1a1a;border-radius:54px;box-shadow:0 0 0 3px #333,0 20px 60px rgba(0,0,0,.8)"></div>
-
-    <!-- Watch screen -->
-    <div style="position:absolute;inset:10px;background:#000;border-radius:44px;overflow:hidden;display:flex;flex-direction:column" id="watch-screen">
-
-      <!-- Watch face content — changes by mode -->
-      <div id="watch-face" style="flex:1;display:flex;flex-direction:column;padding:12px 14px;position:relative"></div>
-
-    </div>
-
-    <!-- Crown button -->
-    <div style="position:absolute;right:-5px;top:80px;width:8px;height:40px;background:#2a2a2a;border-radius:4px;box-shadow:1px 0 0 #444"></div>
-    <div style="position:absolute;right:-5px;top:130px;width:8px;height:24px;background:#2a2a2a;border-radius:4px;box-shadow:1px 0 0 #444"></div>
-
-    <!-- Watch band top -->
-    <div style="position:absolute;top:-50px;left:20px;right:20px;height:60px;background:#222;border-radius:8px 8px 0 0"></div>
-    <!-- Watch band bottom -->
-    <div style="position:absolute;bottom:-50px;left:20px;right:20px;height:60px;background:#222;border-radius:0 0 8px 8px"></div>
+  <!-- Quick add buttons -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px">
+    <button onclick="openFoodSearch('breakfast')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--text)">🌅 Breakfast</button>
+    <button onclick="openFoodSearch('lunch')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--text)">☀️ Lunch</button>
+    <button onclick="openFoodSearch('dinner')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--text)">🌙 Dinner</button>
+    <button onclick="openFoodSearch('snacks')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--text)">🍎 Snacks</button>
+    <button onclick="openPhotoFood()" style="flex-shrink:0;background:rgba(200,241,53,.12);border:1px solid rgba(200,241,53,.3);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--lime)">📷 AI Photo</button>
   </div>
 
-  <!-- Close button -->
-  <button onclick="closeWatchMode()" style="margin-top:28px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 28px;font-size:14px;font-weight:700">Close Watch View</button>
+  <!-- Meal sections -->
+  <div id="nut-meals-container">
+    <!-- Rendered by renderNutrition() -->
+  </div>
 
-  <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:12px;text-align:center;padding:0 32px">This simulates how the app will look on your Apple Watch. On the real watch all controls work via the touchscreen and digital crown.</div>
+  <!-- Generate meal plan button -->
+  <button onclick="generateMealPlan()" class="btn-primary" style="width:100%;margin-top:8px">
+    ✨ Generate Meal Plan
+  </button>
+
+</div>
 </div>
 
-<!-- ══════════════════ ROUTINE DETAIL SCREEN ══════════════════ -->
-<div class="screen" id="screen-routine">
-<div style="max-width:480px;margin:0 auto">
-  <div id="routine-detail-content"></div>
-</div>
-</div>
 
 <!-- ══════════════════ PLANNER SCREEN ══════════════════ -->
 <div class="screen" id="screen-planner">
@@ -673,6 +515,102 @@ if('serviceWorker' in navigator){
     <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#6C63FF"></div><span style="font-size:11px;color:var(--muted)">Secondary</span></div>
   </div>
   <button onclick="closeModal('modal-muscle-viewer')" class="btn-secondary">Close</button>
+</div>
+</div>
+
+<!-- Food Search Modal -->
+<div class="modal-overlay" id="modal-food-search">
+<div class="modal" style="padding:0;overflow:hidden;max-width:420px;max-height:85vh;display:flex;flex-direction:column">
+  <div style="padding:16px;border-bottom:1px solid var(--border)">
+    <div style="font-size:18px;font-weight:800;margin-bottom:12px" id="food-search-title">Add Food</div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="food-search-input" placeholder="Search UK foods..." 
+        style="flex:1;background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px"
+        oninput="searchFoods(this.value)">
+      <button onclick="openBarcodeScanner()" style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:18px">📷</button>
+    </div>
+    <!-- Quick foods -->
+    <div style="display:flex;gap:6px;margin-top:10px;overflow-x:auto;padding-bottom:4px">
+      <button onclick="searchFoods('chicken breast')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--muted)">Chicken</button>
+      <button onclick="searchFoods('rice')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--muted)">Rice</button>
+      <button onclick="searchFoods('eggs')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--muted)">Eggs</button>
+      <button onclick="searchFoods('oats')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--muted)">Oats</button>
+      <button onclick="searchFoods('banana')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--muted)">Banana</button>
+      <button onclick="searchFoods('protein shake')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--muted)">Protein</button>
+    </div>
+  </div>
+  <div id="food-search-results" style="flex:1;overflow-y:auto;padding:8px">
+    <div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Search for a food above</div>
+  </div>
+  <div style="padding:12px;border-top:1px solid var(--border)">
+    <button onclick="closeModal('modal-food-search')" class="btn-secondary">Cancel</button>
+  </div>
+</div>
+</div>
+
+<!-- Water Log Modal -->
+<div class="modal-overlay" id="modal-water-log">
+<div class="modal" style="max-width:340px">
+  <div style="font-size:18px;font-weight:800;margin-bottom:4px">💧 Log Water</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px">How much did you drink?</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <button onclick="logWater(150)" style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:var(--text)">150ml<br><span style="font-size:10px;color:var(--muted)">Small glass</span></button>
+    <button onclick="logWater(250)" style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:var(--text)">250ml<br><span style="font-size:10px;color:var(--muted)">Glass</span></button>
+    <button onclick="logWater(330)" style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:var(--text)">330ml<br><span style="font-size:10px;color:var(--muted)">Can</span></button>
+    <button onclick="logWater(500)" style="background:rgba(79,195,247,.15);border:1px solid rgba(79,195,247,.3);border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:#4FC3F7">500ml<br><span style="font-size:10px">Bottle</span></button>
+    <button onclick="logWater(750)" style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:var(--text)">750ml<br><span style="font-size:10px;color:var(--muted)">Large</span></button>
+    <button onclick="logWater(1000)" style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:var(--text)">1000ml<br><span style="font-size:10px;color:var(--muted)">1 Litre</span></button>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+    <input type="number" id="water-custom-input" placeholder="Custom ml..." 
+      style="flex:1;background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:14px">
+    <button onclick="logWater(parseInt(document.getElementById('water-custom-input').value)||0)" 
+      style="background:rgba(79,195,247,.15);border:1px solid rgba(79,195,247,.3);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;color:#4FC3F7">Add</button>
+  </div>
+  <button onclick="closeModal('modal-water-log')" class="btn-secondary">Close</button>
+</div>
+</div>
+
+<!-- Food Detail Modal -->
+<div class="modal-overlay" id="modal-food-detail">
+<div class="modal" style="max-width:380px">
+  <div style="font-size:17px;font-weight:800;margin-bottom:4px" id="food-detail-name">Food</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px" id="food-detail-brand"></div>
+  <!-- Serving size -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;background:var(--soft);border-radius:10px;padding:12px;border:1px solid var(--border)">
+    <div style="flex:1">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">SERVING SIZE</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="adjustServing(-0.5)" style="width:28px;height:28px;border-radius:7px;background:var(--border);color:var(--text);font-size:16px;font-weight:800">−</button>
+        <span id="food-detail-serving" style="font-size:18px;font-weight:800;min-width:40px;text-align:center">1</span>
+        <button onclick="adjustServing(0.5)" style="width:28px;height:28px;border-radius:7px;background:var(--border);color:var(--text);font-size:16px;font-weight:800">+</button>
+        <span id="food-detail-unit" style="font-size:13px;color:var(--muted)">serving</span>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:28px;font-weight:800;color:var(--lime)" id="food-detail-cal">0</div>
+      <div style="font-size:11px;color:var(--muted)">kcal</div>
+    </div>
+  </div>
+  <!-- Macros -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+    <div style="background:rgba(255,140,66,.1);border-radius:10px;padding:10px;text-align:center;border:1px solid rgba(255,140,66,.2)">
+      <div style="font-size:16px;font-weight:800;color:#FF8C42" id="food-detail-protein">0g</div>
+      <div style="font-size:10px;color:var(--muted)">Protein</div>
+    </div>
+    <div style="background:rgba(108,99,255,.1);border-radius:10px;padding:10px;text-align:center;border:1px solid rgba(108,99,255,.2)">
+      <div style="font-size:16px;font-weight:800;color:#6C63FF" id="food-detail-carbs">0g</div>
+      <div style="font-size:10px;color:var(--muted)">Carbs</div>
+    </div>
+    <div style="background:rgba(255,68,68,.1);border-radius:10px;padding:10px;text-align:center;border:1px solid rgba(255,68,68,.2)">
+      <div style="font-size:16px;font-weight:800;color:#FF4444" id="food-detail-fat">0g</div>
+      <div style="font-size:10px;color:var(--muted)">Fat</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <button onclick="closeModal('modal-food-detail')" class="btn-secondary">Cancel</button>
+    <button onclick="addFoodToLog()" class="btn-primary">Add to Log</button>
+  </div>
 </div>
 </div>
 
@@ -1889,8 +1827,9 @@ function showScreen(name){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('nav-'+name)?.classList.add('active');
-  if(name==='nutrition'){ renderNutrition(); setNutTab(activeNutTab||'today'); }
+  if(name==='nutrition'){ renderNutrition(); if(typeof setNutTab === 'function') setNutTab(activeNutTab||'today'); }
   if(name==='profile') renderProfile();
+  if(name==='nutrition') renderNutrition();
   if(name==='home') renderHome();
   if(name==='planner') renderPlanner();
   if(name==='sport'){ renderSportPick(); }
@@ -1906,8 +1845,8 @@ function switchUser(user){
     b.style.color = isActive ? USERS[user].color : 'var(--muted)';
   });
   renderHome();
-  renderNutrition();
-  setNutTab('today');
+  if(typeof renderNutrition === 'function') renderNutrition();
+  if(typeof setNutTab === 'function') setNutTab('today');
   if(document.getElementById('screen-planner').classList.contains('active')) renderPlanner();
 }
 
@@ -2957,157 +2896,7 @@ function calcTDEE(settings){
   return tdee + (goalAdj[settings.goal]||0);
 }
 
-function renderNutrition(){
-  initDefaultSavedMeals();
-  const settings = getNutSettings();
-  document.getElementById('nut-title').textContent = activeUser + "'s Nutrition";
-  const meals = getTodayMeals();
-  const totalCals = meals.reduce((a,m)=>a+m.cals,0);
-  const totalProtein = meals.reduce((a,m)=>a+(m.protein||0),0);
-  const totalCarbs = meals.reduce((a,m)=>a+(m.carbs||0),0);
-  const totalFat = meals.reduce((a,m)=>a+(m.fat||0),0);
-  const totalFibre = meals.reduce((a,m)=>a+(m.fibre||0),0);
-  const totalSodium = meals.reduce((a,m)=>a+(m.sodium||0),0);
-  const totalSugar = meals.reduce((a,m)=>a+(m.sugar||0),0);
 
-  // Get today's workout burn from history
-  const today = new Date().toDateString();
-  const todayWorkouts = loadHistory().filter(w=>w.user===activeUser && new Date(w.date).toDateString()===today);
-  const burnedCals = todayWorkouts.reduce((a,w)=>a+w.cals,0);
-
-  const goalCal = settings.cal || calcTDEE(settings);
-  const netCal = totalCals - burnedCals;
-  const remaining = goalCal - netCal;
-  const uColor = USERS[activeUser].color;
-
-  // ── Calorie summary card ──
-  const pct = Math.min(1, totalCals / goalCal);
-  const circumference = 201;
-  const offset = circumference * (1 - pct);
-  document.getElementById('nut-cal-summary').innerHTML = `
-    <div class="card" style="margin-bottom:14px">
-      <div style="display:flex;gap:16px;align-items:center">
-        <svg width="90" height="90" viewBox="0 0 90 90" style="flex-shrink:0">
-          <circle cx="45" cy="45" r="38" fill="none" stroke="var(--border)" stroke-width="9"/>
-          <circle cx="45" cy="45" r="38" fill="none" stroke="${uColor}" stroke-width="9"
-            stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
-            stroke-linecap="round" transform="rotate(-90 45 45)" style="transition:stroke-dashoffset .4s"/>
-          <text x="45" y="41" text-anchor="middle" fill="var(--text)" font-size="16" font-weight="800">${totalCals}</text>
-          <text x="45" y="55" text-anchor="middle" fill="var(--muted)" font-size="9">of ${goalCal}</text>
-        </svg>
-        <div style="flex:1">
-          <div style="font-size:22px;font-weight:800;color:${remaining>=0?uColor:'var(--red)'}">${remaining>=0?remaining+'':'+'+Math.abs(remaining)}</div>
-          <div style="font-size:12px;color:var(--muted)">${remaining>=0?'kcal remaining':'kcal over goal'}</div>
-          ${burnedCals>0?`<div style="font-size:11px;color:#4CAF50;margin-top:4px">🔥 +${burnedCals} kcal burned today</div>`:''}
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Net: ${netCal} kcal · Goal: ${goalCal}</div>
-          <div style="font-size:11px;font-weight:700;margin-top:4px;color:${uColor}">${settings.goal==='lean'?'🔥 Get Lean':settings.goal==='build'?'💪 Build Muscle':'⚖️ Maintain'}</div>
-        </div>
-      </div>
-      <!-- 4 quick stats -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-        ${[
-          {l:'Protein',v:totalProtein+'g',t:settings.protein+'g',c:'#6C63FF'},
-          {l:'Carbs',v:totalCarbs+'g',t:settings.carbs+'g',c:'#FF8C42'},
-          {l:'Fat',v:totalFat+'g',t:settings.fat+'g',c:'#FF4D4D'},
-          {l:'Fibre',v:totalFibre+'g',t:'25g',c:'#4CAF50'},
-        ].map(s=>`<div style="text-align:center;background:var(--soft);border-radius:8px;padding:7px 4px">
-          <div style="font-size:13px;font-weight:800;color:${s.c}">${s.v}</div>
-          <div style="font-size:9px;color:var(--muted)">${s.l}</div>
-          <div style="font-size:9px;color:var(--muted)">${s.t}</div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-
-  // ── Macro bars ──
-  document.getElementById('macro-bars').innerHTML = [
-    {name:'Protein',val:totalProtein,max:settings.protein,color:'#6C63FF',unit:'g'},
-    {name:'Carbohydrates',val:totalCarbs,max:settings.carbs,color:'#FF8C42',unit:'g'},
-    {name:'Fat',val:totalFat,max:settings.fat,color:'#FF4D4D',unit:'g'},
-  ].map(m=>{
-    const pct = Math.min(100,Math.round(m.val/m.max*100));
-    return `<div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-        <span style="font-weight:700">${m.name}</span>
-        <span style="color:var(--muted)">${m.val}g / ${m.max}g <span style="color:${pct>=100?'#FF4D4D':m.color}">${pct}%</span></span>
-      </div>
-      <div style="background:var(--soft);border-radius:4px;height:8px">
-        <div style="height:8px;border-radius:4px;background:${m.color};width:${pct}%;transition:width .4s;max-width:100%"></div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // ── Micronutrients ──
-  document.getElementById('micro-bars').innerHTML = [
-    {name:'Fibre',val:totalFibre,max:25,color:'#4CAF50',unit:'g',tip:'Aids digestion and satiety'},
-    {name:'Sugar',val:totalSugar,max:30,color:'#FF6B6B',unit:'g',tip:'Keep under 30g for lean goals'},
-    {name:'Sodium',val:totalSodium,max:2300,color:'#FFB347',unit:'mg',tip:'Target under 2300mg per day'},
-  ].map(m=>{
-    const pct = Math.min(100,Math.round((m.val||0)/m.max*100));
-    const isOver = pct >= 100;
-    return `<div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-        <div>
-          <span style="font-weight:700">${m.name}</span>
-          <span style="font-size:10px;color:var(--muted);margin-left:6px">${m.tip}</span>
-        </div>
-        <span style="color:${isOver?'#FF4D4D':m.color}">${m.val||0}${m.unit} / ${m.max}${m.unit}</span>
-      </div>
-      <div style="background:var(--soft);border-radius:3px;height:6px">
-        <div style="height:6px;border-radius:3px;background:${isOver?'#FF4D4D':m.color};width:${pct}%;transition:width .4s;max-width:100%"></div>
-      </div>
-    </div>`;
-  }).join('') + '<div style="font-size:11px;color:var(--muted);margin-top:6px">💡 Log micronutrients via food search — most packaged foods include this data automatically</div>';
-
-  // ── Meal log ──
-  document.getElementById('meal-log').innerHTML = meals.length ? meals.map((m,i)=>`
-    <div class="card-sm" style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:700">${m.name}</div>
-        <div style="font-size:11px;color:var(--muted)">${m.time} · P:${m.protein||0}g C:${m.carbs||0}g F:${m.fat||0}g${m.fibre?' · Fibre:'+m.fibre+'g':''}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:15px;font-weight:800;color:${uColor}">${m.cals}</div>
-        <button onclick="deleteMeal(${i})" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:0">remove</button>
-      </div>
-    </div>`).join('') :
-    '<div style="color:var(--muted);font-size:14px;padding:12px 0">No meals logged yet today. Tap + Add to start.</div>';
-
-  // ── Suggestions ──
-  const settings2 = getNutSettings();
-  const goal = settings2.goal;
-  const leanSuggestions = [
-    {name:'Grilled chicken breast 200g',cals:220,protein:42,carbs:0,fat:5,fibre:0,timing:'Lunch or dinner'},
-    {name:'Greek yoghurt 200g',cals:130,protein:18,carbs:8,fat:3,fibre:0,timing:'Snack or breakfast'},
-    {name:'Egg white omelette (4 whites)',cals:70,protein:14,carbs:1,fat:0,fibre:0,timing:'Breakfast or post workout'},
-    {name:'Smoked salmon 100g',cals:140,protein:20,carbs:0,fat:7,fibre:0,timing:'Lunch'},
-    {name:'Cottage cheese 150g',cals:105,protein:18,carbs:4,fat:2,fibre:0,timing:'Pre-bed protein'},
-    {name:'Steamed broccoli 200g',cals:68,protein:5,carbs:10,fat:1,fibre:6,timing:'Any meal — fill your plate'},
-  ];
-  const buildSuggestions = [
-    {name:'Chicken & rice bowl',cals:620,protein:52,carbs:68,fat:10,fibre:3,timing:'Post workout'},
-    {name:'Beef stir fry & noodles',cals:680,protein:45,carbs:72,fat:18,fibre:4,timing:'Dinner'},
-    {name:'Porridge with protein powder',cals:380,protein:32,carbs:48,fat:6,fibre:5,timing:'Breakfast'},
-    {name:'Whole milk & banana shake',cals:420,protein:24,carbs:62,fat:12,fibre:2,timing:'Post workout'},
-  ];
-  const maintainSuggestions = [
-    {name:'Salmon with sweet potato',cals:520,protein:40,carbs:48,fat:14,fibre:6,timing:'Dinner'},
-    {name:'Turkey & avocado wrap',cals:450,protein:35,carbs:38,fat:16,fibre:5,timing:'Lunch'},
-    {name:'Mixed nuts & fruit',cals:280,protein:8,carbs:22,fat:18,fibre:4,timing:'Snack'},
-  ];
-  const sugg = goal==='lean'?leanSuggestions:goal==='build'?buildSuggestions:maintainSuggestions;
-  document.getElementById('meal-suggestions').innerHTML = sugg.map(s=>`
-    <div class="card-sm" style="margin-bottom:8px;border-left:3px solid ${uColor}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;margin-bottom:2px">${s.name}</div>
-          <div style="font-size:11px;color:var(--muted)">${s.timing} · ${s.cals} kcal · P:${s.protein}g C:${s.carbs}g F:${s.fat}g</div>
-        </div>
-        <button onclick="quickAddMeal(${JSON.stringify(s).replace(/"/g,"'")})" style="background:rgba(${uColor==='#C8F135'?'200,241,53':'108,99,255'},0.15);color:${uColor};border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;border:1px solid ${uColor}44;flex-shrink:0;margin-left:8px">Add</button>
-      </div>
-    </div>`).join('');
-}
-
-// ── Meal helpers ──
 function getTodayMeals(){
   const key = 'fgym_meals_'+activeUser+'_'+new Date().toDateString();
   try{ return JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){ return []; }
@@ -3718,7 +3507,7 @@ function searchFood(q){
         const carb = Math.round(n.carbohydrates_100g||0);
         const fat = Math.round(n.fat_100g||0);
         const brand = p.brands ? ' · '+p.brands.split(',')[0] : '';
-        return `<div onclick="fillMealForm('${(p.product_name||'').replace(/'/g,'')}',${cal},${pro},${carb},${fat})"
+        return `<div onclick="fillMealForm('${(p.product_name||' ').replace(/'/g,' ')}',${cal},${pro},${carb},${fat})"
           style="padding:9px 10px;border-radius:9px;margin-bottom:5px;background:var(--soft);cursor:pointer;border:1px solid var(--border)">
           <div style="font-size:13px;font-weight:700;margin-bottom:2px">${p.product_name}${brand}</div>
           <div style="font-size:11px;color:var(--muted)">${cal} kcal · P:${pro}g C:${carb}g F:${fat}g <span style="color:var(--lime);font-size:10px">per 100g — tap to use</span></div>
@@ -3750,7 +3539,7 @@ async function lookupBarcode(barcode){
     resultEl.innerHTML = `<div style="background:var(--soft);border-radius:10px;padding:12px;border:1px solid var(--lime)44">
       <div style="font-size:14px;font-weight:800;margin-bottom:4px">${name}</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${cal} kcal · Protein ${pro}g · Carbs ${carb}g · Fat ${fat}g <em style="font-size:10px">per 100g</em></div>
-      <button onclick="fillMealForm('${name.replace(/'/g,'')}',${cal},${pro},${carb},${fat})" style="background:var(--lime);color:#050508;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800;width:100%">Use This Food</button>
+      <button onclick="fillMealForm('${name.replace(/['"]/g,' ')}',${cal},${pro},${carb},${fat})" style="background:var(--lime);color:#050508;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800;width:100%">Use This Food</button>
     </div>`;
   }catch(e){
     resultEl.innerHTML='<div style="color:var(--red);font-size:13px;padding:8px">Lookup failed — check your connection or enter manually</div>';
@@ -5435,6 +5224,429 @@ function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+
+// ══════════════════ NUTRITION SYSTEM ══════════════════
+
+const YMOVE_NUTRITION_BASE = 'https://exercise-api.ymove.app/api/v2';
+
+// Nutrition data storage
+function loadNutritionLog(){
+  var today = new Date().toDateString();
+  try {
+    var log = JSON.parse(localStorage.getItem('fgym_nutrition_' + activeUser + '_' + today) || '{}');
+    return log;
+  } catch(e){ return {}; }
+}
+
+function saveNutritionLog(log){
+  var today = new Date().toDateString();
+  try {
+    localStorage.setItem('fgym_nutrition_' + activeUser + '_' + today, JSON.stringify(log));
+  } catch(e){}
+}
+
+function loadWaterLog(){
+  var today = new Date().toDateString();
+  try { return parseInt(localStorage.getItem('fgym_water_' + activeUser + '_' + today) || '0'); }
+  catch(e){ return 0; }
+}
+
+function saveWaterLog(ml){
+  var today = new Date().toDateString();
+  try { localStorage.setItem('fgym_water_' + activeUser + '_' + today, ml.toString()); }
+  catch(e){}
+}
+
+// User calorie targets
+function getCalorieTargets(){
+  var targets = {
+    Mike: { calories: 2400, protein: 180, carbs: 220, fat: 80, water: 2800 },
+    Michelle: { calories: 1800, protein: 130, carbs: 170, fat: 60, water: 2500 },
+    Amy: { calories: 2000, protein: 140, carbs: 200, fat: 65, water: 2500 }
+  };
+  return targets[activeUser] || targets.Mike;
+}
+
+// Calculate total macros from log
+function calcTotals(){
+  var log = loadNutritionLog();
+  var totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  var meals = ['breakfast','lunch','dinner','snacks'];
+  meals.forEach(function(meal){
+    (log[meal] || []).forEach(function(item){
+      totals.calories += item.calories || 0;
+      totals.protein += item.protein || 0;
+      totals.carbs += item.carbs || 0;
+      totals.fat += item.fat || 0;
+    });
+  });
+  return totals;
+}
+
+// Calculate calories burned from today's workouts
+function getCaloriesBurned(){
+  var today = new Date().toDateString();
+  var history = loadHistory();
+  var burned = 0;
+  history.filter(function(w){ return w.user === activeUser && new Date(w.date).toDateString() === today; })
+    .forEach(function(w){ burned += w.calories || 0; });
+  return Math.round(burned);
+}
+
+function renderNutrition(){
+  // Only render if nutrition screen elements exist (screen may be hidden)
+  if(!document.getElementById('nut-cal-consumed')) return;
+  var targets = getCalorieTargets();
+  var totals = calcTotals();
+  var water = loadWaterLog();
+  var burned = getCaloriesBurned();
+  var net = totals.calories - burned;
+
+  // Update date
+  var dateEl = document.getElementById('nut-date');
+  if(dateEl) dateEl.textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
+
+  // Update title
+  var titleEl = document.getElementById('nut-title');
+  if(titleEl) titleEl.textContent = activeUser + "'s Nutrition";
+
+  // Update avatar
+  var avEl = document.getElementById('nut-avatar');
+  if(avEl){ avEl.textContent = activeUser[0]; avEl.style.color = USERS[activeUser].color; }
+
+  // Update calorie ring
+  var calEl = document.getElementById('nut-cal-consumed');
+  if(calEl) calEl.textContent = Math.round(totals.calories);
+  var targetEl = document.getElementById('nut-cal-target');
+  if(targetEl) targetEl.textContent = targets.calories;
+
+  // Animate ring
+  var ring = document.getElementById('nut-cal-ring');
+  if(ring){
+    var pct = Math.min(totals.calories / targets.calories, 1);
+    var circumference = 427;
+    ring.style.strokeDashoffset = circumference - (pct * circumference);
+    ring.style.stroke = totals.calories > targets.calories ? 'var(--red)' : 'var(--lime)';
+  }
+
+  // Macros
+  function updateMacro(id, val, target, barId, color){
+    var el = document.getElementById(id);
+    if(el) el.textContent = Math.round(val) + 'g';
+    var bar = document.getElementById(barId);
+    if(bar) bar.style.width = Math.min(val/target*100, 100) + '%';
+    var tEl = document.getElementById(id.replace('-val','-target'));
+    if(tEl) tEl.textContent = target + 'g';
+  }
+  updateMacro('nut-protein-val', totals.protein, targets.protein, 'nut-protein-bar');
+  updateMacro('nut-carbs-val', totals.carbs, targets.carbs, 'nut-carbs-bar');
+  updateMacro('nut-fat-val', totals.fat, targets.fat, 'nut-fat-bar');
+
+  // Burned + net
+  var burnEl = document.getElementById('nut-burned');
+  if(burnEl) burnEl.textContent = burned;
+  var netEl = document.getElementById('nut-net');
+  if(netEl){
+    netEl.textContent = 'Net: ' + Math.round(net) + ' kcal';
+    netEl.style.color = net > targets.calories ? 'var(--red)' : '#4CAF50';
+  }
+
+  // Water
+  var waterEl = document.getElementById('nut-water-val');
+  if(waterEl) waterEl.textContent = water + 'ml';
+  var waterTargetEl = document.getElementById('nut-water-target');
+  if(waterTargetEl) waterTargetEl.textContent = targets.water;
+  var waterBar = document.getElementById('nut-water-bar');
+  if(waterBar) waterBar.style.width = Math.min(water/targets.water*100, 100) + '%';
+
+  // Render meal sections
+  renderMealSections();
+}
+
+function renderMealSections(){
+  var log = loadNutritionLog();
+  var meals = [
+    { id:'breakfast', label:'Breakfast', color:'#FF8C42' },
+    { id:'lunch', label:'Lunch', color:'#C8F135' },
+    { id:'dinner', label:'Dinner', color:'#6C63FF' },
+    { id:'snacks', label:'Snacks', color:'#FF4444' }
+  ];
+  var mealEmoji = { breakfast:'sunrise', lunch:'sun', dinner:'crescent_moon', snacks:'apple' };
+
+  var html = '';
+  meals.forEach(function(meal){
+    var items = log[meal.id] || [];
+    var mealCals = items.reduce(function(a,i){ return a + (i.calories||0); }, 0);
+    var mb = items.length ? '10px' : '0';
+    html += '<div class="card" style="margin-bottom:10px">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:' + mb + '">';
+    html += '<div style="font-size:15px;font-weight:800;color:' + meal.color + '">' + meal.label + '</div>';
+    html += '<div style="display:flex;align-items:center;gap:8px">';
+    if(mealCals > 0) html += '<span style="font-size:12px;color:var(--muted)">' + Math.round(mealCals) + ' kcal</span>';
+    html += '<button data-mid="' + meal.id + '" onclick="openFoodSearch(this.getAttribute(\'data-mid\'))" style="background:rgba(200,241,53,.12);border:1px solid rgba(200,241,53,.25);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;color:var(--lime)">+ Add</button>';
+    html += '</div></div>';
+    items.forEach(function(item, i){
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--border)">';
+      html += '<div style="flex:1;min-width:0">';
+      html += '<div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + item.name + '</div>';
+      html += '<div style="font-size:11px;color:var(--muted)">' + (item.servingDesc||'1 serving') + ' &middot; P:' + Math.round(item.protein||0) + 'g C:' + Math.round(item.carbs||0) + 'g F:' + Math.round(item.fat||0) + 'g</div>';
+      html += '</div>';
+      html += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">';
+      html += '<span style="font-size:14px;font-weight:800;color:' + meal.color + '">' + Math.round(item.calories||0) + '</span>';
+      html += '<button data-mid="' + meal.id + '" data-idx="' + i + '" onclick="removeFoodItem(this.getAttribute(\'data-mid\'), parseInt(this.getAttribute(\'data-idx\')))" style="color:var(--red);font-size:14px;font-weight:800;padding:2px 6px;border-radius:6px;background:rgba(255,68,68,.1)">x</button>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  });
+
+  var container = document.getElementById('nut-meals-container');
+  if(container) container.innerHTML = html;
+}
+
+function removeFoodItem(meal, idx){
+  var log = loadNutritionLog();
+  if(log[meal]){ log[meal].splice(idx, 1); }
+  saveNutritionLog(log);
+  renderNutrition();
+}
+
+// ── Food Search ──
+var currentMeal = 'breakfast';
+var currentFood = null;
+var currentServing = 1;
+var searchTimeout = null;
+
+function openFoodSearch(meal){
+  currentMeal = meal;
+  var titles = { breakfast:'🌅 Add Breakfast', lunch:'☀️ Add Lunch', dinner:'🌙 Add Dinner', snacks:'🍎 Add Snack' };
+  document.getElementById('food-search-title').textContent = titles[meal] || 'Add Food';
+  document.getElementById('food-search-input').value = '';
+  document.getElementById('food-search-results').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Search for a food above</div>';
+  openModal('modal-food-search');
+}
+
+function searchFoods(query){
+  if(!query || query.length < 2) return;
+  document.getElementById('food-search-input').value = query;
+  clearTimeout(searchTimeout);
+  document.getElementById('food-search-results').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Searching...</div>';
+  searchTimeout = setTimeout(function(){ doFoodSearch(query); }, 400);
+}
+
+async function doFoodSearch(query){
+  try {
+    var res = await fetch(YMOVE_NUTRITION_BASE + '/foods?q=' + encodeURIComponent(query) + '&country=GB&limit=15', {
+      headers: { 'X-API-Key': YMOVE_KEY }
+    });
+    if(!res.ok) throw new Error('API error');
+    var data = await res.json();
+    var foods = data.foods || data.results || data || [];
+    renderFoodResults(foods);
+  } catch(e){
+    console.log('Food search error:', e.message);
+    document.getElementById('food-search-results').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Search failed. Check connection.</div>';
+  }
+}
+
+var foodSearchResults = [];
+
+function renderFoodResults(foods){
+  if(!foods || !foods.length){
+    document.getElementById('food-search-results').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">No results found</div>';
+    return;
+  }
+  foodSearchResults = foods;
+  var html = '';
+  foods.forEach(function(food, idx){
+    var cal = Math.round(food.calories || food.energy || 0);
+    var protein = Math.round(food.protein || 0);
+    var carbs = Math.round(food.carbohydrates || food.carbs || 0);
+    var fat = Math.round(food.fat || 0);
+    var name = food.name || food.food_name || 'Unknown';
+    var brand = food.brand || food.brand_name || '';
+    var serving = food.serving_description || food.serving_size || '100g';
+    html += '<div onclick="selectFoodByIndex(' + idx + ')" style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border);cursor:pointer">';
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</div>';
+    if(brand) html += '<div style="font-size:11px;color:var(--muted)">' + brand + '</div>';
+    html += '<div style="font-size:11px;color:var(--muted)">' + serving + ' · P:' + protein + 'g C:' + carbs + 'g F:' + fat + 'g</div>';
+    html += '</div>';
+    html += '<div style="font-size:16px;font-weight:800;color:var(--lime);margin-left:12px;flex-shrink:0">' + cal + '<span style="font-size:10px;color:var(--muted)"> kcal</span></div>';
+    html += '</div>';
+  });
+  document.getElementById('food-search-results').innerHTML = html;
+}
+
+function selectFoodByIndex(idx){
+  var food = foodSearchResults[idx];
+  if(!food) return;
+  var cal = Math.round(food.calories || food.energy || 0);
+  selectFood({
+    id: food.id || food.food_id || '',
+    name: food.name || food.food_name || 'Unknown',
+    brand: food.brand || food.brand_name || '',
+    calories: cal,
+    protein: Math.round(food.protein || 0),
+    carbs: Math.round(food.carbohydrates || food.carbs || 0),
+    fat: Math.round(food.fat || 0),
+    servingDesc: food.serving_description || food.serving_size || '100g',
+    servingG: food.serving_weight_grams || 100
+  });
+}
+
+function selectFood(food){
+  currentFood = food;
+  currentServing = 1;
+  closeModal('modal-food-search');
+  document.getElementById('food-detail-name').textContent = food.name;
+  document.getElementById('food-detail-brand').textContent = food.brand || '';
+  updateFoodDetail();
+  openModal('modal-food-detail');
+}
+
+function updateFoodDetail(){
+  if(!currentFood) return;
+  document.getElementById('food-detail-serving').textContent = currentServing;
+  document.getElementById('food-detail-cal').textContent = Math.round(currentFood.calories * currentServing);
+  document.getElementById('food-detail-protein').textContent = Math.round(currentFood.protein * currentServing) + 'g';
+  document.getElementById('food-detail-carbs').textContent = Math.round(currentFood.carbs * currentServing) + 'g';
+  document.getElementById('food-detail-fat').textContent = Math.round(currentFood.fat * currentServing) + 'g';
+  document.getElementById('food-detail-unit').textContent = currentFood.servingDesc || 'serving';
+}
+
+function adjustServing(delta){
+  currentServing = Math.max(0.5, currentServing + delta);
+  updateFoodDetail();
+}
+
+function addFoodToLog(){
+  if(!currentFood) return;
+  var log = loadNutritionLog();
+  if(!log[currentMeal]) log[currentMeal] = [];
+  log[currentMeal].push({
+    name: currentFood.name,
+    brand: currentFood.brand,
+    calories: currentFood.calories * currentServing,
+    protein: currentFood.protein * currentServing,
+    carbs: currentFood.carbs * currentServing,
+    fat: currentFood.fat * currentServing,
+    servingDesc: currentServing + ' x ' + (currentFood.servingDesc || 'serving'),
+    loggedAt: new Date().toISOString()
+  });
+  saveNutritionLog(log);
+  closeModal('modal-food-detail');
+  renderNutrition();
+  toast('Added ' + currentFood.name + ' to ' + currentMeal);
+}
+
+// Water logging
+function openWaterLog(){
+  openModal('modal-water-log');
+}
+
+function logWater(ml){
+  if(!ml || ml <= 0) return;
+  var current = loadWaterLog();
+  saveWaterLog(current + ml);
+  closeModal('modal-water-log');
+  renderNutrition();
+  toast('Logged ' + ml + 'ml of water 💧');
+}
+
+// AI Photo food logging
+function openPhotoFood(){
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+  input.onchange = async function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    toast('Analysing your meal... 🤖');
+    var reader = new FileReader();
+    reader.onload = async function(ev){
+      var base64 = ev.target.result.split(',')[1];
+      try {
+        var res = await fetch(YMOVE_NUTRITION_BASE + '/foods/log/photo', {
+          method: 'POST',
+          headers: { 'X-API-Key': YMOVE_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64, media_type: 'image/jpeg' })
+        });
+        if(!res.ok) throw new Error('Photo analysis failed');
+        var data = await res.json();
+        var foods = data.foods || data.items || data || [];
+        if(foods.length > 0){
+          var log = loadNutritionLog();
+          if(!log[currentMeal]) log[currentMeal] = [];
+          foods.forEach(function(food){
+            log[currentMeal].push({
+              name: food.name || food.food_name,
+              calories: Math.round(food.calories || food.energy || 0),
+              protein: Math.round(food.protein || 0),
+              carbs: Math.round(food.carbohydrates || food.carbs || 0),
+              fat: Math.round(food.fat || 0),
+              servingDesc: food.serving_description || '1 serving',
+              loggedAt: new Date().toISOString()
+            });
+          });
+          saveNutritionLog(log);
+          renderNutrition();
+          toast('Logged ' + foods.length + ' food item(s) from photo! 📷');
+        } else {
+          toast('Could not identify food. Try again.');
+        }
+      } catch(err){
+        console.log('Photo food error:', err);
+        toast('Photo analysis failed. Try searching instead.');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+// Generate meal plan
+async function generateMealPlan(){
+  toast('Generating your meal plan... ✨');
+  var targets = getCalorieTargets();
+  try {
+    var res = await fetch(YMOVE_NUTRITION_BASE + '/mealplans/generate?calories=' + targets.calories + '&diet=high_protein&country=GB', {
+      headers: { 'X-API-Key': YMOVE_KEY }
+    });
+    if(!res.ok) throw new Error('Meal plan generation failed');
+    var data = await res.json();
+    var plan = data.meals || data.meal_plan || data;
+    if(plan){
+      // Clear today's log and add meal plan items
+      var log = {};
+      var mealMap = { breakfast: 'breakfast', lunch: 'lunch', dinner: 'dinner', snack: 'snacks' };
+      if(Array.isArray(plan)){
+        plan.forEach(function(meal){
+          var mealType = mealMap[meal.meal_type] || mealMap[(meal.type||'').toLowerCase()] || 'snacks';
+          if(!log[mealType]) log[mealType] = [];
+          (meal.foods || meal.items || []).forEach(function(food){
+            log[mealType].push({
+              name: food.name || food.food_name,
+              calories: Math.round(food.calories || 0),
+              protein: Math.round(food.protein || 0),
+              carbs: Math.round(food.carbohydrates || food.carbs || 0),
+              fat: Math.round(food.fat || 0),
+              servingDesc: food.serving_description || '1 serving',
+              loggedAt: new Date().toISOString()
+            });
+          });
+        });
+      }
+      saveNutritionLog(log);
+      renderNutrition();
+      toast('Meal plan generated! 🎉');
+    }
+  } catch(e){
+    console.log('Meal plan error:', e.message);
+    toast('Could not generate meal plan. Try again.');
+  }
 }
 
 // Init user switcher styles
