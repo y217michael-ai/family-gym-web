@@ -4357,108 +4357,53 @@ const EDB_NAME_MAP = {
 
 async function fetchExerciseGif(exName){
   if(EDB_CACHE[exName]) return EDB_CACHE[exName];
-  const searchName = EDB_NAME_MAP[exName] || exName;
+  var searchName = EDB_NAME_MAP[exName] || exName;
   try {
-    const res = await fetch(
-      YMOVE_BASE + '/exercises?name=' + encodeURIComponent(searchName) + '&limit=5',
-      { headers: { 'X-API-Key': YMOVE_KEY } }
-    );
-    if(!res.ok) throw new Error('API error ' + res.status);
-    const data = await res.json();
-    const exercises = data.results || data;
+    var res = await fetch(YMOVE_BASE + '/exercises?name=' + encodeURIComponent(searchName) + '&limit=5', { headers: { 'X-API-Key': YMOVE_KEY } });
+    if(!res.ok) throw new Error('status ' + res.status);
+    var data = await res.json();
+    var exercises = data.results || data;
     if(exercises && exercises.length > 0){
-      const ex = exercises[0];
-      const whiteVid = ex.videos && ex.videos.find(function(v){ return v.tag === 'white-background'; });
-      const gymVid = ex.videos && ex.videos.find(function(v){ return v.tag === 'gym-shot' && v.orientation === 'landscape'; });
-      const mapped = {
-        name: ex.title,
-        target: ex.muscleGroup,
-        secondaryMuscles: ex.secondaryMuscles || [],
-        equipment: ex.equipment,
-        instructions: ex.instructions || [],
-        importantPoints: ex.importantPoints || [],
-        videoUrl: (whiteVid && whiteVid.videoUrl) || ex.videoUrl,
-        thumbnailUrl: (whiteVid && whiteVid.thumbnailUrl) || ex.thumbnailUrl,
-        gymVideoUrl: gymVid && gymVid.videoUrl,
-      };
+      var ex = exercises[0];
+      var wv = ex.videos && ex.videos.find(function(v){ return v.tag === 'white-background'; });
+      var gv = ex.videos && ex.videos.find(function(v){ return v.tag === 'gym-shot' && v.orientation === 'landscape'; });
+      var mapped = { name: ex.title, target: ex.muscleGroup, secondaryMuscles: ex.secondaryMuscles || [], equipment: ex.equipment, instructions: ex.instructions || [], importantPoints: ex.importantPoints || [], videoUrl: (wv&&wv.videoUrl)||ex.videoUrl, gymVideoUrl: gv&&gv.videoUrl };
       EDB_CACHE[exName] = mapped;
       return mapped;
     }
-  } catch(e){ console.log('YMove error:', e.message); }
+  } catch(e){ console.log('YMove:', e.message); }
   return null;
 }
 
 
-function switchExVideo(url){
-  var v = document.getElementById('muscle-front-img').querySelector('video');
-  if(v) v.src = url;
-}
+function switchExVideo(url){ var v = document.getElementById('muscle-front-img').querySelector('video'); if(v) v.src = url; }
 
 async function showMuscleModal(exName, muscle){
   document.getElementById('muscle-modal-title').textContent = exName;
   document.getElementById('muscle-modal-subtitle').textContent = 'Loading...';
-  document.getElementById('muscle-front-img').innerHTML = '<div style="height:160px;background:var(--soft);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px"><div style="color:var(--muted);font-size:12px">Loading video...</div></div>';
+  document.getElementById('muscle-front-img').innerHTML = '<div style="height:140px;background:var(--soft);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px"><div style="color:var(--muted);font-size:12px">Loading video...</div></div>';
   document.getElementById('muscle-back-img').innerHTML = '';
   openModal('modal-muscle-viewer');
-
   var ex = await fetchExerciseGif(exName);
   var info = MUSCLE_SVG_HIGHLIGHTS[muscle] || { front:[], back:[] };
-
   if(ex && ex.videoUrl){
-    document.getElementById('muscle-modal-subtitle').textContent =
-      (ex.target ? ex.target.charAt(0).toUpperCase()+ex.target.slice(1) : muscle) +
-      (ex.equipment ? ' · ' + ex.equipment : '');
-
-    var videoHtml = '<video src="' + ex.videoUrl + '" controls autoplay loop muted playsinline style="width:100%;border-radius:12px;background:#000;max-height:240px;object-fit:contain"></video>';
-    if(ex.gymVideoUrl){
-      videoHtml += '<div style="margin-top:6px;display:flex;gap:6px">';
-      videoHtml += '<div style="font-size:10px;font-weight:700;color:var(--lime);padding:4px 8px;background:rgba(200,241,53,.1);border-radius:6px;cursor:pointer" data-url="' + ex.videoUrl + '" onclick="switchExVideo(this.dataset.url)">🎬 Clean</div>';
-      videoHtml += '<div style="font-size:10px;font-weight:700;color:var(--muted);padding:4px 8px;background:var(--soft);border-radius:6px;cursor:pointer" data-url="' + ex.gymVideoUrl + '" onclick="switchExVideo(this.dataset.url)">🏋️ Gym</div>';
-      videoHtml += '</div>';
-    }
-    document.getElementById('muscle-front-img').innerHTML = '<div style="margin-bottom:12px">' + videoHtml + '</div>';
-
-    var secHtml = '';
-    if(ex.secondaryMuscles && ex.secondaryMuscles.length){
-      secHtml += '<div style="font-size:10px;font-weight:700;color:#6C63FF;margin-bottom:3px">SECONDARY</div>';
-      secHtml += '<div style="font-size:11px;color:var(--muted);text-transform:capitalize">' + ex.secondaryMuscles.join(', ') + '</div>';
-    }
-
-    var instrHtml = '';
-    if(ex.instructions && ex.instructions.length){
-      instrHtml = '<div style="background:var(--soft);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid var(--border)">';
-      instrHtml += '<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;margin-bottom:8px">HOW TO DO IT</div>';
-      ex.instructions.forEach(function(step, i){
-        instrHtml += '<div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start">';
-        instrHtml += '<div style="width:18px;height:18px;border-radius:50%;background:var(--lime);color:#050508;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (i+1) + '</div>';
-        instrHtml += '<div style="font-size:12px;color:var(--text);line-height:1.4">' + step + '</div></div>';
-      });
-      instrHtml += '</div>';
-    }
-
-    var pointsHtml = '';
-    if(ex.importantPoints && ex.importantPoints.length){
-      pointsHtml = '<div style="background:rgba(200,241,53,.05);border-radius:10px;padding:12px;border:1px solid rgba(200,241,53,.2)">';
-      pointsHtml += '<div style="font-size:10px;font-weight:700;color:var(--lime);letter-spacing:.5px;margin-bottom:6px">KEY POINTS</div>';
-      ex.importantPoints.forEach(function(p){
-        pointsHtml += '<div style="font-size:12px;color:var(--text);margin-bottom:4px;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:var(--lime)">•</span>' + p + '</div>';
-      });
-      pointsHtml += '</div>';
-    }
-
-    var backHtml = '<div style="display:flex;gap:8px;margin-bottom:10px;justify-content:center">';
-    backHtml += '<div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px">FRONT</div>' + buildMuscleSVG(info.front,'front') + '</div>';
-    backHtml += '<div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px">BACK</div>' + buildMuscleSVG(info.back,'back') + '</div>';
-    backHtml += '<div style="flex:1;padding:4px"><div style="font-size:10px;font-weight:700;color:var(--lime);margin-bottom:4px">PRIMARY</div>';
-    backHtml += '<div style="font-size:12px;font-weight:800;color:var(--text);text-transform:capitalize;margin-bottom:6px">' + (ex.target||muscle) + '</div>' + secHtml + '</div></div>';
-    backHtml += instrHtml + pointsHtml;
-    document.getElementById('muscle-back-img').innerHTML = backHtml;
-
+    document.getElementById('muscle-modal-subtitle').textContent = (ex.target ? ex.target.charAt(0).toUpperCase()+ex.target.slice(1) : muscle) + (ex.equipment ? ' · ' + ex.equipment : '');
+    var vh = '<video src="' + ex.videoUrl + '" controls autoplay loop muted playsinline style="width:100%;border-radius:12px;background:#000;max-height:220px;object-fit:contain"></video>';
+    if(ex.gymVideoUrl){ vh += '<div style="margin-top:6px;display:flex;gap:6px"><div style="font-size:10px;font-weight:700;color:var(--lime);padding:4px 8px;background:rgba(200,241,53,.1);border-radius:6px;cursor:pointer" data-url="' + ex.videoUrl + '" onclick="switchExVideo(this.dataset.url)">🎬 Clean</div><div style="font-size:10px;font-weight:700;color:var(--muted);padding:4px 8px;background:var(--soft);border-radius:6px;cursor:pointer" data-url="' + ex.gymVideoUrl + '" onclick="switchExVideo(this.dataset.url)">🏋️ Gym</div></div>'; }
+    document.getElementById('muscle-front-img').innerHTML = '<div style="margin-bottom:12px">' + vh + '</div>';
+    var sh = '';
+    if(ex.secondaryMuscles && ex.secondaryMuscles.length){ sh = '<div style="font-size:10px;font-weight:700;color:#6C63FF;margin-bottom:3px">SECONDARY</div><div style="font-size:11px;color:var(--muted);text-transform:capitalize">' + ex.secondaryMuscles.join(', ') + '</div>'; }
+    var ih = '';
+    if(ex.instructions && ex.instructions.length){ ih = '<div style="background:var(--soft);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;margin-bottom:8px">HOW TO DO IT</div>'; ex.instructions.forEach(function(step,i){ ih += '<div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start"><div style="min-width:18px;height:18px;border-radius:50%;background:var(--lime);color:#050508;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">' + (i+1) + '</div><div style="font-size:12px;color:var(--text);line-height:1.4">' + step + '</div></div>'; }); ih += '</div>'; }
+    var ph = '';
+    if(ex.importantPoints && ex.importantPoints.length){ ph = '<div style="background:rgba(200,241,53,.05);border-radius:10px;padding:12px;border:1px solid rgba(200,241,53,.2)"><div style="font-size:10px;font-weight:700;color:var(--lime);letter-spacing:.5px;margin-bottom:6px">KEY POINTS</div>'; ex.importantPoints.forEach(function(p){ ph += '<div style="font-size:12px;color:var(--text);margin-bottom:4px;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:var(--lime)">&#8226;</span>' + p + '</div>'; }); ph += '</div>'; }
+    var bh = '<div style="display:flex;gap:8px;margin-bottom:10px;justify-content:center"><div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px">FRONT</div>' + buildMuscleSVG(info.front,'front') + '</div><div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px">BACK</div>' + buildMuscleSVG(info.back,'back') + '</div><div style="flex:1;padding:4px"><div style="font-size:10px;font-weight:700;color:var(--lime);margin-bottom:4px">PRIMARY</div><div style="font-size:12px;font-weight:800;color:var(--text);text-transform:capitalize;margin-bottom:6px">' + (ex.target||muscle) + '</div>' + sh + '</div></div>' + ih + ph;
+    document.getElementById('muscle-back-img').innerHTML = bh;
   } else {
     document.getElementById('muscle-modal-subtitle').textContent = 'Primary (green) / Secondary (purple)';
+    var su = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(exName + ' proper form exercise tutorial');
     document.getElementById('muscle-front-img').innerHTML = '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px"><div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px">FRONT</div>' + buildMuscleSVG(info.front,'front') + '</div><div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px">BACK</div>' + buildMuscleSVG(info.back,'back') + '</div></div>';
-    var searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(exName + ' proper form exercise tutorial');
-    document.getElementById('muscle-back-img').innerHTML = '<a href="' + searchUrl + '" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(255,0,0,.12);border:1.5px solid rgba(255,0,0,.3);border-radius:12px;padding:14px;text-decoration:none;font-weight:800;font-size:14px;color:#FF4444;margin-bottom:12px"><span style="font-size:20px">&#9654;</span> Watch on YouTube</a>';
+    document.getElementById('muscle-back-img').innerHTML = '<a href="' + su + '" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(255,0,0,.12);border:1.5px solid rgba(255,0,0,.3);border-radius:12px;padding:14px;text-decoration:none;font-weight:800;font-size:14px;color:#FF4444">&#9654; Watch on YouTube</a>';
   }
 }
 
