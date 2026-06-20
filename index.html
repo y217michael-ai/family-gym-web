@@ -321,8 +321,8 @@ if('serviceWorker' in navigator){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
     <div class="card" style="text-align:center;padding:14px">
       <div style="font-size:22px;font-weight:800;color:var(--lime)" id="nut-burned">0</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">kcal burned</div>
-      <div style="font-size:10px;color:var(--muted)" id="nut-net">Net: 0 kcal</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">total daily burn</div>
+      <div style="font-size:10px;color:var(--muted)" id="nut-net">calculating...</div>
     </div>
     <div class="card" style="text-align:center;padding:14px;cursor:pointer" onclick="openWaterLog()">
       <div style="font-size:22px;font-weight:800;color:#4FC3F7" id="nut-water-val">0ml</div>
@@ -5285,6 +5285,27 @@ function calcTotals(){
   return totals;
 }
 
+// Calculate BMR using Mifflin-St Jeor formula
+function getBMR(){
+  var profiles = {
+    Mike: { age: 45, weightKg: 88, heightCm: 178, male: true },
+    Michelle: { age: 42, weightKg: 65, heightCm: 165, male: false },
+    Amy: { age: 20, weightKg: 58, heightCm: 163, male: false }
+  };
+  var p = profiles[activeUser] || profiles.Mike;
+  if(p.male){
+    return Math.round(10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age + 5);
+  } else {
+    return Math.round(10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age - 161);
+  }
+}
+
+// Daily NEAT (Non-Exercise Activity Thermogenesis) - light activity
+function getNEAT(){
+  var bmr = getBMR();
+  return Math.round(bmr * 0.3); // ~30% of BMR for light daily movement
+}
+
 // Calculate calories burned from today's workouts
 function getCaloriesBurned(){
   var today = new Date().toDateString();
@@ -5293,6 +5314,10 @@ function getCaloriesBurned(){
   history.filter(function(w){ return w.user === activeUser && new Date(w.date).toDateString() === today; })
     .forEach(function(w){ burned += w.calories || 0; });
   return Math.round(burned);
+}
+
+function getTotalDailyBurn(){
+  return getBMR() + getNEAT() + getCaloriesBurned();
 }
 
 function renderNutrition(){
@@ -5345,12 +5370,16 @@ function renderNutrition(){
   updateMacro('nut-fat-val', totals.fat, targets.fat, 'nut-fat-bar');
 
   // Burned + net
+  var bmr = getBMR();
+  var neat = getNEAT();
+  var totalBurn = getTotalDailyBurn();
   var burnEl = document.getElementById('nut-burned');
-  if(burnEl) burnEl.textContent = burned;
+  if(burnEl) burnEl.innerHTML = Math.round(totalBurn) + '<div style="font-size:9px;color:var(--muted);margin-top:2px">BMR ' + bmr + ' + NEAT ' + neat + (burned?' + Exercise '+burned:'') + '</div>';
   var netEl = document.getElementById('nut-net');
   if(netEl){
-    netEl.textContent = 'Net: ' + Math.round(net) + ' kcal';
-    netEl.style.color = net > targets.calories ? 'var(--red)' : '#4CAF50';
+    var remaining = totalBurn - totals.calories;
+    netEl.textContent = remaining >= 0 ? remaining + ' kcal remaining' : Math.abs(Math.round(remaining)) + ' kcal over';
+    netEl.style.color = remaining >= 0 ? '#4CAF50' : 'var(--red)';
   }
 
   // Water
@@ -5440,13 +5469,14 @@ async function doFoodSearch(query){
     var res = await fetch(YMOVE_NUTRITION_BASE + '/foods?q=' + encodeURIComponent(query) + '&country=GB&limit=15', {
       headers: { 'X-API-Key': YMOVE_KEY }
     });
-    if(!res.ok) throw new Error('API error');
+    if(!res.ok) throw new Error('API error ' + res.status);
     var data = await res.json();
-    var foods = data.foods || data.results || data || [];
+    console.log('Food search response:', JSON.stringify(data).slice(0,300));
+    var foods = data.foods || data.results || data.items || (Array.isArray(data) ? data : []);
     renderFoodResults(foods);
   } catch(e){
     console.log('Food search error:', e.message);
-    document.getElementById('food-search-results').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Search failed. Check connection.</div>';
+    document.getElementById('food-search-results').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Search failed: ' + e.message + '</div>';
   }
 }
 
@@ -5454,19 +5484,19 @@ var foodSearchResults = [];
 
 function renderFoodResults(foods){
   if(!foods || !foods.length){
-    document.getElementById('food-search-results').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">No results found</div>';
+    document.getElementById('food-search-results').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">No results found — try a different search</div>';
     return;
   }
   foodSearchResults = foods;
   var html = '';
   foods.forEach(function(food, idx){
-    var cal = Math.round(food.calories || food.energy || 0);
-    var protein = Math.round(food.protein || 0);
-    var carbs = Math.round(food.carbohydrates || food.carbs || 0);
-    var fat = Math.round(food.fat || 0);
-    var name = food.name || food.food_name || 'Unknown';
-    var brand = food.brand || food.brand_name || '';
-    var serving = food.serving_description || food.serving_size || '100g';
+    var cal = Math.round(food.calories || food.energy || food.nutriments && food.nutriments['energy-kcal'] || 0);
+    var protein = Math.round(food.protein || food.nutriments && food.nutriments.proteins || 0);
+    var carbs = Math.round(food.carbohydrates || food.carbs || food.nutriments && food.nutriments.carbohydrates || 0);
+    var fat = Math.round(food.fat || food.nutriments && food.nutriments.fat || 0);
+    var name = food.shortName || food.displayName || food.name || food.product_name || food.food_name || 'Unknown';
+    var brand = food.brand || food.brand_name || food.brands || '';
+    var serving = food.servingDescription || food.serving_description || food.servingSize + 'g' || '100g';
     html += '<div onclick="selectFoodByIndex(' + idx + ')" style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border);cursor:pointer">';
     html += '<div style="flex:1;min-width:0">';
     html += '<div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</div>';
@@ -5485,14 +5515,14 @@ function selectFoodByIndex(idx){
   var cal = Math.round(food.calories || food.energy || 0);
   selectFood({
     id: food.id || food.food_id || '',
-    name: food.name || food.food_name || 'Unknown',
-    brand: food.brand || food.brand_name || '',
+    name: food.shortName || food.displayName || food.name || food.product_name || 'Unknown',
+    brand: food.brand || food.brands || food.brand_name || '',
     calories: cal,
     protein: Math.round(food.protein || 0),
     carbs: Math.round(food.carbohydrates || food.carbs || 0),
     fat: Math.round(food.fat || 0),
-    servingDesc: food.serving_description || food.serving_size || '100g',
-    servingG: food.serving_weight_grams || 100
+    servingDesc: food.servingDescription || food.serving_description || (food.servingSize ? food.servingSize+'g' : '100g'),
+    servingG: food.servingSize || food.serving_weight_grams || 100
   });
 }
 
