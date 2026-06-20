@@ -337,7 +337,7 @@ if('serviceWorker' in navigator){
     <button onclick="openFoodSearch('lunch')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--text)">☀️ Lunch</button>
     <button onclick="openFoodSearch('dinner')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--text)">🌙 Dinner</button>
     <button onclick="openFoodSearch('snacks')" style="flex-shrink:0;background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--text)">🍎 Snacks</button>
-    <button onclick="openPhotoFood()" style="flex-shrink:0;background:rgba(200,241,53,.12);border:1px solid rgba(200,241,53,.3);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--lime)">📷 AI Photo</button>
+    <label style="flex-shrink:0;background:rgba(200,241,53,.12);border:1px solid rgba(200,241,53,.3);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--lime);cursor:pointer">📷 AI Photo<input type="file" accept="image/*" capture="environment" onchange="handlePhotoFood(this)" style="display:none"></label>
   </div>
 
   <!-- Meal sections -->
@@ -5556,6 +5556,51 @@ function logWater(ml){
 }
 
 // AI Photo food logging
+function handlePhotoFood(input){
+  var file = input && input.files && input.files[0];
+  if(!file){ toast('No photo selected'); return; }
+  toast('Analysing your meal... 🤖');
+  var reader = new FileReader();
+  reader.onload = async function(ev){
+    var base64 = ev.target.result.split(',')[1];
+    try {
+      var res = await fetch(YMOVE_NUTRITION_BASE + '/foods/log/photo', {
+        method: 'POST',
+        headers: { 'X-API-Key': YMOVE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, media_type: file.type || 'image/jpeg' })
+      });
+      if(!res.ok) throw new Error('Photo analysis failed ' + res.status);
+      var data = await res.json();
+      var foods = data.foods || data.items || data || [];
+      if(foods.length > 0){
+        var log = loadNutritionLog();
+        if(!log[currentMeal]) log[currentMeal] = [];
+        foods.forEach(function(food){
+          log[currentMeal].push({
+            name: food.name || food.food_name || 'Unknown food',
+            calories: Math.round(food.calories || food.energy || 0),
+            protein: Math.round(food.protein || 0),
+            carbs: Math.round(food.carbohydrates || food.carbs || 0),
+            fat: Math.round(food.fat || 0),
+            servingDesc: food.serving_description || '1 serving',
+            loggedAt: new Date().toISOString()
+          });
+        });
+        saveNutritionLog(log);
+        renderNutrition();
+        toast('Logged ' + foods.length + ' item(s) from photo!');
+      } else {
+        toast('Could not identify food — try searching instead');
+      }
+    } catch(err){
+      console.log('Photo food error:', err);
+      toast('Photo analysis failed — try searching instead');
+    }
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
 function openPhotoFood(){
   var input = document.createElement('input');
   input.type = 'file';
