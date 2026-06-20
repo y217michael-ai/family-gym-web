@@ -4321,8 +4321,8 @@ const EDB_NAME_MAP = {
   'Incline Press': 'barbell incline bench press',
   'Decline Bench Press': 'barbell decline bench press',
   'Overhead Press': 'barbell overhead press',
-  'Pull Up': 'pull-up',
-  'Lat Pulldown': 'cable lat pulldown',
+  'Pull Up': 'pull up',
+  'Lat Pulldown': 'lat pulldown',
   'Seated Row': 'cable seated row',
   'Barbell Bent Over Row': 'barbell bent over row',
   'Deadlift': 'barbell deadlift',
@@ -4330,11 +4330,10 @@ const EDB_NAME_MAP = {
   'Squat': 'barbell squat',
   'Leg Press': 'leg press',
   'Leg Extension': 'leg extension',
-  'Leg Curl': 'lying leg curl',
+  'Leg Curl': 'leg curl',
   'Calf Raise': 'standing calf raise',
   'Lateral Raise': 'dumbbell lateral raise',
   'Front Raise': 'dumbbell front raise',
-  'Bicep Curl': 'barbell curl',
   'Barbell Curl': 'barbell curl',
   'Hammer Curl': 'dumbbell hammer curl',
   'Tricep Pushdown': 'cable triceps pushdown',
@@ -4342,17 +4341,32 @@ const EDB_NAME_MAP = {
   'Plank': 'plank',
   'Ab Rollout': 'ab wheel rollout',
   'Cable Fly': 'cable fly',
-  'Dumbbell Fly': 'dumbbell fly',
   'Hip Thrust': 'barbell hip thrust',
   'Glute Bridge': 'glute bridge',
   'Face Pull': 'cable face pull',
-  'Shrug': 'barbell shrug',
+  'Barbell Shrug': 'barbell shrug',
   'Farmer Carry': 'farmers walk',
   'Battle Ropes': 'battle ropes',
+  'Push Up': 'push up',
+  'Dip': 'parallel bar dip',
+  'Chin Up': 'chin up',
+  'Arnold Press': 'arnold press',
+  'Preacher Curl': 'preacher curl',
+  'Close Grip Bench Press': 'close grip bench press',
+  'Incline Dumbbell Curl': 'incline dumbbell curl',
+  'Concentration Curl': 'concentration curl',
+  'Overhead Tricep Extension': 'overhead tricep extension',
+  'Single Arm Row': 'dumbbell row',
+  'Face Pull — Rope': 'cable face pull',
+  'Rope Tricep Pushdown': 'cable triceps pushdown rope',
+  'Seated Dumbbell Press': 'dumbbell shoulder press',
+  'Hip Thrust': 'barbell hip thrust',
+  'Bulgarian Split Squat': 'bulgarian split squat',
+  'Nordic Curl': 'nordic hamstring curl',
+  'Hanging Leg Raise': 'hanging leg raise',
+  'Cable Crunch': 'cable crunch',
+  'Treadmill Run': 'running treadmill',
   'Kettlebell Swing — Two Hand': 'kettlebell swing',
-  'Push Up': 'push-up',
-  'Dip': 'dip',
-  'Chin Up': 'chin-up',
 };
 
 async function fetchExerciseGif(exName){
@@ -4362,9 +4376,16 @@ async function fetchExerciseGif(exName){
     var res = await fetch(YMOVE_BASE + '/exercises?name=' + encodeURIComponent(searchName) + '&limit=5', { headers: { 'X-API-Key': YMOVE_KEY } });
     if(!res.ok) throw new Error('status ' + res.status);
     var data = await res.json();
-    var exercises = data.results || data;
+    var exercises = data.data || data.results || data;
     if(exercises && exercises.length > 0){
+      // Try to find best match by title or slug
       var ex = exercises[0];
+      var sLow = searchName.toLowerCase();
+      for(var i=0;i<exercises.length;i++){
+        var t = (exercises[i].title||'').toLowerCase();
+        var sl = (exercises[i].slug||'').replace(/-/g,' ');
+        if(t === sLow || sl === sLow || t.indexOf(sLow) === 0){ ex = exercises[i]; break; }
+      }
       var wv = ex.videos && ex.videos.find(function(v){ return v.tag === 'white-background'; });
       var gv = ex.videos && ex.videos.find(function(v){ return v.tag === 'gym-shot' && v.orientation === 'landscape'; });
       var mapped = { name: ex.title, target: ex.muscleGroup, secondaryMuscles: ex.secondaryMuscles || [], equipment: ex.equipment, instructions: ex.instructions || [], importantPoints: ex.importantPoints || [], videoUrl: (wv&&wv.videoUrl)||ex.videoUrl, gymVideoUrl: gv&&gv.videoUrl };
