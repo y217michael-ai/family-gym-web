@@ -659,39 +659,20 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
-<!-- Exercise detail modal -->
+<!-- Muscle visualizer modal -->
 <div class="modal-overlay" id="modal-muscle-viewer">
-<div class="modal" style="padding:0;overflow:hidden;max-width:420px">
-  <!-- Video button -->
-  <div id="exercise-video-container" style="width:100%;background:linear-gradient(135deg,#1a1a2e,#0f0f1a);padding:20px;display:flex;align-items:center;justify-content:center;gap:12px">
-    <a id="exercise-youtube" href="#" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(255,0,0,.15);border:1.5px solid rgba(255,0,0,.4);border-radius:12px;padding:14px 20px;text-decoration:none;font-weight:800;font-size:14px;color:#FF4444">
-      <span style="font-size:24px">▶</span> Watch on YouTube
-    </a>
+<div class="modal" style="padding-bottom:28px;max-width:400px">
+  <div style="font-size:18px;font-weight:800;margin-bottom:4px" id="muscle-modal-title">Muscle Groups</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px" id="muscle-modal-subtitle">Primary and secondary muscles</div>
+  <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;align-items:flex-start">
+    <div id="muscle-front-img" style="display:block"></div>
+    <div id="muscle-back-img" style="display:block;flex:1"></div>
   </div>
-  <!-- Content -->
-  <div style="padding:16px">
-    <div style="font-size:20px;font-weight:800;margin-bottom:4px" id="muscle-modal-title">Exercise</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px" id="muscle-modal-subtitle">Tap video to play</div>
-    <!-- Muscle diagram + info -->
-    <div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start">
-      <div id="muscle-front-img"></div>
-      <div id="muscle-back-img" style="flex:1"></div>
-    </div>
-    <!-- Legend -->
-    <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:5px">
-        <div style="width:10px;height:10px;border-radius:3px;background:#C8F135"></div>
-        <span style="font-size:11px;color:var(--muted)">Primary</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:5px">
-        <div style="width:10px;height:10px;border-radius:3px;background:#6C63FF"></div>
-        <span style="font-size:11px;color:var(--muted)">Secondary</span>
-      </div>
-    </div>
-    <!-- Instructions -->
-    <div id="exercise-instructions" style="margin-bottom:14px"></div>
-    <button onclick="closeModal('modal-muscle-viewer')" class="btn-secondary">Close</button>
+  <div id="muscle-legend" style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#C8F135"></div><span style="font-size:11px;color:var(--muted)">Primary</span></div>
+    <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#6C63FF"></div><span style="font-size:11px;color:var(--muted)">Secondary</span></div>
   </div>
+  <button onclick="closeModal('modal-muscle-viewer')" class="btn-secondary">Close</button>
 </div>
 </div>
 
@@ -3927,8 +3908,7 @@ function renderProfile(){
 
 // ══════════════════ MODALS ══════════════════
 function openModal(id){ document.getElementById(id).classList.add('open'); }
-function closeModal(id){
-  // Nothing to clear for YouTube link document.getElementById(id).classList.remove('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m=>{
   m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
 });
@@ -4236,111 +4216,176 @@ const MUSCLE_SVG_HIGHLIGHTS = {
 };
 
 function buildMuscleSVG(highlights, side){
+  // Body silhouette SVG with muscle group paths
+  const LIM = '#C8F135'; // lime primary
+  const PUR = '#6C63FF'; // purple secondary
+  const DIM = '#1C1C2A'; // dark fill
+  const OUT = '#2A2A3A'; // outline
   const h = highlights || [];
-  const col = (id) => {
-    if(h[0] === id) return '#C8F135'; // Primary — lime
-    if(h.includes(id)) return '#6C63FF'; // Secondary — purple
-    return null; // Not targeted
-  };
-  const muscle = (id, defaultFill='#1E1E2E') => {
-    const c = col(id);
-    return c ? `fill="${c}" opacity="0.9"` : `fill="${defaultFill}" opacity="0.4"`;
-  };
+
+  const col = (id) => h[0] === id ? LIM : h.includes(id) ? PUR : DIM;
 
   if(side === 'front') return `
-<svg viewBox="0 0 200 380" xmlns="http://www.w3.org/2000/svg" style="width:90px;height:170px">
-  <style>.outline{fill:none;stroke:#3A3A5C;stroke-width:1.5}</style>
-  <!-- Body outline -->
-  <ellipse cx="100" cy="28" rx="22" ry="26" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1.5"/>
+<svg viewBox="0 0 120 260" xmlns="http://www.w3.org/2000/svg" style="width:110px;height:220px">
+  <!-- Head -->
+  <ellipse cx="60" cy="18" rx="14" ry="17" fill="${DIM}" stroke="${OUT}" stroke-width="1.5"/>
   <!-- Neck -->
-  <rect x="90" y="50" width="20" height="18" rx="6" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
+  <rect x="54" y="32" width="12" height="10" rx="4" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
   <!-- Chest -->
-  <path d="M52 68 Q100 62 148 68 L152 118 Q100 126 48 118 Z" ${muscle('chest','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.5"/>
-  <!-- Chest line -->
-  <line x1="100" y1="68" x2="100" y2="118" stroke="#3A3A5C" stroke-width="0.5" opacity="0.5"/>
+  <path d="M35 42 Q60 38 85 42 L88 75 Q60 80 32 75 Z" fill="${col('chest')}" stroke="${OUT}" stroke-width="1.5"/>
   <!-- Front Delts -->
-  <ellipse cx="44" cy="78" rx="14" ry="20" ${muscle('front-delts','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <ellipse cx="156" cy="78" rx="14" ry="20" ${muscle('front-delts','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <!-- Abs - 6 pack -->
-  <path d="M64 120 Q100 115 136 120 L132 178 Q100 183 68 178 Z" ${muscle('abs','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <line x1="100" y1="120" x2="100" y2="178" stroke="#3A3A5C" stroke-width="0.5" opacity="0.5"/>
-  <line x1="66" y1="138" x2="134" y2="138" stroke="#3A3A5C" stroke-width="0.5" opacity="0.5"/>
-  <line x1="66" y1="156" x2="134" y2="156" stroke="#3A3A5C" stroke-width="0.5" opacity="0.5"/>
+  <ellipse cx="30" cy="50" rx="10" ry="13" fill="${col('front-delts')}" stroke="${OUT}" stroke-width="1.2"/>
+  <ellipse cx="90" cy="50" rx="10" ry="13" fill="${col('front-delts')}" stroke="${OUT}" stroke-width="1.2"/>
+  <!-- Abs -->
+  <path d="M42 76 Q60 72 78 76 L76 120 Q60 124 44 120 Z" fill="${col('abs')}" stroke="${OUT}" stroke-width="1.2"/>
   <!-- Obliques -->
-  <path d="M48 120 L64 178 L52 185 L36 140 Z" ${muscle('obliques','#1A1A2E')} stroke="#3A3A5C" stroke-width="1"/>
-  <path d="M152 120 L136 178 L148 185 L164 140 Z" ${muscle('obliques','#1A1A2E')} stroke="#3A3A5C" stroke-width="1"/>
+  <path d="M32 75 L44 120 Q38 118 32 108 Z" fill="${col('obliques')}" stroke="${OUT}" stroke-width="1"/>
+  <path d="M88 75 L76 120 Q82 118 88 108 Z" fill="${col('obliques')}" stroke="${OUT}" stroke-width="1"/>
   <!-- Biceps -->
-  <ellipse cx="30" cy="112" rx="11" ry="22" ${muscle('biceps','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <ellipse cx="170" cy="112" rx="11" ry="22" ${muscle('biceps','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <!-- Forearms -->
-  <ellipse cx="24" cy="152" rx="9" ry="20" ${muscle('forearms-front','#1A1A2E')} stroke="#3A3A5C" stroke-width="1"/>
-  <ellipse cx="176" cy="152" rx="9" ry="20" ${muscle('forearms-front','#1A1A2E')} stroke="#3A3A5C" stroke-width="1"/>
+  <ellipse cx="22" cy="78" rx="8" ry="16" fill="${col('biceps')}" stroke="${OUT}" stroke-width="1.2"/>
+  <ellipse cx="98" cy="78" rx="8" ry="16" fill="${col('biceps')}" stroke="${OUT}" stroke-width="1.2"/>
+  <!-- Forearms front -->
+  <ellipse cx="18" cy="108" rx="6" ry="14" fill="${col('forearms-front')}" stroke="${OUT}" stroke-width="1"/>
+  <ellipse cx="102" cy="108" rx="6" ry="14" fill="${col('forearms-front')}" stroke="${OUT}" stroke-width="1"/>
   <!-- Hands -->
-  <ellipse cx="20" cy="178" rx="9" ry="12" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
-  <ellipse cx="180" cy="178" rx="9" ry="12" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
-  <!-- Hip/groin -->
-  <path d="M68 180 Q100 185 132 180 L136 210 Q100 215 64 210 Z" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
-  <!-- Quads Left -->
-  <path d="M64 212 L72 290 Q60 298 50 290 L46 218 Z" ${muscle('quads','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <!-- Quads Right -->
-  <path d="M136 212 L128 290 Q140 298 150 290 L154 218 Z" ${muscle('quads','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
+  <ellipse cx="16" cy="128" rx="6" ry="8" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
+  <ellipse cx="104" cy="128" rx="6" ry="8" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
+  <!-- Hip/Groin -->
+  <path d="M44 120 Q60 124 76 120 L78 140 Q60 144 42 140 Z" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
+  <!-- Quads -->
+  <path d="M42 140 L48 200 Q42 204 36 196 L34 148 Z" fill="${col('quads')}" stroke="${OUT}" stroke-width="1.2"/>
+  <path d="M78 140 L72 200 Q78 204 84 196 L86 148 Z" fill="${col('quads')}" stroke="${OUT}" stroke-width="1.2"/>
   <!-- Knees -->
-  <ellipse cx="62" cy="296" rx="13" ry="10" ${muscle('knees','#1E1E35')} stroke="#3A3A5C" stroke-width="1"/>
-  <ellipse cx="138" cy="296" rx="13" ry="10" ${muscle('knees','#1E1E35')} stroke="#3A3A5C" stroke-width="1"/>
-  <!-- Shins -->
-  <path d="M52 308 L54 355 Q62 362 70 355 L72 306 Z" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
-  <path d="M148 308 L146 355 Q138 362 130 355 L128 306 Z" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
+  <ellipse cx="42" cy="206" rx="9" ry="7" fill="${col('knees')}" stroke="${OUT}" stroke-width="1"/>
+  <ellipse cx="78" cy="206" rx="9" ry="7" fill="${col('knees')}" stroke="${OUT}" stroke-width="1"/>
   <!-- Calves front -->
-  <path d="M56 308 L58 340 Q62 344 68 340 L70 308 Z" ${muscle('calves','#1A1A2E')} stroke="#3A3A5C" stroke-width="0.8"/>
-  <path d="M144 308 L142 340 Q138 344 132 340 L130 308 Z" ${muscle('calves','#1A1A2E')} stroke="#3A3A5C" stroke-width="0.8"/>
+  <path d="M36 214 L38 248 Q42 252 46 248 L48 212 Z" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
+  <path d="M84 214 L82 248 Q78 252 74 248 L72 212 Z" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
   <!-- Feet -->
-  <ellipse cx="62" cy="360" rx="12" ry="7" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
-  <ellipse cx="138" cy="360" rx="12" ry="7" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
+  <ellipse cx="41" cy="252" rx="8" ry="5" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
+  <ellipse cx="79" cy="252" rx="8" ry="5" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
 </svg>`;
 
   else return `
-<svg viewBox="0 0 200 380" xmlns="http://www.w3.org/2000/svg" style="width:90px;height:170px">
+<svg viewBox="0 0 120 260" xmlns="http://www.w3.org/2000/svg" style="width:110px;height:220px">
   <!-- Head -->
-  <ellipse cx="100" cy="28" rx="22" ry="26" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1.5"/>
+  <ellipse cx="60" cy="18" rx="14" ry="17" fill="${DIM}" stroke="${OUT}" stroke-width="1.5"/>
   <!-- Neck -->
-  <rect x="90" y="50" width="20" height="18" rx="6" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
+  <rect x="54" y="32" width="12" height="10" rx="4" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
   <!-- Traps -->
-  <path d="M52 65 Q100 56 148 65 L140 88 Q100 80 60 88 Z" ${muscle('traps','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.5"/>
+  <path d="M35 40 Q60 34 85 40 L80 56 Q60 50 40 56 Z" fill="${col('traps')}" stroke="${OUT}" stroke-width="1.5"/>
   <!-- Rear Delts -->
-  <ellipse cx="42" cy="80" rx="14" ry="18" ${muscle('rear-delts','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <ellipse cx="158" cy="80" rx="14" ry="18" ${muscle('rear-delts','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <!-- Upper Back / Rhomboids -->
-  <path d="M60 88 Q100 80 140 88 L136 120 Q100 128 64 120 Z" ${muscle('upper-back','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.5"/>
+  <ellipse cx="28" cy="52" rx="10" ry="12" fill="${col('rear-delts')}" stroke="${OUT}" stroke-width="1.2"/>
+  <ellipse cx="92" cy="52" rx="10" ry="12" fill="${col('rear-delts')}" stroke="${OUT}" stroke-width="1.2"/>
+  <!-- Upper Back -->
+  <path d="M40 56 Q60 50 80 56 L82 90 Q60 96 38 90 Z" fill="${col('upper-back')}" stroke="${OUT}" stroke-width="1.5"/>
   <!-- Lats -->
-  <path d="M42 85 L60 120 L52 145 L34 125 Z" ${muscle('lats','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <path d="M158 85 L140 120 L148 145 L166 125 Z" ${muscle('lats','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
+  <path d="M30 58 L38 90 Q32 100 28 88 Z" fill="${col('lats')}" stroke="${OUT}" stroke-width="1"/>
+  <path d="M90 58 L82 90 Q88 100 92 88 Z" fill="${col('lats')}" stroke="${OUT}" stroke-width="1"/>
   <!-- Lower Back -->
-  <path d="M64 120 Q100 128 136 120 L132 168 Q100 175 68 168 Z" ${muscle('lower-back','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
+  <path d="M38 90 Q60 96 82 90 L80 118 Q60 122 40 118 Z" fill="${col('lower-back')}" stroke="${OUT}" stroke-width="1.2"/>
   <!-- Triceps -->
-  <ellipse cx="28" cy="112" rx="11" ry="24" ${muscle('triceps','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <ellipse cx="172" cy="112" rx="11" ry="24" ${muscle('triceps','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
+  <ellipse cx="21" cy="78" rx="8" ry="16" fill="${col('triceps')}" stroke="${OUT}" stroke-width="1.2"/>
+  <ellipse cx="99" cy="78" rx="8" ry="16" fill="${col('triceps')}" stroke="${OUT}" stroke-width="1.2"/>
   <!-- Forearms back -->
-  <ellipse cx="22" cy="152" rx="9" ry="20" ${muscle('forearms-back','#1A1A2E')} stroke="#3A3A5C" stroke-width="1"/>
-  <ellipse cx="178" cy="152" rx="9" ry="20" ${muscle('forearms-back','#1A1A2E')} stroke="#3A3A5C" stroke-width="1"/>
+  <ellipse cx="18" cy="108" rx="6" ry="14" fill="${col('forearms-back')}" stroke="${OUT}" stroke-width="1"/>
+  <ellipse cx="102" cy="108" rx="6" ry="14" fill="${col('forearms-back')}" stroke="${OUT}" stroke-width="1"/>
   <!-- Hands -->
-  <ellipse cx="18" cy="178" rx="9" ry="12" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
-  <ellipse cx="182" cy="178" rx="9" ry="12" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
+  <ellipse cx="16" cy="128" rx="6" ry="8" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
+  <ellipse cx="104" cy="128" rx="6" ry="8" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
   <!-- Glutes -->
-  <path d="M64 170 Q100 178 136 170 L140 215 Q100 222 60 215 Z" ${muscle('glutes','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.5"/>
-  <line x1="100" y1="170" x2="100" y2="215" stroke="#3A3A5C" stroke-width="0.5" opacity="0.5"/>
+  <path d="M40 118 Q60 122 80 118 L82 148 Q60 154 38 148 Z" fill="${col('glutes')}" stroke="${OUT}" stroke-width="1.5"/>
   <!-- Hamstrings -->
-  <path d="M60 217 L66 292 Q54 300 44 292 L40 220 Z" ${muscle('hamstrings','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <path d="M140 217 L134 292 Q146 300 156 292 L160 220 Z" ${muscle('hamstrings','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
+  <path d="M38 148 L42 200 Q36 204 30 196 L34 150 Z" fill="${col('hamstrings')}" stroke="${OUT}" stroke-width="1.2"/>
+  <path d="M82 148 L78 200 Q84 204 90 196 L86 150 Z" fill="${col('hamstrings')}" stroke="${OUT}" stroke-width="1.2"/>
   <!-- Knees back -->
-  <ellipse cx="56" cy="298" rx="13" ry="9" fill="#1E1E35" stroke="#3A3A5C" stroke-width="1"/>
-  <ellipse cx="144" cy="298" rx="13" ry="9" fill="#1E1E35" stroke="#3A3A5C" stroke-width="1"/>
+  <ellipse cx="38" cy="204" rx="9" ry="7" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
+  <ellipse cx="82" cy="204" rx="9" ry="7" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
   <!-- Calves -->
-  <path d="M46 308 L50 355 Q58 363 66 355 L68 307 Z" ${muscle('calves','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
-  <path d="M154 308 L150 355 Q142 363 134 355 L132 307 Z" ${muscle('calves','#1A1A2E')} stroke="#3A3A5C" stroke-width="1.2"/>
+  <path d="M32 212 L34 248 Q38 252 44 248 L44 210 Z" fill="${col('calves')}" stroke="${OUT}" stroke-width="1.2"/>
+  <path d="M88 212 L86 248 Q82 252 76 248 L76 210 Z" fill="${col('calves')}" stroke="${OUT}" stroke-width="1.2"/>
   <!-- Feet -->
-  <ellipse cx="58" cy="360" rx="12" ry="7" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
-  <ellipse cx="142" cy="360" rx="12" ry="7" fill="#1A1A2E" stroke="#3A3A5C" stroke-width="1"/>
+  <ellipse cx="39" cy="252" rx="8" ry="5" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
+  <ellipse cx="81" cy="252" rx="8" ry="5" fill="${DIM}" stroke="${OUT}" stroke-width="1"/>
 </svg>`;
+}
+
+const RAPIDAPI_KEY = '1113141c40msh43616bc18297c59p151a8ajsn985621b2de87';
+const YMOVE_KEY = 'ym_30ee39eb6368ff1b5cfe0a9f0993be3ac5600b9d2ff1b463c724e379d835f68d';
+const YMOVE_BASE = 'https://exercise-api.ymove.app/api/v2';
+const EDB_CACHE = {};
+
+// Map our exercise names to ExerciseDB search terms
+const EDB_NAME_MAP = {
+  'Bench Press': 'barbell bench press',
+  'Incline Press': 'barbell incline bench press',
+  'Decline Bench Press': 'barbell decline bench press',
+  'Overhead Press': 'barbell overhead press',
+  'Pull Up': 'pull-up',
+  'Lat Pulldown': 'cable lat pulldown',
+  'Seated Row': 'cable seated row',
+  'Barbell Bent Over Row': 'barbell bent over row',
+  'Deadlift': 'barbell deadlift',
+  'Romanian Deadlift': 'romanian deadlift',
+  'Squat': 'barbell squat',
+  'Leg Press': 'leg press',
+  'Leg Extension': 'leg extension',
+  'Leg Curl': 'lying leg curl',
+  'Calf Raise': 'standing calf raise',
+  'Lateral Raise': 'dumbbell lateral raise',
+  'Front Raise': 'dumbbell front raise',
+  'Bicep Curl': 'barbell curl',
+  'Barbell Curl': 'barbell curl',
+  'Hammer Curl': 'dumbbell hammer curl',
+  'Tricep Pushdown': 'cable triceps pushdown',
+  'Skull Crusher': 'barbell skull crusher',
+  'Plank': 'plank',
+  'Ab Rollout': 'ab wheel rollout',
+  'Cable Fly': 'cable fly',
+  'Dumbbell Fly': 'dumbbell fly',
+  'Hip Thrust': 'barbell hip thrust',
+  'Glute Bridge': 'glute bridge',
+  'Face Pull': 'cable face pull',
+  'Shrug': 'barbell shrug',
+  'Farmer Carry': 'farmers walk',
+  'Battle Ropes': 'battle ropes',
+  'Kettlebell Swing — Two Hand': 'kettlebell swing',
+  'Push Up': 'push-up',
+  'Dip': 'dip',
+  'Chin Up': 'chin-up',
+};
+
+async function fetchExerciseGif(exName){
+  if(EDB_CACHE[exName]) return EDB_CACHE[exName];
+  const searchName = EDB_NAME_MAP[exName] || exName;
+  try {
+    const res = await fetch(
+      YMOVE_BASE + '/exercises?name=' + encodeURIComponent(searchName) + '&limit=5',
+      { headers: { 'X-API-Key': YMOVE_KEY } }
+    );
+    if(!res.ok) throw new Error('API error ' + res.status);
+    const data = await res.json();
+    const exercises = data.results || data;
+    if(exercises && exercises.length > 0){
+      const ex = exercises[0];
+      const whiteVid = ex.videos && ex.videos.find(function(v){ return v.tag === 'white-background'; });
+      const gymVid = ex.videos && ex.videos.find(function(v){ return v.tag === 'gym-shot' && v.orientation === 'landscape'; });
+      const mapped = {
+        name: ex.title,
+        target: ex.muscleGroup,
+        secondaryMuscles: ex.secondaryMuscles || [],
+        equipment: ex.equipment,
+        instructions: ex.instructions || [],
+        importantPoints: ex.importantPoints || [],
+        videoUrl: (whiteVid && whiteVid.videoUrl) || ex.videoUrl,
+        thumbnailUrl: (whiteVid && whiteVid.thumbnailUrl) || ex.thumbnailUrl,
+        gymVideoUrl: gymVid && gymVid.videoUrl,
+      };
+      EDB_CACHE[exName] = mapped;
+      return mapped;
+    }
+  } catch(e){ console.log('YMove error:', e.message); }
+  return null;
 }
 
 
@@ -4352,32 +4397,30 @@ function switchExVideo(url){
 async function showMuscleModal(exName, muscle){
   document.getElementById('muscle-modal-title').textContent = exName;
   document.getElementById('muscle-modal-subtitle').textContent = 'Loading...';
-  document.getElementById('muscle-front-img').innerHTML = '<div style="width:100%;height:180px;background:var(--soft);border-radius:12px;display:flex;align-items:center;justify-content:center"><div style="color:var(--muted);font-size:12px">Loading...</div></div>';
+  document.getElementById('muscle-front-img').innerHTML = '<div style="height:160px;background:var(--soft);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px"><div style="color:var(--muted);font-size:12px">Loading video...</div></div>';
   document.getElementById('muscle-back-img').innerHTML = '';
   openModal('modal-muscle-viewer');
 
-  const ex = await fetchExerciseGif(exName);
-  const info = MUSCLE_SVG_HIGHLIGHTS[muscle] || { front:[], back:[] };
+  var ex = await fetchExerciseGif(exName);
+  var info = MUSCLE_SVG_HIGHLIGHTS[muscle] || { front:[], back:[] };
 
   if(ex && ex.videoUrl){
     document.getElementById('muscle-modal-subtitle').textContent =
       (ex.target ? ex.target.charAt(0).toUpperCase()+ex.target.slice(1) : muscle) +
       (ex.equipment ? ' · ' + ex.equipment : '');
 
-    // Build video HTML
-    var videoHtml = '<video src="' + ex.videoUrl + '" controls autoplay loop muted playsinline style="width:100%;border-radius:12px;background:#000;max-height:260px;object-fit:contain"></video>';
+    var videoHtml = '<video src="' + ex.videoUrl + '" controls autoplay loop muted playsinline style="width:100%;border-radius:12px;background:#000;max-height:240px;object-fit:contain"></video>';
     if(ex.gymVideoUrl){
-      videoHtml += '<div style="margin-top:8px;display:flex;gap:8px">';
-      videoHtml += '<div style="font-size:10px;font-weight:700;color:var(--lime);padding:4px 8px;background:rgba(200,241,53,.1);border-radius:6px;cursor:pointer" onclick="switchExVideo(this.dataset.url)" data-url="' + ex.videoUrl + '">🎬 Clean view</div>';
-      videoHtml += '<div style="font-size:10px;font-weight:700;color:var(--muted);padding:4px 8px;background:var(--soft);border-radius:6px;cursor:pointer" onclick="switchExVideo(this.dataset.url)" data-url="' + ex.gymVideoUrl + '">🏋️ Gym view</div>';
+      videoHtml += '<div style="margin-top:6px;display:flex;gap:6px">';
+      videoHtml += '<div style="font-size:10px;font-weight:700;color:var(--lime);padding:4px 8px;background:rgba(200,241,53,.1);border-radius:6px;cursor:pointer" data-url="' + ex.videoUrl + '" onclick="switchExVideo(this.dataset.url)">🎬 Clean</div>';
+      videoHtml += '<div style="font-size:10px;font-weight:700;color:var(--muted);padding:4px 8px;background:var(--soft);border-radius:6px;cursor:pointer" data-url="' + ex.gymVideoUrl + '" onclick="switchExVideo(this.dataset.url)">🏋️ Gym</div>';
       videoHtml += '</div>';
     }
     document.getElementById('muscle-front-img').innerHTML = '<div style="margin-bottom:12px">' + videoHtml + '</div>';
 
-    // Build muscle info + diagrams
     var secHtml = '';
     if(ex.secondaryMuscles && ex.secondaryMuscles.length){
-      secHtml = '<div style="font-size:10px;font-weight:700;color:#6C63FF;margin-bottom:3px">SECONDARY</div>';
+      secHtml += '<div style="font-size:10px;font-weight:700;color:#6C63FF;margin-bottom:3px">SECONDARY</div>';
       secHtml += '<div style="font-size:11px;color:var(--muted);text-transform:capitalize">' + ex.secondaryMuscles.join(', ') + '</div>';
     }
 
@@ -4396,26 +4439,26 @@ async function showMuscleModal(exName, muscle){
     var pointsHtml = '';
     if(ex.importantPoints && ex.importantPoints.length){
       pointsHtml = '<div style="background:rgba(200,241,53,.05);border-radius:10px;padding:12px;border:1px solid rgba(200,241,53,.2)">';
-      pointsHtml += '<div style="font-size:10px;font-weight:700;color:var(--lime);letter-spacing:.5px;margin-bottom:8px">💡 KEY POINTS</div>';
+      pointsHtml += '<div style="font-size:10px;font-weight:700;color:var(--lime);letter-spacing:.5px;margin-bottom:6px">KEY POINTS</div>';
       ex.importantPoints.forEach(function(p){
         pointsHtml += '<div style="font-size:12px;color:var(--text);margin-bottom:4px;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:var(--lime)">•</span>' + p + '</div>';
       });
       pointsHtml += '</div>';
     }
 
-    var backHtml = '<div style="display:flex;gap:8px;margin-bottom:12px;justify-content:center">';
-    backHtml += '<div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:3px">FRONT</div>' + buildMuscleSVG(info.front,'front') + '</div>';
-    backHtml += '<div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:3px">BACK</div>' + buildMuscleSVG(info.back,'back') + '</div>';
+    var backHtml = '<div style="display:flex;gap:8px;margin-bottom:10px;justify-content:center">';
+    backHtml += '<div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px">FRONT</div>' + buildMuscleSVG(info.front,'front') + '</div>';
+    backHtml += '<div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px">BACK</div>' + buildMuscleSVG(info.back,'back') + '</div>';
     backHtml += '<div style="flex:1;padding:4px"><div style="font-size:10px;font-weight:700;color:var(--lime);margin-bottom:4px">PRIMARY</div>';
-    backHtml += '<div style="font-size:12px;font-weight:800;color:var(--text);text-transform:capitalize;margin-bottom:8px">' + (ex.target||muscle) + '</div>' + secHtml + '</div></div>';
+    backHtml += '<div style="font-size:12px;font-weight:800;color:var(--text);text-transform:capitalize;margin-bottom:6px">' + (ex.target||muscle) + '</div>' + secHtml + '</div></div>';
     backHtml += instrHtml + pointsHtml;
     document.getElementById('muscle-back-img').innerHTML = backHtml;
 
   } else {
-    document.getElementById('muscle-modal-subtitle').textContent = 'Primary (green) · Secondary (purple)';
-    document.getElementById('muscle-front-img').innerHTML = '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px"><div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:3px">FRONT</div>' + buildMuscleSVG(info.front,'front') + '</div><div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:3px">BACK</div>' + buildMuscleSVG(info.back,'back') + '</div></div>';
+    document.getElementById('muscle-modal-subtitle').textContent = 'Primary (green) / Secondary (purple)';
+    document.getElementById('muscle-front-img').innerHTML = '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px"><div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px">FRONT</div>' + buildMuscleSVG(info.front,'front') + '</div><div style="text-align:center"><div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px">BACK</div>' + buildMuscleSVG(info.back,'back') + '</div></div>';
     var searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(exName + ' proper form exercise tutorial');
-    document.getElementById('muscle-back-img').innerHTML = '<a href="' + searchUrl + '" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(255,0,0,.12);border:1.5px solid rgba(255,0,0,.3);border-radius:12px;padding:14px;text-decoration:none;font-weight:800;font-size:14px;color:#FF4444;margin-bottom:12px"><span style="font-size:20px">▶</span> Watch on YouTube</a>';
+    document.getElementById('muscle-back-img').innerHTML = '<a href="' + searchUrl + '" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(255,0,0,.12);border:1.5px solid rgba(255,0,0,.3);border-radius:12px;padding:14px;text-decoration:none;font-weight:800;font-size:14px;color:#FF4444;margin-bottom:12px"><span style="font-size:20px">&#9654;</span> Watch on YouTube</a>';
   }
 }
 
@@ -5430,53 +5473,6 @@ function toast(msg){
 
 // Init user switcher styles
 switchUser('Mike');
-
-async function fetchExerciseGif(exName){
-  if(EDB_CACHE[exName]) return EDB_CACHE[exName];
-  
-  // Map our exercise names to YMove search terms
-  const searchName = EDB_NAME_MAP[exName] || exName;
-  
-  try {
-    const res = await fetch(
-      `${YMOVE_BASE}/exercises?name=${encodeURIComponent(searchName)}&limit=5`,
-      { headers: { 'X-API-Key': YMOVE_KEY } }
-    );
-    if(!res.ok) throw new Error('API error ' + res.status);
-    const data = await res.json();
-    const exercises = data.results || data;
-    if(exercises && exercises.length > 0){
-      // Find best match
-      const ex = exercises.find(e => 
-        e.title?.toLowerCase().includes(searchName.toLowerCase()) ||
-        searchName.toLowerCase().includes(e.slug?.replace(/-/g,' '))
-      ) || exercises[0];
-      
-      const mapped = {
-        name: ex.title,
-        target: ex.muscleGroup,
-        secondaryMuscles: ex.secondaryMuscles || [],
-        equipment: ex.equipment,
-        bodyPart: ex.category,
-        instructions: ex.instructions || [],
-        importantPoints: ex.importantPoints || [],
-        description: ex.description,
-        // Get white background video (cleanest look)
-        videoUrl: ex.videos?.find(v=>v.tag==='white-background')?.videoUrl || ex.videoUrl,
-        thumbnailUrl: ex.videos?.find(v=>v.tag==='white-background')?.thumbnailUrl || ex.thumbnailUrl,
-        // Gym shot as secondary
-        gymVideoUrl: ex.videos?.find(v=>v.tag==='gym-shot' && v.orientation==='landscape')?.videoUrl,
-        gymThumbnailUrl: ex.videos?.find(v=>v.tag==='gym-shot')?.thumbnailUrl,
-      };
-      EDB_CACHE[exName] = mapped;
-      return mapped;
-    }
-  } catch(e){ console.log('YMove fetch error:', e.message); }
-  return null;
-}
-
-
-
 </script>
 </body>
 </html>
