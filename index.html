@@ -207,6 +207,7 @@ if('serviceWorker' in navigator){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-size:16px;font-weight:800">Family Routines</div>
       <div style="display:flex;gap:6px">
+        <button onclick="openDayPlan()" style="background:rgba(108,99,255,.15);color:var(--purple);border:1px solid var(--purple);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">🗓️ Day Plan</button>
         <button onclick="openTempoSetup()" style="background:rgba(255,140,66,.15);color:var(--michelle);border:1px solid var(--michelle);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">🔥 Tempo</button>
         <button onclick="openWorkoutGenerator()" style="background:rgba(57,255,20,.15);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">✨ Generate</button>
         <button onclick="openNewRoutine()" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
@@ -850,6 +851,66 @@ if('serviceWorker' in navigator){
     <button class="btn-secondary" onclick="closeModal('modal-tempo-setup')">Cancel</button>
     <button onclick="startTempoRunner()" style="background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:13px;padding:14px;font-size:15px;font-weight:800">🔥 Start</button>
   </div>
+</div>
+</div>
+
+<!-- Day Plan builder modal -->
+<div class="modal-overlay" id="modal-dayplan">
+<div class="modal" style="max-height:92vh">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:20px;font-weight:800">🗓️ Day Plan</div>
+    <button onclick="openDayPlanSaved()" style="background:#16161F;color:var(--purple);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700">📂 Saved</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Chain your whole training day — walk, swim, the tempo session, a workout — in order. Launch each one when you get to it; every part records on its own.</div>
+
+  <input class="inp" id="dayplan-name" placeholder="Name (e.g. Big Training Day)" style="margin-bottom:12px">
+
+  <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">ACTIVITIES <span id="dayplan-count" style="color:var(--purple)">0</span></div>
+  <div id="dayplan-items" style="margin-bottom:10px"></div>
+  <button onclick="openDayPlanAdd()" style="width:100%;background:#16161F;color:var(--text);border:1px dashed var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:700;margin-bottom:12px">+ Add activity</button>
+
+  <div id="dayplan-summary" style="font-size:11px;color:var(--purple);margin-bottom:12px;text-align:center"></div>
+
+  <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:8px">
+    <button onclick="saveDayPlan()" title="Save this plan" style="background:#16161F;color:var(--text);border:1px solid var(--border);border-radius:13px;padding:14px 16px;font-size:14px;font-weight:700">💾</button>
+    <button class="btn-secondary" onclick="closeModal('modal-dayplan')">Close</button>
+    <button onclick="startDayPlan()" style="background:rgba(108,99,255,.16);color:var(--purple);border:1px solid var(--purple);border-radius:13px;padding:14px;font-size:15px;font-weight:800">▶ Start day</button>
+  </div>
+</div>
+</div>
+
+<!-- Day Plan add-activity chooser -->
+<div class="modal-overlay" id="modal-dayplan-add">
+<div class="modal" style="max-width:400px;max-height:88vh">
+  <div style="font-size:18px;font-weight:800;margin-bottom:10px">Add activity</div>
+  <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">TYPE</div>
+  <div style="display:flex;gap:6px;margin-bottom:12px" id="dpadd-type-btns"></div>
+  <div id="dpadd-choices" style="max-height:42vh;overflow-y:auto;margin-bottom:12px"></div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <span style="font-size:12px;color:var(--muted)">Target time (min):</span>
+    <input class="inp" type="number" id="dpadd-mins" value="30" min="0" max="600" style="flex:1;padding:8px">
+  </div>
+  <button class="btn-secondary" onclick="closeModal('modal-dayplan-add')">Cancel</button>
+</div>
+</div>
+
+<!-- Day Plan saved list -->
+<div class="modal-overlay" id="modal-dayplan-saved">
+<div class="modal" style="max-width:380px">
+  <div style="font-size:18px;font-weight:800;margin-bottom:4px">📂 Saved Day Plans</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Tap one to load it.</div>
+  <div id="dayplan-saved-list" style="margin-bottom:12px"></div>
+  <button class="btn-secondary" onclick="closeModal('modal-dayplan-saved')">Close</button>
+</div>
+</div>
+
+<!-- Day Plan runner (the live chain) -->
+<div class="modal-overlay" id="modal-dayplan-run">
+<div class="modal" style="max-height:92vh">
+  <div style="font-size:20px;font-weight:800;margin-bottom:2px" id="dprun-title">Training Day</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px" id="dprun-progress"></div>
+  <div id="dprun-items" style="margin-bottom:14px"></div>
+  <button class="btn-secondary" onclick="closeModal('modal-dayplan-run')">Pause day (resume later)</button>
 </div>
 </div>
 
@@ -3740,6 +3801,9 @@ function finishRunner(save){
   }
   document.getElementById('runner-overlay').style.display='none';
   runner=null;
+  if(typeof dayPlanItemComplete==='function' && dayPlanItemComplete()){
+    return;
+  }
   showScreen('home');
 }
 
@@ -4278,13 +4342,213 @@ function exitTempo(skipConfirm){
   if(!skipConfirm && tempoRun && tempoRun.phase!=='done'){
     if(!confirm('Exit tempo workout? Progress won\u2019t be saved.')) return;
   }
+  const wasComplete = tempoRun && tempoRun.phase==='done';
   clearTempoTimers();
   try{ window.speechSynthesis.cancel(); }catch(e){}
   document.getElementById('tempo-overlay').style.display='none';
   tempoRun=null;
+  if(wasComplete && typeof dayPlanItemComplete==='function' && dayPlanItemComplete()){
+    return;
+  }
   renderHome();
   showScreen('home');
 }
+
+// ════════════════════════════════════════════════
+//  DAY PLAN — chain a whole training day of activities
+// ════════════════════════════════════════════════
+// item: { type:'sport'|'tempo'|'routine', ref, name, icon, targetMin, done }
+//   sport   -> ref = sport id (walk/swim/bike...)
+//   tempo   -> ref = saved tempo workout id (or 'current')
+//   routine -> ref = routine id
+let dayPlan = { name:'', items:[] };
+let dayPlanRun = null;       // { items:[...with done flags], idx }
+let dpAddType = 'sport';
+
+function openDayPlan(){
+  if(!dayPlan.items) dayPlan.items = [];
+  document.getElementById('dayplan-name').value = dayPlan.name || '';
+  renderDayPlanItems();
+  openModal('modal-dayplan');
+}
+function renderDayPlanItems(){
+  document.getElementById('dayplan-count').textContent = dayPlan.items.length;
+  const el = document.getElementById('dayplan-items');
+  if(!dayPlan.items.length){
+    el.innerHTML = `<div style="color:var(--muted);font-size:12px;text-align:center;padding:10px">No activities yet — add your walk, swim, tempo session, workout…</div>`;
+  } else {
+    el.innerHTML = dayPlan.items.map((it,i)=>`
+      <div draggable="true" ondragstart="dpDragStart(${i})" ondragover="event.preventDefault()" ondrop="dpDrop(${i})"
+        style="display:flex;align-items:center;gap:8px;padding:9px 10px;margin-bottom:6px;border-radius:10px;border:1px solid var(--border);background:#16161F">
+        <span style="color:var(--muted);cursor:grab;font-size:14px">⠿</span>
+        <span style="font-size:18px">${it.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.name}</div>
+          <div style="font-size:10px;color:var(--muted)">${dpTypeLabel(it.type)}${it.targetMin?(' · target '+it.targetMin+' min'):''}</div>
+        </div>
+        <button onclick="editDayPlanMins(${i})" title="Edit time" style="background:transparent;border:none;color:var(--muted);font-size:13px">✎</button>
+        <button onclick="removeDayPlanItem(${i})" style="width:24px;height:24px;border-radius:6px;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.25);color:var(--red);font-size:14px">×</button>
+      </div>`).join('');
+  }
+  // summary
+  const totalMin = dayPlan.items.reduce((a,it)=>a+(it.targetMin||0),0);
+  const sumEl = document.getElementById('dayplan-summary');
+  if(sumEl) sumEl.textContent = dayPlan.items.length ? (dayPlan.items.length+' activities · ~'+Math.floor(totalMin/60)+'h '+(totalMin%60)+'m planned') : '';
+}
+function dpTypeLabel(t){ return t==='sport'?'Cardio / Sport':t==='tempo'?'Tempo session':'Workout'; }
+let dpDrag=null;
+function dpDragStart(i){ dpDrag=i; }
+function dpDrop(to){ if(dpDrag===null)return; const a=dayPlan.items; const [m]=a.splice(dpDrag,1); a.splice(to,0,m); dpDrag=null; renderDayPlanItems(); }
+function removeDayPlanItem(i){ dayPlan.items.splice(i,1); renderDayPlanItems(); }
+function editDayPlanMins(i){
+  const v = parseInt(prompt('Target time in minutes:', dayPlan.items[i].targetMin||30));
+  if(v!=null && v>=0 && v<=600){ dayPlan.items[i].targetMin=v; renderDayPlanItems(); }
+}
+
+// ── Add activity chooser ──
+function openDayPlanAdd(){
+  dpAddType='sport';
+  renderDpAddTypes(); renderDpAddChoices();
+  document.getElementById('dpadd-mins').value = 30;
+  openModal('modal-dayplan-add');
+}
+function renderDpAddTypes(){
+  const types = [{k:'sport',l:'🏃 Sport'},{k:'tempo',l:'🔥 Tempo'},{k:'routine',l:'💪 Workout'}];
+  document.getElementById('dpadd-type-btns').innerHTML = types.map(t=>{
+    const on = dpAddType===t.k;
+    return `<button onclick="setDpAddType('${t.k}')" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--purple)':'var(--border)'};background:${on?'rgba(108,99,255,.16)':'#16161F'};color:${on?'var(--purple)':'#D8D8E2'}">${t.l}</button>`;
+  }).join('');
+}
+function setDpAddType(k){ dpAddType=k; renderDpAddTypes(); renderDpAddChoices(); }
+function renderDpAddChoices(){
+  const el = document.getElementById('dpadd-choices');
+  if(dpAddType==='sport'){
+    const sports = getSportSessions();
+    el.innerHTML = sports.map(s=>`
+      <button onclick="addDayPlanItem('sport','${s.id}','${s.name.replace(/'/g,"\\'")}','${s.icon}')" style="width:100%;text-align:left;display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:10px;border:1px solid var(--border);background:#16161F">
+        <span style="font-size:20px">${s.icon}</span><span style="font-size:14px;font-weight:700">${s.name}</span>
+      </button>`).join('');
+  } else if(dpAddType==='tempo'){
+    const saved = loadTempoWorkouts();
+    let html = `<button onclick="addDayPlanItem('tempo','current','Tempo Session','🔥')" style="width:100%;text-align:left;display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:10px;border:1px dashed var(--michelle);background:#16161F">
+        <span style="font-size:20px">🔥</span><div><div style="font-size:14px;font-weight:700;color:var(--michelle)">Build fresh on launch</div><div style="font-size:10px;color:var(--muted)">Set it up when you start this part</div></div>
+      </button>`;
+    html += saved.map(w=>`
+      <button onclick="addDayPlanItem('tempo',${w.id},'${w.name.replace(/'/g,"\\'")}','🔥')" style="width:100%;text-align:left;display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:10px;border:1px solid var(--border);background:#16161F">
+        <span style="font-size:20px">🔥</span><span style="font-size:14px;font-weight:700">${w.name}</span>
+      </button>`).join('');
+    el.innerHTML = html;
+  } else {
+    const mine = routines.filter(r=>!r.prebuilt);
+    el.innerHTML = mine.length ? mine.map(r=>`
+      <button onclick="addDayPlanItem('routine',${r.id},'${(r.name||'Workout').replace(/'/g,"\\'")}','💪')" style="width:100%;text-align:left;display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:10px;border:1px solid var(--border);background:#16161F">
+        <span style="font-size:20px">💪</span><span style="font-size:14px;font-weight:700">${r.name}</span>
+      </button>`).join('') : `<div style="color:var(--muted);font-size:12px;text-align:center;padding:14px">No saved workouts yet. Create one with + New first.</div>`;
+  }
+}
+function addDayPlanItem(type, ref, name, icon){
+  const mins = parseInt(document.getElementById('dpadd-mins').value)||0;
+  dayPlan.items.push({ type, ref, name, icon, targetMin:mins, done:false });
+  closeModal('modal-dayplan-add');
+  renderDayPlanItems();
+}
+
+// ── Save / load day plans ──
+function loadDayPlans(){ try{ return JSON.parse(localStorage.getItem('fgym_dayplans_'+activeUser)||'[]'); }catch(e){ return []; } }
+function saveDayPlansArr(a){ localStorage.setItem('fgym_dayplans_'+activeUser, JSON.stringify(a)); }
+function saveDayPlan(){
+  if(!dayPlan.items.length){ toast('Add some activities first'); return; }
+  const name = (document.getElementById('dayplan-name').value.trim()) || prompt('Name this day plan:', 'Big Training Day');
+  if(!name || !name.trim()) return;
+  dayPlan.name = name.trim();
+  const arr = loadDayPlans();
+  arr.unshift({ id:Date.now(), name:dayPlan.name, items: JSON.parse(JSON.stringify(dayPlan.items)) });
+  if(arr.length>30) arr.length=30;
+  saveDayPlansArr(arr);
+  toast('Saved "'+dayPlan.name+'" 🗓️');
+}
+function openDayPlanSaved(){
+  const arr = loadDayPlans();
+  const el = document.getElementById('dayplan-saved-list');
+  if(!arr.length){ el.innerHTML = `<div style="color:var(--muted);font-size:12px;text-align:center;padding:14px">No saved day plans yet. Build one and tap 💾.</div>`; }
+  else el.innerHTML = arr.map(p=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:10px;margin-bottom:6px;border:1px solid var(--border);border-radius:10px;background:#16161F">
+      <div onclick="loadDayPlan(${p.id})" style="flex:1;cursor:pointer">
+        <div style="font-size:14px;font-weight:700;color:var(--purple)">${p.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${p.items.length} activities · ${p.items.map(i=>i.icon).join(' ')}</div>
+      </div>
+      <button onclick="deleteDayPlan(${p.id})" style="width:28px;height:28px;border-radius:7px;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.25);color:var(--red);font-size:14px">×</button>
+    </div>`).join('');
+  openModal('modal-dayplan-saved');
+}
+function loadDayPlan(id){
+  const p = loadDayPlans().find(x=>x.id===id); if(!p) return;
+  dayPlan = { name:p.name, items: JSON.parse(JSON.stringify(p.items)) };
+  closeModal('modal-dayplan-saved');
+  openDayPlan();
+  toast('Loaded "'+p.name+'"');
+}
+function deleteDayPlan(id){ saveDayPlansArr(loadDayPlans().filter(x=>x.id!==id)); openDayPlanSaved(); }
+
+// ── Running the day ──
+function startDayPlan(){
+  if(!dayPlan.items.length){ toast('Add some activities first'); return; }
+  dayPlanRun = { name: (document.getElementById('dayplan-name').value.trim()||dayPlan.name||'Training Day'),
+                 items: dayPlan.items.map(it=>({...it, done:false})), idx:0 };
+  closeModal('modal-dayplan');
+  renderDayPlanRun();
+  openModal('modal-dayplan-run');
+}
+function renderDayPlanRun(){
+  if(!dayPlanRun) return;
+  document.getElementById('dprun-title').textContent = '🗓️ ' + dayPlanRun.name;
+  const doneCount = dayPlanRun.items.filter(i=>i.done).length;
+  document.getElementById('dprun-progress').textContent = doneCount+' of '+dayPlanRun.items.length+' done';
+  document.getElementById('dprun-items').innerHTML = dayPlanRun.items.map((it,i)=>{
+    const isNext = !it.done && dayPlanRun.items.slice(0,i).every(x=>x.done);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:11px;margin-bottom:7px;border-radius:11px;border:1px solid ${isNext?'var(--purple)':'var(--border)'};background:${it.done?'rgba(57,255,20,.06)':(isNext?'rgba(108,99,255,.08)':'#16161F')}">
+      <span style="font-size:22px;${it.done?'opacity:.5':''}">${it.done?'✅':it.icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;${it.done?'color:var(--muted);text-decoration:line-through':''}">${it.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${dpTypeLabel(it.type)}${it.targetMin?(' · target '+it.targetMin+' min'):''}</div>
+      </div>
+      ${it.done ? `<span style="font-size:12px;color:var(--lime);font-weight:700">done</span>`
+        : isNext ? `<button onclick="launchDayPlanItem(${i})" style="background:rgba(108,99,255,.16);color:var(--purple);border:1px solid var(--purple);border-radius:9px;padding:9px 16px;font-size:13px;font-weight:800">Start ▶</button>`
+        : `<button onclick="launchDayPlanItem(${i})" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:9px;padding:9px 14px;font-size:12px;font-weight:700">Start</button>`}
+    </div>`;
+  }).join('');
+  const allDone = dayPlanRun.items.every(i=>i.done);
+  if(allDone){
+    document.getElementById('dprun-items').innerHTML += `<div style="text-align:center;padding:14px"><div style="font-size:40px">🏆</div><div style="font-size:18px;font-weight:800;margin:6px 0">Whole day complete!</div><button onclick="finishDayPlan()" class="btn-primary" style="margin-top:8px">Finish</button></div>`;
+  }
+}
+function finishDayPlan(){ dayPlanRun=null; closeModal('modal-dayplan-run'); renderHome(); showScreen('home'); toast('Training day done! 🏆'); }
+
+// Launch an item -> hand off to the right recorder, flag that we're in a day plan
+function launchDayPlanItem(i){
+  if(!dayPlanRun) return;
+  dayPlanRun.idx = i;
+  const it = dayPlanRun.items[i];
+  closeModal('modal-dayplan-run');
+  if(it.type==='sport'){
+    startSportSession(it.ref);
+  } else if(it.type==='tempo'){
+    if(it.ref==='current'){ openTempoSetup(); }
+    else { const w = loadTempoWorkouts().find(x=>x.id===it.ref); if(w){ tempoSetup = JSON.parse(JSON.stringify(w.setup)); startTempoRunner(); } else { openTempoSetup(); } }
+  } else if(it.type==='routine'){
+    startRunnerFromRoutine(it.ref);
+  }
+}
+// Called by the finish functions when a day-plan item completes
+function dayPlanItemComplete(){
+  if(!dayPlanRun) return false;
+  const it = dayPlanRun.items[dayPlanRun.idx];
+  if(it) it.done = true;
+  renderDayPlanRun();
+  openModal('modal-dayplan-run');
+  return true;
+}
+
 
 
 
@@ -7613,6 +7877,10 @@ function finishSportSession(){
   sportState = null;
   document.getElementById('sport-pick-view').style.display = 'block';
   document.getElementById('sport-active-view').style.display = 'none';
+  if(typeof dayPlanItemComplete==='function' && dayPlanItemComplete()){
+    toast(sp.icon+' '+sp.name+' done · '+cals+' kcal');
+    return;
+  }
   renderHome();
   showScreen('home');
   toast(sp.icon + ' ' + sp.name + ' saved & logged to planner! ' + cals + ' kcal · ' + mins + 'min');
