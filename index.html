@@ -315,20 +315,16 @@ if('serviceWorker' in navigator){
 
   <!-- TODAY TAB -->
   <div id="nut-today">
-    <!-- Calorie summary -->
+    <!-- Calorie summary (now includes all macro + micro stats) -->
     <div id="nut-cal-summary"></div>
-    <!-- Macro bars -->
-    <div class="card" style="margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:12px">Macros</div>
-      <div id="macro-bars"></div>
-    </div>
-    <!-- Micronutrients -->
-    <div class="card" style="margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px">Micronutrients</div>
-      <div id="micro-bars"></div>
-    </div>
+    <!-- Water tracking (moved up under the summary) -->
+    <div style="font-size:16px;font-weight:800;margin:0 0 10px">Hydration</div>
+    <div id="water-card" style="margin-bottom:14px"></div>
     <!-- Meal timing -->
-    <div style="font-size:16px;font-weight:800;margin-bottom:10px">Today's Meals</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:16px;font-weight:800">Today's Meals</div>
+      <button onclick="openMealBuilder('breakfast')" style="background:rgba(57,255,20,.18);color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:7px 16px;font-size:13px;font-weight:800">🍳 Build a Meal</button>
+    </div>
     <!-- Quick food search -->
     <div style="position:relative;margin-bottom:12px">
       <input class="inp" id="today-food-search" placeholder="🔍 Search any food to log..." oninput="todaySearchFood(this.value)" autocomplete="off">
@@ -336,10 +332,7 @@ if('serviceWorker' in navigator){
     </div>
     <div id="meal-log"></div>
     <button onclick="openMenuAdvisor()" style="width:100%;background:rgba(255,140,66,.12);color:var(--michelle);border:1px solid var(--michelle);border-radius:10px;padding:11px;font-size:13px;font-weight:800;margin-top:8px">🍽️ Eating Out? Get menu advice</button>
-    <button onclick="openSaveMealTemplate()" style="width:100%;background:var(--soft);color:var(--muted);border:1px dashed var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-top:8px">💾 Save Today's Meals as a Template</button>
-    <!-- Water tracking -->
-    <div style="font-size:16px;font-weight:800;margin:16px 0 10px">Hydration</div>
-    <div id="water-card"></div>
+    <button onclick="openSaveMealTemplate()" style="width:100%;background:var(--soft);color:var(--muted);border:1px dashed var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-top:8px">💾 Save all of today's meals as one reusable meal</button>
   </div>
 
   <!-- SAVED MEALS TAB -->
@@ -6172,77 +6165,43 @@ function renderNutrition(){
           <div style="font-size:11px;font-weight:700;margin-top:4px;color:${uColor}">${settings.goal==='lean'?'🔥 Get Lean':settings.goal==='build'?'💪 Build Muscle':'⚖️ Maintain'}</div>
         </div>
       </div>
-      <!-- 4 quick stats -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <!-- 6 quick stats: macros + micros in one row -->
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
         ${[
-          {l:'Protein',v:totalProtein+'g',t:settings.protein+'g',c:'#6C63FF'},
-          {l:'Carbs',v:totalCarbs+'g',t:settings.carbs+'g',c:'#FF8C42'},
-          {l:'Fat',v:totalFat+'g',t:settings.fat+'g',c:'#FF4D4D'},
-          {l:'Fibre',v:totalFibre+'g',t:'25g',c:'#4CAF50'},
-        ].map(s=>`<div style="text-align:center;background:var(--soft);border-radius:8px;padding:7px 4px">
-          <div style="font-size:13px;font-weight:800;color:${s.c}">${s.v}</div>
-          <div style="font-size:9px;color:var(--muted)">${s.l}</div>
-          <div style="font-size:9px;color:var(--muted)">${s.t}</div>
-        </div>`).join('')}
+          {l:'Protein',v:totalProtein,t:settings.protein,c:'#6C63FF',u:'g'},
+          {l:'Carbs',v:totalCarbs,t:settings.carbs,c:'#FF8C42',u:'g'},
+          {l:'Fat',v:totalFat,t:settings.fat,c:'#FF4D4D',u:'g'},
+          {l:'Fibre',v:totalFibre,t:25,c:'#4CAF50',u:'g'},
+          {l:'Sugar',v:totalSugar,t:30,c:'#FF6B6B',u:'g'},
+          {l:'Sodium',v:totalSodium,t:2300,c:'#FFB347',u:'mg'},
+        ].map(s=>{
+          const over = s.v > s.t;
+          return `<div style="text-align:center;background:var(--soft);border-radius:8px;padding:6px 2px">
+            <div style="font-size:12px;font-weight:800;color:${over?'#FF4D4D':s.c}">${s.v}${s.u}</div>
+            <div style="font-size:8px;color:var(--muted);margin-top:1px">${s.l}</div>
+            <div style="font-size:8px;color:var(--muted)">/ ${s.t}${s.u}</div>
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
 
-  // ── Macro bars ──
-  document.getElementById('macro-bars').innerHTML = [
-    {name:'Protein',val:totalProtein,max:settings.protein,color:'#6C63FF',unit:'g'},
-    {name:'Carbohydrates',val:totalCarbs,max:settings.carbs,color:'#FF8C42',unit:'g'},
-    {name:'Fat',val:totalFat,max:settings.fat,color:'#FF4D4D',unit:'g'},
-  ].map(m=>{
-    const pct = Math.min(100,Math.round(m.val/m.max*100));
-    return `<div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-        <span style="font-weight:700">${m.name}</span>
-        <span style="color:var(--muted)">${m.val}g / ${m.max}g <span style="color:${pct>=100?'#FF4D4D':m.color}">${pct}%</span></span>
-      </div>
-      <div style="background:var(--soft);border-radius:4px;height:8px">
-        <div style="height:8px;border-radius:4px;background:${m.color};width:${pct}%;transition:width .4s;max-width:100%"></div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // ── Micronutrients ──
-  document.getElementById('micro-bars').innerHTML = [
-    {name:'Fibre',val:totalFibre,max:25,color:'#4CAF50',unit:'g',tip:'Aids digestion and satiety'},
-    {name:'Sugar',val:totalSugar,max:30,color:'#FF6B6B',unit:'g',tip:'Keep under 30g for lean goals'},
-    {name:'Sodium',val:totalSodium,max:2300,color:'#FFB347',unit:'mg',tip:'Target under 2300mg per day'},
-  ].map(m=>{
-    const pct = Math.min(100,Math.round((m.val||0)/m.max*100));
-    const isOver = pct >= 100;
-    return `<div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-        <div>
-          <span style="font-weight:700">${m.name}</span>
-          <span style="font-size:10px;color:var(--muted);margin-left:6px">${m.tip}</span>
-        </div>
-        <span style="color:${isOver?'#FF4D4D':m.color}">${m.val||0}${m.unit} / ${m.max}${m.unit}</span>
-      </div>
-      <div style="background:var(--soft);border-radius:3px;height:6px">
-        <div style="height:6px;border-radius:3px;background:${isOver?'#FF4D4D':m.color};width:${pct}%;transition:width .4s;max-width:100%"></div>
-      </div>
-    </div>`;
-  }).join('') + '<div style="font-size:11px;color:var(--muted);margin-top:6px">💡 Log micronutrients via food search — most packaged foods include this data automatically</div>';
-
-  // ── Meal log ──
-  // ── Meal log grouped by meal type ──
+  // ── Meal log: only slots that have meals, in order, with a small heading each ──
   const MEAL_SLOTS = [
     {key:'breakfast', label:'Breakfast', icon:'🌅'},
     {key:'lunch', label:'Lunch', icon:'☀️'},
     {key:'dinner', label:'Dinner', icon:'🌙'},
     {key:'snacks', label:'Snacks', icon:'🍎'},
+    {key:'eveningsnack', label:'Evening snack', icon:'🌜'},
   ];
-  document.getElementById('meal-log').innerHTML = MEAL_SLOTS.map(slot=>{
+  const anyMeals = meals.length>0;
+  document.getElementById('meal-log').innerHTML = anyMeals ? MEAL_SLOTS.map(slot=>{
     const slotMeals = meals.map((m,i)=>({m,i})).filter(x=>(x.m.meal||'snacks')===slot.key);
+    if(!slotMeals.length) return '';
     const slotCals = slotMeals.reduce((a,x)=>a+(x.m.cals||0),0);
     return `
     <div class="card-sm" style="margin-bottom:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${slotMeals.length?'8px':'0'}">
-        <div style="font-size:14px;font-weight:800">${slot.icon} ${slot.label} ${slotCals?`<span style="font-size:12px;color:var(--muted);font-weight:600">· ${slotCals} kcal</span>`:''}</div>
-        <button onclick="openMealBuilder('${slot.key==='snacks'?'snack':slot.key}')" style="background:rgba(57,255,20,.18);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Add</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:14px;font-weight:800">${slot.icon} ${slot.label} <span style="font-size:12px;color:var(--muted);font-weight:600">· ${slotCals} kcal</span></div>
       </div>
       ${slotMeals.map(x=>`
         <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border)">
@@ -6259,7 +6218,12 @@ function renderNutrition(){
           </div>
         </div>`).join('')}
     </div>`;
-  }).join('');
+  }).join('') :
+    `<div class="card-sm" style="text-align:center;padding:22px;border:1px dashed var(--border)">
+      <div style="font-size:30px;margin-bottom:6px">🍳</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:3px">No meals logged yet today</div>
+      <div style="font-size:12px;color:var(--muted)">Tap “Build a Meal” above to add one — it'll slot in here automatically.</div>
+    </div>`;
 
   // ── Hydration card ──
   renderWater();
@@ -6536,7 +6500,7 @@ function saveMealTemplate(){
   saved.unshift({...totals, name, cat:_templateCat, items:meals.map(m=>m.name)});
   saveSavedMeals(activeUser, saved);
   closeModal('modal-save-meal-template');
-  toast('Saved as "'+name+'"!');
+  toast('Saved to your Saved Meals as "'+name+'"');
 }
 
 // ── New single saved meal ──
