@@ -813,6 +813,16 @@ if('serviceWorker' in navigator){
     </div>
   </div>
 
+  <div style="display:flex;align-items:center;justify-content:space-between;background:var(--soft);border-radius:10px;padding:12px;margin-bottom:16px;border:1px solid var(--border)">
+    <div>
+      <div style="font-size:13px;font-weight:700">Warm-up & cool-down</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">Auto-adds a warm-up before and stretches after</div>
+    </div>
+    <div onclick="toggleGenWarmup()" id="gen-warmup-toggle" style="width:44px;height:26px;border-radius:13px;background:var(--lime);position:relative;cursor:pointer;transition:all .2s;flex-shrink:0">
+      <div id="gen-warmup-thumb" style="position:absolute;top:3px;left:20px;width:20px;height:20px;border-radius:50%;background:white;transition:left .2s"></div>
+    </div>
+  </div>
+
   <button onclick="generateWorkouts()" class="btn-primary" style="margin-bottom:14px">✨ Generate 3 Options</button>
 
   <div id="gen-results"></div>
@@ -826,6 +836,39 @@ if('serviceWorker' in navigator){
 <div class="modal">
   <div style="font-size:20px;font-weight:800;margin-bottom:18px">New Routine</div>
   <input class="inp" id="nr-name" placeholder="Routine name e.g. Upper Body Power" style="margin-bottom:12px">
+
+  <!-- Smart auto-fill with pairing options -->
+  <div style="background:rgba(200,241,53,.06);border:1px solid rgba(200,241,53,.2);border-radius:11px;padding:12px;margin-bottom:14px">
+    <div style="font-size:13px;font-weight:800;color:var(--lime);margin-bottom:3px">✨ Auto-fill a starting point</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Pick a pairing & length and we'll fill in exercises — then edit freely below.</div>
+
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">STYLE</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px" id="nr-pairmode-btns"></div>
+    <div id="nr-pair-content" style="margin-bottom:10px"></div>
+
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">GROUPS <span style="font-weight:500;text-transform:none">(tap to add/remove)</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;max-height:120px;overflow-y:auto" id="nr-auto-muscles"></div>
+
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <select id="nr-auto-diff" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px">
+        <option value="beginner">Beginner</option>
+        <option value="intermediate" selected>Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+      <select id="nr-auto-mins" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px">
+        <option value="20">20 min</option>
+        <option value="40">40 min</option>
+        <option value="60" selected>60 min</option>
+        <option value="90">90 min</option>
+      </select>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:10px;cursor:pointer">
+      <input type="checkbox" id="nr-auto-warmup" checked style="width:16px;height:16px;accent-color:var(--lime)">
+      Add warm-up & cool-down
+    </label>
+    <button onclick="autofillManual()" style="width:100%;background:rgba(200,241,53,.15);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:9px;padding:10px;font-size:13px;font-weight:800">✨ Fill in exercises</button>
+  </div>
+
   <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;letter-spacing:.5px">MUSCLE GROUPS</div>
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px" id="nr-muscle-groups"></div>
   <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;letter-spacing:.5px">EXERCISES <span id="nr-ex-count" style="color:var(--lime)">0</span></div>
@@ -2065,25 +2108,30 @@ function routineCard(r, isMine){
 function openRoutineDetail(id){
   const r = routines.find(x=>x.id===id);
   if(!r) return;
-  const totalSets = r.exercises.reduce((a,e)=>a+e.sets,0);
-  const estMin = Math.round(r.exercises.reduce((a,e)=>a+e.sets*2.5,0));
+  const exercises = r.exercises || [];
+  const totalSets = exercises.reduce((a,e)=>a+(e.sets||0),0);
+  const estMin = Math.round(exercises.reduce((a,e)=>a+(e.sets||0)*2.5,0));
   document.getElementById('routine-detail-content').innerHTML = `
     <div style="background:linear-gradient(180deg,${r.color}18 0%,transparent 60%);padding:20px 16px 0">
       <button onclick="showScreen('home')" style="background:var(--soft);border-radius:10px;padding:8px 12px;font-size:18px;margin-bottom:16px">←</button>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-        <div style="font-size:11px;color:${r.color};font-weight:800;letter-spacing:1.5px;text-transform:uppercase">${r.muscles.join(' · ')}</div>
-        ${r.prebuilt ? '<span style="background:rgba(200,241,53,.15);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800">⚡ PREBUILT · 1 HOUR</span>' : ''}
+        <div style="font-size:11px;color:${r.color};font-weight:800;letter-spacing:1.5px;text-transform:uppercase">${(r.muscles||[]).join(' · ')}</div>
+        ${(r.muscles||[]).includes('Legs') ? '<span style="background:rgba(200,241,53,.15);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800">FULL LEG</span>' : ''}
       </div>
       <div style="font-size:26px;font-weight:800;margin-bottom:10px">${r.name}</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">By ${r.owner} · Shared with ${r.sharedWith.join(', ')}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">By ${r.owner||'family'}${(r.sharedWith&&r.sharedWith.length)?' · Shared with '+r.sharedWith.join(', '):''}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px">
-        <div class="card-sm" style="text-align:center"><div style="font-size:22px;font-weight:800;color:${r.color}">${r.exercises.length}</div><div style="font-size:10px;color:var(--muted)">Exercises</div></div>
+        <div class="card-sm" style="text-align:center"><div style="font-size:22px;font-weight:800;color:${r.color}">${exercises.length}</div><div style="font-size:10px;color:var(--muted)">Exercises</div></div>
         <div class="card-sm" style="text-align:center"><div style="font-size:22px;font-weight:800;color:${r.color}">${totalSets}</div><div style="font-size:10px;color:var(--muted)">Total Sets</div></div>
         <div class="card-sm" style="text-align:center"><div style="font-size:22px;font-weight:800;color:${r.color}">~${estMin}m</div><div style="font-size:10px;color:var(--muted)">Est. Time</div></div>
       </div>
     </div>
     <div style="padding:0 16px">
-      ${r.exercises.map((ex,i)=>`
+      ${r.warmup&&r.warmup.length?`<div style="background:rgba(255,140,66,.08);border:1px solid rgba(255,140,66,.2);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:#FF8C42;margin-bottom:5px">🔥 WARM-UP (~${r.warmup.reduce((a,m)=>a+(m.mins||0),0)} min)</div>
+        ${r.warmup.map(m=>`<div style="font-size:12px;color:var(--muted);margin-bottom:2px">• ${m.name}${m.desc?` <span style="opacity:.7">— ${m.desc}</span>`:''}</div>`).join('')}
+      </div>`:''}
+      ${exercises.map((ex,i)=>`
         <div class="card" style="margin-bottom:10px;display:flex;align-items:center;gap:12px">
           <div style="width:36px;height:36px;border-radius:10px;background:${r.color}22;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:${r.color};flex-shrink:0">${i+1}</div>
           <div style="flex:1">
@@ -2091,11 +2139,16 @@ function openRoutineDetail(id){
             <div style="font-size:12px;color:var(--muted)">${ex.sets} sets × ${ex.reps} reps${ex.weight?(' · '+ex.weight+'kg'):''}${ex.notes?(' · '+ex.notes):''}</div>
           </div>
         </div>`).join('')}
+      ${r.cooldown&&r.cooldown.length?`<div style="background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.2);border-radius:10px;padding:10px 12px;margin:4px 0 12px">
+        <div style="font-size:11px;font-weight:800;color:#4FC3F7;margin-bottom:5px">🧊 COOL-DOWN (~${r.cooldown.reduce((a,m)=>a+(m.mins||0),0)} min)</div>
+        ${r.cooldown.map(m=>`<div style="font-size:12px;color:var(--muted);margin-bottom:2px">• ${m.name}${m.desc?` <span style="opacity:.7">— ${m.desc}</span>`:''}</div>`).join('')}
+      </div>`:''}
       <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
         <button onclick="editRoutine(${r.id})" class="btn-secondary" style="font-size:14px;padding:12px">Edit</button>
         ${r.owner===activeUser ? `<button onclick="deleteRoutine(${r.id})" style="background:rgba(255,77,77,.15);color:var(--red);border:1px solid rgba(255,77,77,.3);border-radius:13px;padding:12px;font-size:14px;font-weight:700">Delete</button>` : `<div></div>`}
         <button onclick="startWorkout(${r.id})" class="btn-primary" style="padding:12px">Start</button>
       </div>
+      ${((r.warmup&&r.warmup.length)||(r.cooldown&&r.cooldown.length))?`<button onclick="startRunnerFromRoutine(${r.id})" style="width:100%;margin-top:8px;background:var(--soft);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:13px;padding:12px;font-size:14px;font-weight:700">▶ Guided run (with warm-up & cool-down)</button>`:''}
       <div style="height:20px"></div>
     </div>`;
   showScreen('routine');
@@ -2105,18 +2158,111 @@ function openRoutineDetail(id){
 function editRoutine(id){
   const r = routines.find(x=>x.id===id);
   if(!r) return;
-  newRoutineData = {id:r.id, name:r.name, muscles:[...r.muscles], exercises:r.exercises.map(e=>({...e}))};
+  newRoutineData = {id:r.id, name:r.name, muscles:[...(r.muscles||[])], exercises:(r.exercises||[]).map(e=>({...e})), warmup:r.warmup||null, cooldown:r.cooldown||null};
+  nrAuto = { pairMode:'custom', muscles:[] };
   document.getElementById('nr-name').value = r.name;
+  renderNRPairModes(); renderNRAutoMuscles();
   renderNRMuscles(); renderNRExercises();
   openModal('modal-new-routine');
 }
 
 // ══════════════════ NEW ROUTINE ══════════════════
+let nrAuto = { pairMode:'custom', muscles:[] };
+
 function openNewRoutine(){
   newRoutineData = {name:'',muscles:[],exercises:[]};
+  nrAuto = { pairMode:'custom', muscles:[] };
   document.getElementById('nr-name').value = '';
+  renderNRPairModes();
+  renderNRAutoMuscles();
   renderNRMuscles(); renderNRExercises();
   openModal('modal-new-routine');
+}
+
+// ── Manual builder: pairing-mode controls (mirror the generator) ──
+function renderNRPairModes(){
+  const el = document.getElementById('nr-pairmode-btns'); if(!el) return;
+  const modes = [{key:'splits',label:'① Splits'},{key:'antagonist',label:'② Pairs'},{key:'custom',label:'③ Custom'}];
+  el.innerHTML = modes.map(m=>{
+    const on = nrAuto.pairMode===m.key;
+    return `<button onclick="setNRPairMode('${m.key}')" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(200,241,53,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${m.label}</button>`;
+  }).join('');
+  renderNRPairContent();
+}
+function setNRPairMode(mode){ nrAuto.pairMode=mode; renderNRPairModes(); }
+function renderNRPairContent(){
+  const el = document.getElementById('nr-pair-content'); if(!el) return;
+  if(nrAuto.pairMode==='custom'){
+    el.innerHTML = `<div style="font-size:10px;color:var(--muted)">Pick any groups below — companions that pair well are <span style="color:var(--lime)">highlighted</span>.</div>`;
+    return;
+  }
+  const combos = PAIR_COMBOS[nrAuto.pairMode]||[];
+  el.innerHTML = combos.map((c,i)=>{
+    const on = nrAuto.muscles.slice().sort().join(',')===c.groups.slice().sort().join(',');
+    return `<button onclick="applyNRCombo('${nrAuto.pairMode}',${i})" style="text-align:left;padding:8px 10px;border-radius:8px;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(200,241,53,.12)':'var(--soft)'};margin-bottom:5px;width:100%">
+      <div style="font-size:12px;font-weight:800;color:${on?'var(--lime)':'var(--text)'}">${c.label}</div>
+      <div style="font-size:10px;color:var(--muted)">${c.note}</div></button>`;
+  }).join('');
+}
+function applyNRCombo(mode,i){
+  const c = (PAIR_COMBOS[mode]||[])[i]; if(!c) return;
+  nrAuto.muscles = c.groups.filter(g=>EXERCISES.some(e=>e.muscle===g));
+  renderNRPairContent(); renderNRAutoMuscles();
+}
+function renderNRAutoMuscles(){
+  const el = document.getElementById('nr-auto-muscles'); if(!el) return;
+  const counts = {};
+  EXERCISES.forEach(e=>{ counts[e.muscle]=(counts[e.muscle]||0)+1; });
+  const groups = Object.keys(counts).filter(m=>counts[m]>=3).sort();
+  const suggested = new Set();
+  if(nrAuto.pairMode==='custom'){
+    nrAuto.muscles.forEach(m=>{ (PAIR_SUGGESTIONS[m]||[]).forEach(s=>{ if(!nrAuto.muscles.includes(s)) suggested.add(s); }); });
+  }
+  el.innerHTML = groups.map(m=>{
+    const on = nrAuto.muscles.includes(m);
+    const sg = suggested.has(m);
+    const border = on?'var(--lime)':(sg?'rgba(200,241,53,.5)':'var(--border)');
+    const bg = on?'rgba(200,241,53,.15)':(sg?'rgba(200,241,53,.06)':'var(--soft)');
+    const col = on?'var(--lime)':(sg?'var(--lime)':'var(--muted)');
+    return `<button onclick="toggleNRAutoMuscle('${m}')" style="padding:6px 10px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid ${border};background:${bg};color:${col}">${on?'✓ ':''}${m}${sg?' <span style="font-size:8px;opacity:.8">pairs</span>':''}</button>`;
+  }).join('');
+}
+function toggleNRAutoMuscle(m){
+  const i = nrAuto.muscles.indexOf(m);
+  if(i>=0) nrAuto.muscles.splice(i,1); else nrAuto.muscles.push(m);
+  renderNRAutoMuscles(); renderNRPairContent();
+}
+// Build exercises from the pairing options and drop them into the manual builder
+function autofillManual(){
+  if(!nrAuto.muscles.length){ toast('Pick at least one muscle group above'); return; }
+  const difficulty = document.getElementById('nr-auto-diff').value;
+  const minutes = parseInt(document.getElementById('nr-auto-mins').value)||60;
+  const addWarmup = document.getElementById('nr-auto-warmup').checked;
+  const cfg = DIFFICULTY_CFG[difficulty] || DIFFICULTY_CFG.intermediate;
+  let pool = EXERCISES.filter(e=>nrAuto.muscles.includes(e.muscle));
+  if(getHipSafePref(activeUser)) pool = pool.filter(e=>e.hipSafe);
+  if(pool.length < 3){ toast('Not enough exercises for that selection'); return; }
+  // temporarily use genState.difficulty for rest calc inside builder helpers
+  const prevDiff = genState.difficulty; genState.difficulty = difficulty;
+  const exs = buildWorkoutVariant(pool, cfg, minutes, Math.floor(Math.random()*99999), nrAuto.muscles);
+  genState.difficulty = prevDiff;
+  // drop into manual builder for free editing
+  newRoutineData.muscles = [...nrAuto.muscles];
+  newRoutineData.exercises = exs.map(e=>({ name:e.name, muscle:e.muscle, sets:e.sets, reps:e.reps, weight:e.weight||0, desc:e.desc||'', video:e.video||'', restSec:e.restSec }));
+  if(addWarmup){
+    newRoutineData.warmup = buildWarmup(nrAuto.muscles);
+    newRoutineData.cooldown = buildCooldown(nrAuto.muscles);
+  } else {
+    newRoutineData.warmup = null; newRoutineData.cooldown = null;
+  }
+  // auto-name if blank
+  const nameEl = document.getElementById('nr-name');
+  if(!nameEl.value.trim()){
+    const isLeg = nrAuto.muscles.includes('Legs');
+    nameEl.value = (nrAuto.muscles.length===1 ? (isLeg?'Full Leg':nrAuto.muscles[0]) : nrAuto.muscles.join(' + ')) + ' ' + cfg.label;
+  }
+  renderNRMuscles(); renderNRExercises();
+  toast('✨ Filled in '+exs.length+' exercises — edit freely below'+(nrAuto.muscles.includes('Legs')?' · full leg ✓':''));
 }
 
 function renderNRMuscles(){
@@ -2193,11 +2339,11 @@ function saveNewRoutine(){
   if(!newRoutineData.exercises.length){ toast('Add at least one exercise'); return; }
   if(newRoutineData.id){
     const i = routines.findIndex(r=>r.id===newRoutineData.id);
-    if(i>=0){ routines[i]={...routines[i], name, muscles:newRoutineData.muscles, exercises:newRoutineData.exercises}; }
+    if(i>=0){ routines[i]={...routines[i], name, muscles:newRoutineData.muscles, exercises:newRoutineData.exercises, warmup:newRoutineData.warmup||null, cooldown:newRoutineData.cooldown||null}; }
   } else {
     const colors = {Mike:'#C8F135',Michelle:'#FF8C42',Amy:'#6C63FF'};
     const allUsers = ['Mike','Michelle','Amy'];
-    routines.push({id:Date.now(), name, owner:activeUser, sharedWith:allUsers.filter(u=>u!==activeUser), muscles:newRoutineData.muscles, color:colors[activeUser], exercises:newRoutineData.exercises});
+    routines.push({id:Date.now(), name, owner:activeUser, sharedWith:allUsers.filter(u=>u!==activeUser), muscles:newRoutineData.muscles, color:colors[activeUser], exercises:newRoutineData.exercises, warmup:newRoutineData.warmup||null, cooldown:newRoutineData.cooldown||null});
   }
   saveRoutines();
   closeModal('modal-new-routine');
@@ -2278,10 +2424,100 @@ function renderHistory(){
 // Builds N distinct workouts for a muscle group, sized to a target duration,
 // with rest times baked in. Works off the existing EXERCISES data.
 
-let genState = { muscles:['Shoulders'], difficulty:'intermediate', minutes:60, hipSafe:false, pairMode:'custom' };
+let genState = { muscles:['Shoulders'], difficulty:'intermediate', minutes:60, hipSafe:false, pairMode:'custom', warmup:true };
 
 // Rest rail values (seconds) for the "set all to" control
 const REST_RAIL = [15,30,45,60,90,100,120,140,160,180];
+
+// ── Warm-up & cool-down library ──
+// Auto-selected based on the muscle groups in the workout. Each entry is a light
+// mobility/activation move (warm-up) or stretch (cool-down) with a duration.
+const WARMUP_MOVES = {
+  general: [
+    {name:'Light cardio (bike/row/treadmill)', mins:5, desc:'Raise heart rate and core temperature'},
+    {name:'Arm circles & shoulder rolls', mins:1, desc:'Loosen shoulders'},
+  ],
+  Legs: [
+    {name:'5 min easy bike or walk', mins:5, desc:'Warm the legs and hips'},
+    {name:'Bodyweight squats', mins:1, desc:'2×15 — grease the movement'},
+    {name:'Leg swings (front & side)', mins:1, desc:'10 each leg — open the hips'},
+    {name:'Walking lunges (no weight)', mins:1, desc:'10 each side — activate glutes & quads'},
+  ],
+  Glutes: [
+    {name:'Glute bridges', mins:1, desc:'2×15 — activate glutes before loading'},
+    {name:'Banded side steps', mins:1, desc:'15 each way — fire up the hips'},
+  ],
+  Chest: [
+    {name:'Arm circles & band pull-aparts', mins:2, desc:'Warm shoulders & chest'},
+    {name:'Push-ups (easy)', mins:1, desc:'1×10 — prime the chest'},
+  ],
+  Back: [
+    {name:'Band pull-aparts', mins:1, desc:'2×15 — activate upper back'},
+    {name:'Cat-cow & thoracic rotations', mins:2, desc:'Mobilise the spine'},
+  ],
+  Shoulders: [
+    {name:'Arm circles & shoulder dislocates (band)', mins:2, desc:'Open the shoulders'},
+    {name:'Light lateral raises', mins:1, desc:'1×15 — activate delts'},
+  ],
+  Arms: [
+    {name:'Light band curls & pushdowns', mins:2, desc:'Warm elbows & arms'},
+  ],
+  Core: [
+    {name:'Cat-cow & dead bugs', mins:2, desc:'Activate deep core'},
+  ],
+};
+const COOLDOWN_MOVES = {
+  general: [
+    {name:'5 min easy walk', mins:5, desc:'Bring heart rate down gradually'},
+    {name:'Deep breathing', mins:1, desc:'Box breathing to recover'},
+  ],
+  Legs: [
+    {name:'Standing quad stretch', mins:1, desc:'30s each leg'},
+    {name:'Seated hamstring stretch', mins:1, desc:'30s each leg'},
+    {name:'Calf stretch against wall', mins:1, desc:'30s each leg'},
+    {name:'Figure-4 glute stretch', mins:1, desc:'30s each side'},
+    {name:'Hip flexor lunge stretch', mins:1, desc:'30s each side — important for hip health'},
+  ],
+  Glutes: [
+    {name:'Figure-4 glute stretch', mins:1, desc:'30s each side'},
+    {name:'Pigeon stretch', mins:1, desc:'30s each side'},
+  ],
+  Chest: [
+    {name:'Doorway chest stretch', mins:1, desc:'30s each side'},
+    {name:'Cross-body shoulder stretch', mins:1, desc:'30s each arm'},
+  ],
+  Back: [
+    {name:'Child\u2019s pose', mins:1, desc:'Lengthen the back'},
+    {name:'Lat stretch (hang or doorway)', mins:1, desc:'30s each side'},
+  ],
+  Shoulders: [
+    {name:'Cross-body & overhead tricep stretch', mins:1, desc:'30s each side'},
+  ],
+  Arms: [
+    {name:'Tricep & bicep wall stretch', mins:1, desc:'30s each arm'},
+  ],
+  Core: [
+    {name:'Cobra stretch & gentle twists', mins:1, desc:'Decompress the midsection'},
+  ],
+};
+
+// Build a warm-up / cool-down list for the given muscle groups.
+function buildWarmup(groups){
+  const moves = [...WARMUP_MOVES.general];
+  groups.forEach(g=>{ if(WARMUP_MOVES[g]) moves.push(...WARMUP_MOVES[g]); });
+  // de-dupe by name
+  const seen = new Set(); const out = [];
+  moves.forEach(m=>{ if(!seen.has(m.name)){ seen.add(m.name); out.push(m); } });
+  return out;
+}
+function buildCooldown(groups){
+  const moves = [];
+  groups.forEach(g=>{ if(COOLDOWN_MOVES[g]) moves.push(...COOLDOWN_MOVES[g]); });
+  moves.push(...COOLDOWN_MOVES.general);
+  const seen = new Set(); const out = [];
+  moves.forEach(m=>{ if(!seen.has(m.name)){ seen.add(m.name); out.push(m); } });
+  return out;
+}
 
 // Format a rest time cleanly: whole minutes as "Xmin", otherwise seconds.
 function fmtRest(secs){
@@ -2515,7 +2751,34 @@ function buildWorkoutVariant(pool, cfg, targetMin, seed, groups){
     chosen.push(candidate);
     if(estimateWorkoutMinutes(chosen, cfg.restSec) >= targetMin) break;
   }
+  // Guarantee full leg coverage: if Legs is selected, ensure a hamstring AND a calf move
+  if((groups||[]).includes('Legs')){
+    ensureLegCoverage(chosen, cfg);
+  }
   return antiStackOrder(chosen);
+}
+
+// Make sure a leg workout hits hamstrings and calves, not just quads.
+function ensureLegCoverage(chosen, cfg){
+  const subs = chosen.map(subMuscle);
+  const needs = [];
+  if(!subs.includes('hamstrings')) needs.push('hamstrings');
+  if(!subs.includes('calves')) needs.push('calves');
+  needs.forEach(sub=>{
+    // find a Legs exercise of this sub-muscle not already in the workout
+    let pool = EXERCISES.filter(e=>e.muscle==='Legs' && subMuscle(e)===sub);
+    if(genState.hipSafe) pool = pool.filter(e=>e.hipSafe);
+    const usedNames = chosen.map(e=>e.name);
+    const candidates = pool.filter(e=>!usedNames.includes(e.name));
+    if(!candidates.length) return;
+    const pick = candidates[Math.floor(Math.random()*candidates.length)];
+    const reps = Math.round((cfg.reps[0]+cfg.reps[1])/2);
+    const sets = Math.min(cfg.setsRange[1], Math.max(cfg.setsRange[0], pick.sets||3));
+    const ex = { name:pick.name, muscle:pick.muscle, sets, reps, weight:pick.weight||0, desc:pick.desc||'', video:pick.video||'' };
+    ex.restSec = bestPracticeRest(ex, genState.difficulty);
+    // replace the last quad-heavy exercise if the workout is getting long, else append
+    chosen.push(ex);
+  });
 }
 
 function generateWorkouts(){
@@ -2531,7 +2794,11 @@ function generateWorkouts(){
     generatedWorkouts = [];
     return;
   }
-  const groupLabel = groups.length===1 ? groups[0] : groups.join(' + ');
+  // "Full leg" labelling when Legs is the focus
+  const isFullLeg = groups.includes('Legs');
+  const groupLabel = groups.length===1
+    ? (isFullLeg ? 'Full Leg' : groups[0])
+    : groups.join(' + ');
   // Build 3 distinct variants using different seeds
   generatedWorkouts = [0,1,2].map(i=>{
     const exs = buildWorkoutVariant(pool, cfg, minutes, i*37+7, groups);
@@ -2539,6 +2806,8 @@ function generateWorkouts(){
       id: 'gen_'+Date.now()+'_'+i,
       name: `${groupLabel} ${cfg.label} · ${minutes}min (Option ${String.fromCharCode(65+i)})`,
       muscle: groupLabel, muscles: groups, difficulty, restSec: cfg.restSec,
+      warmup: genState.warmup ? buildWarmup(groups) : null,
+      cooldown: genState.warmup ? buildCooldown(groups) : null,
       estMin: estimateWorkoutMinutes(exs, cfg.restSec),
       exercises: exs
     };
@@ -2554,10 +2823,14 @@ function renderGeneratedWorkouts(){
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div>
           <div style="font-size:15px;font-weight:800">Option ${String.fromCharCode(65+wi)}</div>
-          <div style="font-size:11px;color:var(--muted)">${w.exercises.length} exercises · ~${w.estMin} min</div>
+          <div style="font-size:11px;color:var(--muted)">${w.exercises.length} exercises · ~${w.estMin} min${(w.muscles||[]).includes('Legs')?' · <span style="color:var(--lime)">full leg ✓</span>':''}</div>
         </div>
         <button onclick="startRunner(${wi})" style="background:var(--lime);color:#050508;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800">Start</button>
       </div>
+      ${w.warmup?`<div style="background:rgba(255,140,66,.08);border:1px solid rgba(255,140,66,.2);border-radius:9px;padding:8px 10px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:800;color:#FF8C42;margin-bottom:3px">🔥 WARM-UP (~${w.warmup.reduce((a,m)=>a+m.mins,0)} min)</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5">${w.warmup.map(m=>m.name).join(' · ')}</div>
+      </div>`:''}
       <!-- Master rest control -->
       <div style="display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:10px;padding:8px 10px;margin-bottom:8px;border:1px solid var(--border)">
         <span style="font-size:11px;color:var(--muted);font-weight:700">REST</span>
@@ -2590,6 +2863,10 @@ function renderGeneratedWorkouts(){
           </div>`).join('')}
         <button onclick="addGenExercise(${wi})" style="width:100%;margin-top:8px;background:var(--soft);color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700">+ Add exercise</button>
       </div>
+      ${w.cooldown?`<div style="background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.2);border-radius:9px;padding:8px 10px;margin-top:8px">
+        <div style="font-size:11px;font-weight:800;color:#4FC3F7;margin-bottom:3px">🧊 COOL-DOWN (~${w.cooldown.reduce((a,m)=>a+m.mins,0)} min)</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5">${w.cooldown.map(m=>m.name).join(' · ')}</div>
+      </div>`:''}
       <div style="display:flex;gap:6px;margin-top:8px">
         <button onclick="previewRunThrough(${wi})" style="flex:1;background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700">▶ Run-through</button>
         <button onclick="saveGenToLibrary(${wi})" style="flex:1;background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700">💾 Save to Library</button>
@@ -2627,6 +2904,8 @@ function saveGenToLibrary(wi){
     muscles: groups,
     color: colors[activeUser] || '#C8F135',
     generated: true,
+    warmup: w.warmup || null,
+    cooldown: w.cooldown || null,
     exercises: w.exercises.map(ex=>({ name:ex.name, muscle:ex.muscle, sets:ex.sets, reps:ex.reps, weight:ex.weight||0, desc:ex.desc||'', video:ex.video||'', restSec:ex.restSec }))
   });
   saveRoutines();
@@ -2853,7 +3132,8 @@ function startRunner(wi){
     workout: w,
     exIdx: 0,
     setIdx: 0,
-    phase: 'weight', // 'weight' | 'reps' | 'rest' | 'done'
+    phase: (w.warmup && w.warmup.length) ? 'warmup' : 'weight',
+    prepIdx: 0, // index into warmup/cooldown checklist
     log: w.exercises.map(ex=>({ name:ex.name, sets:Array(ex.sets).fill(null).map(()=>({weight:ex.weight||0, reps:ex.reps, done:false})) })),
     restRemaining: 0,
     startTime: Date.now()
@@ -2862,12 +3142,57 @@ function startRunner(wi){
   renderRunner();
 }
 
+// Allow starting the runner directly from a saved routine (not just generated)
+function startRunnerFromRoutine(id){
+  const r = routines.find(x=>x.id===id);
+  if(!r) return;
+  // shape it like a generated workout so the runner can use it
+  const w = {
+    id: r.id, name: r.name, muscle:(r.muscles||[]).join(' + '), muscles:r.muscles||[],
+    warmup: r.warmup||null, cooldown: r.cooldown||null,
+    exercises: (r.exercises||[]).map(ex=>({
+      name:ex.name, muscle:ex.muscle, sets:ex.sets||3, reps:ex.reps||10, weight:ex.weight||0,
+      desc:ex.desc||'', video:ex.video||'', restSec: ex.restSec || bestPracticeRest(ex, 'intermediate')
+    }))
+  };
+  generatedWorkouts = generatedWorkouts || [];
+  generatedWorkouts.push(w);
+  startRunner(generatedWorkouts.length - 1);
+}
+
 function currentRunnerEx(){ return runner.workout.exercises[runner.exIdx]; }
 
 function renderRunner(){
   if(!runner) return;
-  const ex = currentRunnerEx();
   const overlay = document.getElementById('runner-body');
+
+  // ── WARM-UP / COOL-DOWN guided checklist phases ──
+  if(runner.phase === 'warmup' || runner.phase === 'cooldown'){
+    const isWarm = runner.phase === 'warmup';
+    const list = isWarm ? (runner.workout.warmup||[]) : (runner.workout.cooldown||[]);
+    const step = list[runner.prepIdx] || {name:'',desc:'',mins:0};
+    const accent = isWarm ? '#FF8C42' : '#4FC3F7';
+    overlay.innerHTML = `
+      <div style="text-align:center;width:100%">
+        <div style="font-size:13px;color:${accent};font-weight:800;letter-spacing:1px;text-transform:uppercase">${isWarm?'🔥 Warm-up':'🧊 Cool-down'} · ${runner.prepIdx+1}/${list.length}</div>
+        <div style="font-size:26px;font-weight:800;margin:12px 0 6px">${step.name}</div>
+        ${step.desc?`<div style="font-size:14px;color:var(--muted);margin-bottom:8px">${step.desc}</div>`:''}
+        ${step.mins?`<div style="font-size:13px;color:${accent};margin-bottom:20px">~${step.mins} min</div>`:'<div style="margin-bottom:20px"></div>'}
+        <div style="text-align:left;background:var(--soft);border-radius:12px;padding:12px;margin-bottom:20px;border:1px solid var(--border)">
+          ${list.map((m,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;color:${i===runner.prepIdx?'var(--text)':'var(--muted)'}">
+            <span style="color:${i<runner.prepIdx?accent:'var(--border)'};font-size:14px">${i<runner.prepIdx?'✓':(i===runner.prepIdx?'▸':'○')}</span>
+            <span style="${i===runner.prepIdx?'font-weight:700':''}">${m.name}</span>
+          </div>`).join('')}
+        </div>
+        <button onclick="runnerPrepNext()" style="width:100%;background:${accent};color:#050508;border-radius:14px;padding:18px;font-size:17px;font-weight:800;margin-bottom:10px">${runner.prepIdx < list.length-1 ? 'Next →' : (isWarm?'Start workout 💪':'Finish ✓')}</button>
+        <button onclick="runnerSkipPrep()" style="background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline">skip ${isWarm?'warm-up':'cool-down'}</button>
+      </div>`;
+    const pb = document.getElementById('runner-progress');
+    if(pb) pb.style.width = isWarm ? '2%' : (90 + Math.round((runner.prepIdx+1)/Math.max(1,list.length)*10))+'%';
+    return;
+  }
+
+  const ex = currentRunnerEx();
   const totalSets = ex.sets;
   const setNum = runner.setIdx + 1;
   const exNum = runner.exIdx + 1;
@@ -2948,6 +3273,25 @@ function runnerConfirmWeight(){ runner.phase='reps'; renderRunner(); }
 function runnerSkipToReps(){ runner.phase='reps'; renderRunner(); }
 function runnerBack(){ runner.phase='weight'; renderRunner(); }
 
+// Warm-up / cool-down checklist navigation
+function runnerPrepNext(){
+  const isWarm = runner.phase === 'warmup';
+  const list = isWarm ? (runner.workout.warmup||[]) : (runner.workout.cooldown||[]);
+  if(runner.prepIdx < list.length - 1){
+    runner.prepIdx++;
+    if(typeof beepTick==='function') beepTick();
+    renderRunner();
+  } else {
+    // finished this phase
+    if(isWarm){ runner.phase='weight'; runner.prepIdx=0; renderRunner(); }
+    else { runner.phase='done'; renderRunner(); }
+  }
+}
+function runnerSkipPrep(){
+  if(runner.phase === 'warmup'){ runner.phase='weight'; runner.prepIdx=0; renderRunner(); }
+  else { runner.phase='done'; renderRunner(); }
+}
+
 function runnerConfirmReps(){
   const entry = runner.log[runner.exIdx].sets[runner.setIdx];
   entry.done = true;
@@ -2956,7 +3300,13 @@ function runnerConfirmReps(){
   const isLastSet = runner.setIdx >= ex.sets - 1;
   const isLastEx = runner.exIdx >= runner.workout.exercises.length - 1;
   if(isLastSet && isLastEx){
-    runner.phase='done'; renderRunner(); return;
+    // workout done -> cool-down if present, else done
+    if(runner.workout.cooldown && runner.workout.cooldown.length){
+      runner.phase='cooldown'; runner.prepIdx=0; renderRunner();
+    } else {
+      runner.phase='done'; renderRunner();
+    }
+    return;
   }
   // start rest
   runner.phase='rest';
@@ -3165,6 +3515,7 @@ function toggleGenMuscle(m){
 function setGenDifficulty(d){ genState.difficulty=d; renderGenControls(); }
 function setGenMinutes(m){ genState.minutes=m; renderGenControls(); }
 function toggleGenHipSafe(){ genState.hipSafe=!genState.hipSafe; setHipSafePref(activeUser, genState.hipSafe); renderGenControls(); renderGenMuscles(); }
+function toggleGenWarmup(){ genState.warmup=!genState.warmup; renderGenControls(); }
 function setGenCustomMinutes(v){
   const n = parseInt(v)||0;
   if(n>=10 && n<=180){ genState.minutes=n; renderGenControls(); }
@@ -3190,6 +3541,10 @@ function renderGenControls(){
   const t=document.getElementById('gen-hip-toggle'), th=document.getElementById('gen-hip-thumb');
   if(t){ t.style.background=genState.hipSafe?'var(--lime)':'var(--soft)'; t.style.border=genState.hipSafe?'none':'1px solid var(--border)'; }
   if(th){ th.style.left=genState.hipSafe?'20px':'2px'; }
+  // warm-up toggle
+  const wt=document.getElementById('gen-warmup-toggle'), wth=document.getElementById('gen-warmup-thumb');
+  if(wt){ wt.style.background=genState.warmup?'var(--lime)':'var(--soft)'; wt.style.border=genState.warmup?'none':'1px solid var(--border)'; }
+  if(wth){ wth.style.left=genState.warmup?'20px':'2px'; }
   const hipUser=document.getElementById('gen-hip-user');
   if(hipUser) hipUser.textContent = '· for '+activeUser+(activeUser==='Mike'?' (cam lesion)':'');
   // custom field reflects current if not a preset
