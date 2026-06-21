@@ -371,6 +371,14 @@ if('serviceWorker' in navigator){
   <!-- Devices -->
   <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Devices & Integrations</div>
   <div id="device-settings"></div>
+
+  <!-- Exercise video library -->
+  <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Exercise Form Videos</div>
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Connect your animation library (e.g. Gym-Animations). Drop the MP4s into a folder and the app shows a form demo on every exercise.</div>
+    <div id="video-settings"></div>
+  </div>
+
   <div style="height:20px"></div>
 </div>
 </div>
@@ -670,6 +678,7 @@ if('serviceWorker' in navigator){
 <div class="modal" style="padding-bottom:28px;max-width:400px">
   <div style="font-size:18px;font-weight:800;margin-bottom:4px" id="muscle-modal-title">Muscle Groups</div>
   <div style="font-size:12px;color:var(--muted);margin-bottom:16px" id="muscle-modal-subtitle">Primary and secondary muscles</div>
+  <div id="muscle-video-wrap" style="display:none;margin-bottom:16px"></div>
   <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;align-items:flex-start">
     <div id="muscle-front-img" style="display:block"></div>
     <div id="muscle-back-img" style="display:block;flex:1"></div>
@@ -2545,7 +2554,7 @@ function renderNRExercises(){
       <span style="color:var(--muted);cursor:grab;font-size:14px;flex-shrink:0" title="Drag to reorder">⠿</span>
       <span style="color:var(--muted);font-size:11px;width:14px">${i+1}</span>
       <div style="flex:1;min-width:0">
-        <div style="font-weight:600;color:var(--babyblue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ex.name}</div>
+        <div onclick="showMuscleModal('${ex.name.replace(/'/g,"\\'")}','${ex.muscle||''}')" style="font-weight:600;color:var(--babyblue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer">${ex.name} <span style="font-size:10px;color:var(--muted)">ⓘ</span></div>
         <div style="font-size:10px;color:var(--muted)">${subMuscle(ex)}${isCompound(ex)?' · compound':''} · <span onclick="nudgeOneNRRest(${i},-15)" style="cursor:pointer;color:var(--muted)">◂</span> rest <span style="color:var(--babyblue);font-weight:700">${fmtRest(rest)}</span> <span onclick="nudgeOneNRRest(${i},15)" style="cursor:pointer;color:var(--muted)">▸</span></div>
       </div>
       <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
@@ -3517,6 +3526,21 @@ function startRunnerFromRoutine(id){
 
 function currentRunnerEx(){ return runner.workout.exercises[runner.exIdx]; }
 
+// Inline form-demo video for the runner. Uses the local library if enabled,
+// otherwise falls back to the exercise's existing video link.
+function runnerVideoBlock(ex){
+  const vsrc = localVideoSrc(ex);
+  if(vsrc){
+    return `<video src="${vsrc}" autoplay loop muted playsinline
+      onerror="this.style.display='none'"
+      style="width:100%;max-width:280px;max-height:200px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid var(--border);margin:0 auto 14px;display:block"></video>`;
+  }
+  if(ex.video){
+    return `<a href="${ex.video}" target="_blank" style="display:inline-block;color:var(--lime);font-size:13px;margin-bottom:14px">▶ Watch form video</a><br>`;
+  }
+  return '';
+}
+
 // Badge shown in the runner when an exercise is part of a superset/tri-set/giant set
 function runnerGroupBadge(ex){
   if(ex.grp==null || !ex.grpSize || ex.grpSize<2) return '';
@@ -3572,8 +3596,8 @@ function renderRunner(){
       <div style="text-align:center;width:100%">
         ${runnerGroupBadge(ex)}
         <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Exercise ${exNum}/${exTotal} · Set ${setNum}/${totalSets}</div>
-        <div style="font-size:26px;font-weight:800;margin:8px 0 18px;color:var(--babyblue)">${ex.name}</div>
-        ${ex.video?`<a href="${ex.video}" target="_blank" style="display:inline-block;color:var(--lime);font-size:13px;margin-bottom:18px">▶ Watch form video</a><br>`:''}
+        <div style="font-size:26px;font-weight:800;margin:8px 0 12px;color:var(--babyblue)">${ex.name}</div>
+        ${runnerVideoBlock(ex)}
         <div style="font-size:13px;color:var(--muted);margin-bottom:6px">WEIGHT (kg)</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:24px">
           <button onclick="runnerAdjust('weight',-2.5)" style="width:56px;height:56px;border-radius:16px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:26px;font-weight:800">−</button>
@@ -3944,15 +3968,18 @@ function renderTempoCircuits(){
   document.getElementById('tempo-circuits').innerHTML = tempoSetup.circuits.map((c,ci)=>{
     const letter = String.fromCharCode(65+ci);
     const collapsed = !!c._collapsed;
-    const exHtml = c.exercises.length ? c.exercises.map((ex,ei)=>`
+    const exHtml = c.exercises.length ? c.exercises.map((ex,ei)=>{
+      const safe = ex.name.replace(/'/g,"\\'");
+      return `
       <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--soft)">
         <span style="color:var(--muted);font-size:11px;width:16px">${ei+1}</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;color:var(--babyblue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ex.name}</div>
-          <div style="font-size:10px;color:var(--muted)">${ex.muscle} · ${tempoSetup.reps} reps</div>
+        <div onclick="showMuscleModal('${safe}','${ex.muscle}')" style="flex:1;min-width:0;cursor:pointer">
+          <div style="font-size:13px;font-weight:600;color:var(--babyblue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ex.name} <span style="font-size:10px;color:var(--muted)">ⓘ</span></div>
+          <div style="font-size:10px;color:var(--muted)">${ex.muscle} · ${tempoSetup.reps} reps · tap for how-to</div>
         </div>
         <button onclick="removeTempoEx(${ci},${ei})" style="width:24px;height:24px;border-radius:6px;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.25);color:var(--red);font-size:14px">×</button>
-      </div>`).join('') : `<div style="font-size:11px;color:var(--muted);padding:8px 0;text-align:center">No exercises yet</div>`;
+      </div>`;
+    }).join('') : `<div style="font-size:11px;color:var(--muted);padding:8px 0;text-align:center">No exercises yet</div>`;
     const summary = c.exercises.length
       ? `${c.exercises.length} exercise${c.exercises.length>1?'s':''} · tap to ${collapsed?'view':'hide'}`
       : 'empty · tap to add';
@@ -6568,9 +6595,61 @@ function renderProfile(){
         <span class="badge" style="background:rgba(76,175,80,.15);color:#4CAF50;border:1px solid rgba(76,175,80,.3)">Syncing</span>
       </div>
     </div>`;
+  renderVideoSettings();
 }
 
-// ══════════════════ MODALS ══════════════════
+function renderVideoSettings(){
+  const el = document.getElementById('video-settings'); if(!el) return;
+  const cfg = loadVideoConfig();
+  const gMike = videoGenderForUser('Mike');
+  const gMich = videoGenderForUser('Michelle');
+  const gAmy  = videoGenderForUser('Amy');
+  const genderRow = (user, g) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0">
+      <div style="flex:1;font-size:13px">${user}</div>
+      <button onclick="setVideoGender('${user}','male');renderVideoSettings()" style="padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;border:1px solid ${g==='male'?'var(--lime)':'var(--border)'};background:${g==='male'?'rgba(57,255,20,.16)':'#16161F'};color:${g==='male'?'var(--lime)':'#D8D8E2'}">Male</button>
+      <button onclick="setVideoGender('${user}','female');renderVideoSettings()" style="padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;border:1px solid ${g==='female'?'var(--lime)':'var(--border)'};background:${g==='female'?'rgba(57,255,20,.16)':'#16161F'};color:${g==='female'?'var(--lime)':'#D8D8E2'}">Female</button>
+    </div>`;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700">Use my video library</div>
+      <div onclick="toggleVideoEnabled()" style="width:44px;height:26px;border-radius:13px;background:${cfg.enabled?'var(--lime)':'var(--soft)'};border:${cfg.enabled?'none':'1px solid var(--border)'};position:relative;cursor:pointer;transition:.2s">
+        <div style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:${cfg.enabled?'20px':'2px'};transition:.2s"></div>
+      </div>
+    </div>
+    ${cfg.enabled ? `
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Video folder / URL</div>
+      <input class="inp" id="vid-base" value="${cfg.base}" placeholder="videos  (or https://yourcdn.com/videos)" style="font-size:12px" onchange="updateVideoBase(this.value)">
+      <div style="font-size:10px;color:var(--muted);margin-top:4px">Put files at <code>${cfg.base}/male/&lt;name&gt;.${cfg.ext}</code> and <code>/female/</code>. Names auto-match (e.g. "Bench Press" → <code>bench-press.${cfg.ext}</code>).</div>
+    </div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1;font-size:13px;font-weight:700">File type</div>
+        <button onclick="setVideoExt('mp4')" style="padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;border:1px solid ${cfg.ext==='mp4'?'var(--lime)':'var(--border)'};background:${cfg.ext==='mp4'?'rgba(57,255,20,.16)':'#16161F'};color:${cfg.ext==='mp4'?'var(--lime)':'#D8D8E2'}">MP4</button>
+        <button onclick="setVideoExt('mov')" style="padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;border:1px solid ${cfg.ext==='mov'?'var(--lime)':'var(--border)'};background:${cfg.ext==='mov'?'rgba(57,255,20,.16)':'#16161F'};color:${cfg.ext==='mov'?'var(--lime)':'#D8D8E2'}">MOV</button>
+      </div>
+    </div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:700">Library has female versions</div>
+        <div onclick="toggleVideoFemale()" style="width:44px;height:26px;border-radius:13px;background:${cfg.hasFemale?'var(--lime)':'var(--soft)'};border:${cfg.hasFemale?'none':'1px solid var(--border)'};position:relative;cursor:pointer;transition:.2s">
+          <div style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:${cfg.hasFemale?'20px':'2px'};transition:.2s"></div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px">Gym-Animations: on · Exercise Animatic (male only): off</div>
+    </div>
+    <div style="padding:10px 0">
+      <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:4px">Model per person</div>
+      ${genderRow('Mike', gMike)}
+      ${genderRow('Michelle', gMich)}
+      ${genderRow('Amy', gAmy)}
+    </div>` : `<div style="font-size:11px;color:var(--muted);padding:10px 0">Turn on once your video files are in place. Until then, exercises use the built-in animated GIFs.</div>`}`;
+}
+function toggleVideoEnabled(){ const c=loadVideoConfig(); c.enabled=!c.enabled; saveVideoConfig(c); renderVideoSettings(); }
+function toggleVideoFemale(){ const c=loadVideoConfig(); c.hasFemale=!c.hasFemale; saveVideoConfig(c); renderVideoSettings(); }
+function updateVideoBase(v){ const c=loadVideoConfig(); c.base=(v||'videos').trim().replace(/\/+$/,''); saveVideoConfig(c); renderVideoSettings(); }
+function setVideoExt(e){ const c=loadVideoConfig(); c.ext=e; saveVideoConfig(c); renderVideoSettings(); }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m=>{
@@ -6830,6 +6909,78 @@ function getVideoUrl(ex){
   return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
 }
 
+// ════════════════════════════════════════════════
+//  VIDEO PIPELINE — local exercise animation library
+// ════════════════════════════════════════════════
+// Library-agnostic: maps each exercise to an MP4 by normalised name.
+// Works with Gym-Animations / Exercise Animatic / any MP4 set.
+// Files live under a base folder, split by gender:
+//   <base>/male/<slug>.mp4   and   <base>/female/<slug>.mp4
+// Config is editable in Profile and saved to localStorage.
+
+const VIDEO_DEFAULTS = {
+  enabled: false,            // turns the local library on once files are in place
+  base: 'videos',            // folder (relative to the app) or full CDN URL, no trailing slash
+  ext: 'mp4',                // file extension the library uses (mp4 / mov)
+  hasFemale: true,           // Gym-Animations has female; Exercise Animatic is male-only
+  // Optional explicit overrides: exact exercise name -> exact filename (no extension)
+  // Use this for any exercise whose auto-slug doesn't match the library's filename.
+  map: {}
+};
+function loadVideoConfig(){
+  try{ return Object.assign({}, VIDEO_DEFAULTS, JSON.parse(localStorage.getItem('fgym_videocfg')||'{}')); }
+  catch(e){ return Object.assign({}, VIDEO_DEFAULTS); }
+}
+function saveVideoConfig(cfg){ localStorage.setItem('fgym_videocfg', JSON.stringify(cfg)); }
+
+// Turn an exercise name into a filename slug.
+// "Bench Press" -> "bench-press" ; "Pull Up — Wide Grip" -> "pull-up-wide-grip"
+function videoSlug(name){
+  return (name||'')
+    .toLowerCase()
+    .replace(/[—–]/g,'-')         // em/en dashes -> hyphen
+    .replace(/[^a-z0-9]+/g,'-')   // anything not alphanumeric -> hyphen
+    .replace(/^-+|-+$/g,'')       // trim leading/trailing hyphens
+    .replace(/-+/g,'-');          // collapse repeats
+}
+
+// Which gender variant to use for the active user.
+function videoGenderForUser(user){
+  user = user || activeUser;
+  // explicit per-user stored preference wins
+  const stored = localStorage.getItem('fgym_videogender_'+user);
+  if(stored==='male' || stored==='female') return stored;
+  // sensible defaults: Mike = male, Michelle/Amy = female
+  if(user==='Mike') return 'male';
+  if(user==='Michelle' || user==='Amy') return 'female';
+  return 'male';
+}
+function setVideoGender(user, g){ localStorage.setItem('fgym_videogender_'+user, g); }
+
+// The main resolver. Returns a playable local MP4 URL, or null if the library
+// isn't enabled / this exercise has no mapped file yet.
+function localVideoSrc(ex){
+  const cfg = loadVideoConfig();
+  if(!cfg.enabled) return null;
+  const name = (typeof ex==='string') ? ex : (ex && ex.name);
+  if(!name) return null;
+  let gender = videoGenderForUser(activeUser);
+  if(gender==='female' && !cfg.hasFemale) gender='male'; // fall back if library is male-only
+  // explicit filename override, else auto-slug
+  const file = (cfg.map && cfg.map[name]) ? cfg.map[name] : videoSlug(name);
+  const base = cfg.base.replace(/\/+$/,'');
+  return `${base}/${gender}/${file}.${cfg.ext}`;
+}
+
+// Does this exercise have a local video configured? (best-effort: enabled + name)
+function hasLocalVideo(ex){
+  const cfg = loadVideoConfig();
+  if(!cfg.enabled) return false;
+  const name = (typeof ex==='string') ? ex : (ex && ex.name);
+  return !!name;
+}
+
+
 function openLink(url){
   // Create a real anchor and click it — bypasses popup blockers
   const a = document.createElement('a');
@@ -6996,6 +7147,22 @@ async function fetchExerciseGif(exName){
 async function showMuscleModal(exName, muscle){
   document.getElementById('muscle-modal-title').textContent = exName;
   document.getElementById('muscle-modal-subtitle').textContent = 'Loading exercise data...';
+
+  // Local animation library video (if enabled & mapped)
+  const vidWrap = document.getElementById('muscle-video-wrap');
+  const vsrc = localVideoSrc(exName);
+  if(vsrc){
+    const gender = videoGenderForUser(activeUser);
+    vidWrap.style.display = 'block';
+    vidWrap.innerHTML = `
+      <video src="${vsrc}" autoplay loop muted playsinline
+        onerror="this.closest('#muscle-video-wrap').style.display='none'"
+        style="width:100%;max-height:240px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid var(--border)"></video>
+      <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">Form demo · ${gender} model</div>`;
+  } else {
+    vidWrap.style.display = 'none';
+    vidWrap.innerHTML = '';
+  }
 
   const frontEl = document.getElementById('muscle-front-img');
   const backEl  = document.getElementById('muscle-back-img');
