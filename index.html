@@ -2280,14 +2280,98 @@ function toggleNRMuscle(m){
 
 function renderNRExercises(){
   document.getElementById('nr-ex-count').textContent = newRoutineData.exercises.length;
-  document.getElementById('nr-exercises-list').innerHTML = newRoutineData.exercises.map((ex,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:10px;padding:9px 10px;margin-bottom:7px">
-      <div style="flex:1;font-size:14px;font-weight:700">${ex.name}</div>
-      <input type="number" class="inp-sm" value="${ex.sets}" onchange="updateNREx(${i},'sets',this.value)" style="width:40px">
-      <span style="font-size:11px;color:var(--muted)">×</span>
-      <input type="number" class="inp-sm" value="${ex.reps}" onchange="updateNREx(${i},'reps',this.value)" style="width:40px">
-      <button onclick="removeNREx(${i})" style="background:rgba(255,77,77,.15);color:var(--red);border-radius:7px;padding:5px 9px;font-size:15px">×</button>
-    </div>`).join('');
+  const list = newRoutineData.exercises;
+  const el = document.getElementById('nr-exercises-list');
+  if(!list.length){ el.innerHTML = `<div style="color:var(--muted);font-size:12px;text-align:center;padding:10px">No exercises yet — auto-fill above or add from the library below.</div>`; return; }
+  // master rest bar (same as generator)
+  let html = `<div style="display:flex;align-items:center;gap:8px;background:var(--card);border-radius:10px;padding:8px 10px;margin-bottom:8px;border:1px solid var(--border)">
+    <span style="font-size:11px;color:var(--muted);font-weight:700">REST</span>
+    <button onclick="nudgeAllNRRest(-15)" style="width:26px;height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:14px;font-weight:800">−</button>
+    <button onclick="nudgeAllNRRest(15)" style="width:26px;height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:14px;font-weight:800">+</button>
+    <span style="font-size:10px;color:var(--muted)">nudge all ±15s</span>
+    <button onclick="resetAllNRRest()" style="margin-left:auto;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:700;padding:6px 10px">↺ Reset to default</button>
+  </div>
+  <div style="background:var(--bg);border-radius:10px;padding:8px 10px">`;
+  html += list.map((ex,i)=>{
+    const rest = ex.restSec!=null ? ex.restSec : 60;
+    return `<div draggable="true"
+      ondragstart="nrDragStart(${i})" ondragover="event.preventDefault()" ondrop="nrDrop(${i})"
+      style="display:flex;align-items:center;gap:6px;padding:7px 0;font-size:13px;border-bottom:1px solid var(--soft)">
+      <span style="color:var(--muted);cursor:grab;font-size:14px;flex-shrink:0" title="Drag to reorder">⠿</span>
+      <span style="color:var(--muted);font-size:11px;width:14px">${i+1}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;color:var(--babyblue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ex.name}</div>
+        <div style="font-size:10px;color:var(--muted)">${subMuscle(ex)}${isCompound(ex)?' · compound':''} · <span onclick="nudgeOneNRRest(${i},-15)" style="cursor:pointer;color:var(--muted)">◂</span> rest <span style="color:var(--babyblue);font-weight:700">${fmtRest(rest)}</span> <span onclick="nudgeOneNRRest(${i},15)" style="cursor:pointer;color:var(--muted)">▸</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
+        <button onclick="editNRSets(${i},-1)" style="width:22px;height:22px;border-radius:5px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:800">−</button>
+        <span style="font-size:12px;min-width:32px;text-align:center;color:var(--muted)">${ex.sets}×${ex.reps}</span>
+        <button onclick="editNRSets(${i},1)" style="width:22px;height:22px;border-radius:5px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:800">+</button>
+        <button onclick="swapNRExercise(${i})" title="Swap" style="width:22px;height:22px;border-radius:5px;background:var(--soft);border:1px solid var(--border);color:var(--lime);font-size:12px">↻</button>
+        <button onclick="removeNREx(${i})" title="Remove" style="width:22px;height:22px;border-radius:5px;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.25);color:var(--red);font-size:13px">×</button>
+      </div>
+    </div>`;
+  }).join('');
+  // run-through button
+  html += `</div><button onclick="previewNRRunThrough()" style="width:100%;margin-top:10px;background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:12px;font-weight:700">▶ Run-through</button>`;
+  el.innerHTML = html;
+}
+
+// ── Manual builder: per-exercise edits (mirror generator) ──
+function editNRSets(i, delta){
+  const ex = newRoutineData.exercises[i];
+  ex.sets = Math.max(1, Math.min(6, (ex.sets||3) + delta));
+  renderNRExercises();
+}
+function nudgeOneNRRest(i, delta){
+  const ex = newRoutineData.exercises[i];
+  ex.restSec = Math.max(10, Math.min(300, (ex.restSec!=null?ex.restSec:60) + delta));
+  renderNRExercises();
+}
+function nudgeAllNRRest(delta){
+  newRoutineData.exercises.forEach(ex=>{ ex.restSec = Math.max(10, Math.min(300, (ex.restSec!=null?ex.restSec:60) + delta)); });
+  renderNRExercises();
+}
+function setAllNRRest(secs){
+  const v = parseInt(secs)||0; if(!v) return;
+  newRoutineData.exercises.forEach(ex=>{ ex.restSec = v; });
+  renderNRExercises();
+}
+function resetAllNRRest(){
+  newRoutineData.exercises.forEach(ex=>{ ex.restSec = bestPracticeRest(ex, 'intermediate'); });
+  renderNRExercises();
+  toast('Rest times reset to recommended');
+}
+function swapNRExercise(i){
+  const cur = newRoutineData.exercises[i];
+  let pool = EXERCISES.filter(e=>e.muscle===cur.muscle);
+  if(getHipSafePref(activeUser)) pool = pool.filter(e=>e.hipSafe);
+  const used = newRoutineData.exercises.map(e=>e.name);
+  const options = pool.filter(e=>!used.includes(e.name));
+  if(!options.length){ toast('No other exercises available to swap in'); return; }
+  const pick = options[Math.floor(Math.random()*options.length)];
+  const newEx = {...pick};
+  newEx.sets = cur.sets; newEx.reps = cur.reps;
+  newEx.restSec = bestPracticeRest(newEx, 'intermediate');
+  newRoutineData.exercises[i] = newEx;
+  renderNRExercises();
+}
+let nrDrag = null;
+function nrDragStart(i){ nrDrag = i; }
+function nrDrop(to){
+  if(nrDrag===null) return;
+  const arr = newRoutineData.exercises;
+  const [moved] = arr.splice(nrDrag, 1);
+  arr.splice(to, 0, moved);
+  nrDrag = null;
+  renderNRExercises();
+}
+// Run-through for the manual builder (reuses the same preview modal)
+function previewNRRunThrough(){
+  if(!newRoutineData.exercises.length){ toast('Add some exercises first'); return; }
+  previewState = { workout: { name: document.getElementById('nr-name').value||'Your workout', exercises: newRoutineData.exercises, warmup:newRoutineData.warmup, cooldown:newRoutineData.cooldown }, idx:0, playing:false };
+  renderPreview();
+  openModal('modal-preview');
 }
 
 function updateNREx(i,field,val){ newRoutineData.exercises[i][field]=parseInt(val)||0; }
@@ -2328,7 +2412,11 @@ function renderPickerList(){
 
 function addExToRoutine(name){
   const ex = EXERCISES.find(e=>e.name===name);
-  if(ex) newRoutineData.exercises.push({...ex});
+  if(ex){
+    const newEx = {...ex};
+    if(newEx.restSec==null) newEx.restSec = bestPracticeRest(newEx, 'intermediate');
+    newRoutineData.exercises.push(newEx);
+  }
   closeModal('modal-ex-picker');
   renderNRExercises();
 }
@@ -2837,12 +2925,9 @@ function renderGeneratedWorkouts(){
         <button onclick="nudgeAllRest(${wi},-15)" style="width:26px;height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:14px;font-weight:800">−</button>
         <button onclick="nudgeAllRest(${wi},15)" style="width:26px;height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:14px;font-weight:800">+</button>
         <span style="font-size:10px;color:var(--muted)">nudge all ±15s</span>
-        <select onchange="setAllRest(${wi},this.value);this.selectedIndex=0" style="margin-left:auto;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:5px 6px">
-          <option value="">set all to…</option>
-          ${REST_RAIL.map(s=>`<option value="${s}">${fmtRest(s)}</option>`).join('')}
-        </select>
+        <button onclick="resetAllRest(${wi})" style="margin-left:auto;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:700;padding:6px 10px">↺ Reset to default</button>
       </div>
-      <div style="border-top:1px solid var(--border);padding-top:8px" id="gen-exlist-${wi}">
+      <div style="background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:8px" id="gen-exlist-${wi}">
         ${w.exercises.map((ex,i)=>`
           <div draggable="true"
             ondragstart="genDragStart(${wi},${i})" ondragover="event.preventDefault()" ondrop="genDrop(${wi},${i})"
@@ -2943,6 +3028,13 @@ function setAllRest(wi, secs){
   generatedWorkouts[wi].exercises.forEach(ex=>{ ex.restSec = v; });
   recalcGenEstimate(wi);
   renderGeneratedWorkouts();
+}
+// Reset every exercise's rest to its smart best-practice default
+function resetAllRest(wi){
+  generatedWorkouts[wi].exercises.forEach(ex=>{ ex.restSec = bestPracticeRest(ex, genState.difficulty); });
+  recalcGenEstimate(wi);
+  renderGeneratedWorkouts();
+  toast('Rest times reset to recommended');
 }
 // Adjust just one exercise's rest (individual override, bounded 10–300s)
 function nudgeOneRest(wi, i, delta){
