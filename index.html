@@ -206,7 +206,10 @@ if('serviceWorker' in navigator){
   <div id="routine-view-family">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-size:16px;font-weight:800">Family Routines</div>
-      <button onclick="openNewRoutine()" style="background:var(--lime);color:#050508;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
+      <div style="display:flex;gap:6px">
+        <button onclick="openWorkoutGenerator()" style="background:rgba(200,241,53,.15);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">✨ Generate</button>
+        <button onclick="openNewRoutine()" style="background:var(--lime);color:#050508;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
+      </div>
     </div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:8px;padding-bottom:4px"><div style="display:flex;gap:6px;width:max-content;padding-right:16px" id="routine-filter-bar"></div></div>
     <div id="my-routines-list"></div>
@@ -309,9 +312,11 @@ if('serviceWorker' in navigator){
       <div id="micro-bars"></div>
     </div>
     <!-- Meal timing -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:16px;font-weight:800">Today's Meals</div>
-      <button onclick="openAddMeal()" style="background:var(--lime);color:#050508;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ Add</button>
+    <div style="font-size:16px;font-weight:800;margin-bottom:10px">Today's Meals</div>
+    <!-- Quick food search -->
+    <div style="position:relative;margin-bottom:12px">
+      <input class="inp" id="today-food-search" placeholder="🔍 Search any food to log..." oninput="todaySearchFood(this.value)" autocomplete="off">
+      <div id="today-food-results" style="margin-top:6px"></div>
     </div>
     <div id="meal-log"></div>
     <button onclick="openSaveMealTemplate()" style="width:100%;background:var(--soft);color:var(--muted);border:1px dashed var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-top:8px">💾 Save Today's Meals as a Template</button>
@@ -745,6 +750,52 @@ if('serviceWorker' in navigator){
 </div>
 </div>
 
+<!-- Workout Generator Modal -->
+<div class="modal-overlay" id="modal-generator">
+<div class="modal" style="max-height:92vh">
+  <div style="font-size:20px;font-weight:800;margin-bottom:4px">✨ Generate Workouts</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Pick a muscle, difficulty and time — get 3 options to choose from, rest built in.</div>
+
+  <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">MUSCLE GROUP</div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;max-height:120px;overflow-y:auto" id="gen-muscle-btns"></div>
+
+  <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">DIFFICULTY</div>
+  <div style="display:flex;gap:6px;margin-bottom:16px">
+    <button id="gendiff-beginner" onclick="setGenDifficulty('beginner')" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">🟢 Beginner</button>
+    <button id="gendiff-intermediate" onclick="setGenDifficulty('intermediate')" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">🟡 Intermediate</button>
+    <button id="gendiff-advanced" onclick="setGenDifficulty('advanced')" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">🔴 Advanced</button>
+  </div>
+
+  <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">DURATION</div>
+  <div style="display:flex;gap:6px;margin-bottom:8px">
+    <button id="genmin-20" onclick="setGenMinutes(20)" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">20 min</button>
+    <button id="genmin-40" onclick="setGenMinutes(40)" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">40 min</button>
+    <button id="genmin-60" onclick="setGenMinutes(60)" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">60 min</button>
+    <button id="genmin-90" onclick="setGenMinutes(90)" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">90 min</button>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+    <span style="font-size:12px;color:var(--muted)">Custom:</span>
+    <input id="gen-custom-min" type="number" min="10" max="180" placeholder="mins" oninput="setGenCustomMinutes(this.value)" class="inp" style="flex:1;padding:8px">
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;background:var(--soft);border-radius:10px;padding:12px;margin-bottom:16px;border:1px solid var(--border)">
+    <div>
+      <div style="font-size:13px;font-weight:700">Hip-safe only</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">Exclude deep hip-flexion moves (for Mike's cam lesion)</div>
+    </div>
+    <div onclick="toggleGenHipSafe()" id="gen-hip-toggle" style="width:44px;height:26px;border-radius:13px;background:var(--soft);border:1px solid var(--border);position:relative;cursor:pointer;transition:all .2s;flex-shrink:0">
+      <div id="gen-hip-thumb" style="position:absolute;top:3px;left:2px;width:20px;height:20px;border-radius:50%;background:white;transition:left .2s"></div>
+    </div>
+  </div>
+
+  <button onclick="generateWorkouts()" class="btn-primary" style="margin-bottom:14px">✨ Generate 3 Options</button>
+
+  <div id="gen-results"></div>
+
+  <button class="btn-secondary" onclick="closeModal('modal-generator')">Close</button>
+</div>
+</div>
+
 <!-- New Routine Modal -->
 <div class="modal-overlay" id="modal-new-routine">
 <div class="modal">
@@ -963,9 +1014,24 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- Add Meal Modal -->
+<!-- Pick Meal Slot Modal (from Today quick-search) -->
+<div class="modal-overlay" id="modal-pick-slot">
+<div class="modal" style="max-width:340px">
+  <div style="font-size:20px;font-weight:800;margin-bottom:6px">Add to which meal?</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Choose where to log this food</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <button onclick="logPendingFood('breakfast')" style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:var(--text)">🌅 Breakfast</button>
+    <button onclick="logPendingFood('lunch')" style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:var(--text)">☀️ Lunch</button>
+    <button onclick="logPendingFood('dinner')" style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:var(--text)">🌙 Dinner</button>
+    <button onclick="logPendingFood('snacks')" style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:var(--text)">🍎 Snacks</button>
+  </div>
+  <button onclick="closeModal('modal-pick-slot')" class="btn-secondary">Cancel</button>
+</div>
+</div>
+
 <div class="modal-overlay" id="modal-add-meal">
 <div class="modal">
-  <div style="font-size:20px;font-weight:800;margin-bottom:4px">Log a Meal</div>
+  <div style="font-size:20px;font-weight:800;margin-bottom:4px" id="add-meal-title">Log a Meal</div>
   <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Search, scan a barcode, or enter manually</div>
 
   <!-- Scan & Search row -->
@@ -2457,6 +2523,197 @@ function renderHistory(){
   }).join('');
 }
 
+// ══════════════════ WORKOUT GENERATOR ══════════════════
+// Builds N distinct workouts for a muscle group, sized to a target duration,
+// with rest times baked in. Works off the existing EXERCISES data.
+
+let genState = { muscle:'Shoulders', difficulty:'intermediate', minutes:60, hipSafe:false };
+let generatedWorkouts = []; // holds the last batch so "Start" can launch them
+
+// Per-difficulty tuning
+const DIFFICULTY_CFG = {
+  beginner:     { reps:[12,15], setsRange:[2,3], restSec:45, label:'Beginner' },
+  intermediate: { reps:[8,12],  setsRange:[3,4], restSec:60, label:'Intermediate' },
+  advanced:     { reps:[5,8],   setsRange:[4,5], restSec:90, label:'Advanced' },
+};
+const SET_WORK_SEC = 45;       // ~time to perform one set
+const EX_SETUP_SEC = 60;       // ~time to find/setup a new exercise
+
+// Estimate minutes for a list of exercises at a given difficulty
+function estimateWorkoutMinutes(exs, restSec){
+  let sec = 0;
+  exs.forEach(ex=>{
+    const sets = ex.sets || 3;
+    sec += EX_SETUP_SEC;
+    sec += sets * SET_WORK_SEC;
+    sec += (sets - 1) * restSec; // rest between sets, not after the last
+  });
+  return Math.round(sec / 60);
+}
+
+// Simple seeded shuffle so the 3 variants differ but are reproducible per-seed
+function shuffleWithSeed(arr, seed){
+  const a = arr.slice();
+  let s = seed * 9301 + 49297;
+  for(let i=a.length-1;i>0;i--){
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s/233280) * (i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+// Build one workout variant
+function buildWorkoutVariant(pool, cfg, targetMin, seed){
+  const ordered = shuffleWithSeed(pool, seed);
+  const chosen = [];
+  const [minReps,maxReps] = cfg.reps;
+  for(const ex of ordered){
+    // pick sets within the difficulty range (bounded by the exercise's own default)
+    const sets = Math.min(cfg.setsRange[1], Math.max(cfg.setsRange[0], ex.sets||3));
+    const reps = Math.round((minReps+maxReps)/2);
+    const candidate = { name:ex.name, muscle:ex.muscle, sets, reps, weight:ex.weight||0, desc:ex.desc||'', video:ex.video||'' };
+    const trial = chosen.concat([candidate]);
+    const trialMins = estimateWorkoutMinutes(trial, cfg.restSec);
+    const currentMins = estimateWorkoutMinutes(chosen, cfg.restSec);
+    // Stop if adding this would overshoot target by more than it undershoots now,
+    // i.e. keep whichever lands closest to the target.
+    if(chosen.length >= 3 && trialMins > targetMin){
+      const overBy = trialMins - targetMin;
+      const underBy = targetMin - currentMins;
+      if(overBy > underBy) break; // current set is closer to target; stop
+    }
+    chosen.push(candidate);
+    if(estimateWorkoutMinutes(chosen, cfg.restSec) >= targetMin) break;
+  }
+  return chosen;
+}
+
+function generateWorkouts(){
+  const { muscle, difficulty, minutes, hipSafe } = genState;
+  const cfg = DIFFICULTY_CFG[difficulty] || DIFFICULTY_CFG.intermediate;
+  // pool: exercises in this muscle group, optionally hip-safe only
+  let pool = EXERCISES.filter(e=>e.muscle===muscle);
+  if(hipSafe) pool = pool.filter(e=>e.hipSafe);
+  const resultsEl = document.getElementById('gen-results');
+  if(pool.length < 3){
+    resultsEl.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:14px;text-align:center">Only ${pool.length} exercise${pool.length===1?'':'s'} available for ${muscle}${hipSafe?' (hip-safe)':''}. Try another muscle group or turn off the hip-safe filter.</div>`;
+    generatedWorkouts = [];
+    return;
+  }
+  // Build 3 distinct variants using different seeds
+  generatedWorkouts = [0,1,2].map(i=>{
+    const exs = buildWorkoutVariant(pool, cfg, minutes, i*37+7);
+    return {
+      id: 'gen_'+Date.now()+'_'+i,
+      name: `${muscle} ${cfg.label} · ${minutes}min (Option ${String.fromCharCode(65+i)})`,
+      muscle, difficulty, restSec: cfg.restSec,
+      estMin: estimateWorkoutMinutes(exs, cfg.restSec),
+      exercises: exs
+    };
+  });
+  renderGeneratedWorkouts();
+}
+
+function renderGeneratedWorkouts(){
+  const el = document.getElementById('gen-results');
+  if(!generatedWorkouts.length){ el.innerHTML=''; return; }
+  el.innerHTML = generatedWorkouts.map((w,wi)=>`
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div style="font-size:15px;font-weight:800">Option ${String.fromCharCode(65+wi)}</div>
+          <div style="font-size:11px;color:var(--muted)">${w.exercises.length} exercises · ~${w.estMin} min · ${w.restSec}s rest between sets</div>
+        </div>
+        <button onclick="startGeneratedWorkout(${wi})" style="background:var(--lime);color:#050508;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800">Start</button>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:8px">
+        ${w.exercises.map((ex,i)=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px">
+            <span style="color:var(--muted);font-size:11px;width:18px">${i+1}.</span>
+            <span style="flex:1;font-weight:600">${ex.name}</span>
+            <span style="color:var(--muted);font-size:12px">${ex.sets} × ${ex.reps}</span>
+          </div>`).join('')}
+      </div>
+      <button onclick="regenerateOne(${wi})" style="width:100%;margin-top:8px;background:var(--soft);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700">↻ Shuffle this option</button>
+    </div>`).join('');
+}
+
+function regenerateOne(wi){
+  const cfg = DIFFICULTY_CFG[genState.difficulty] || DIFFICULTY_CFG.intermediate;
+  let pool = EXERCISES.filter(e=>e.muscle===genState.muscle);
+  if(genState.hipSafe) pool = pool.filter(e=>e.hipSafe);
+  const exs = buildWorkoutVariant(pool, cfg, genState.minutes, Math.floor(Math.random()*99999));
+  generatedWorkouts[wi] = {
+    ...generatedWorkouts[wi],
+    estMin: estimateWorkoutMinutes(exs, cfg.restSec),
+    exercises: exs
+  };
+  renderGeneratedWorkouts();
+}
+
+function startGeneratedWorkout(wi){
+  const w = generatedWorkouts[wi];
+  if(!w) return;
+  // register as a temporary routine so startWorkout can use it
+  if(typeof routines !== 'undefined'){
+    routines.push(w); // in-memory only; not saved unless user keeps it
+  }
+  startWorkout(w.id);
+}
+
+// ── Generator modal controls ──
+function openWorkoutGenerator(presetMuscle){
+  if(presetMuscle) genState.muscle = presetMuscle;
+  generatedWorkouts = [];
+  const rEl = document.getElementById('gen-results'); if(rEl) rEl.innerHTML='';
+  renderGenMuscles();
+  renderGenControls();
+  openModal('modal-generator');
+}
+function renderGenMuscles(){
+  // muscle groups that actually have >=3 exercises, for sensible choices
+  const counts = {};
+  EXERCISES.forEach(e=>{ counts[e.muscle]=(counts[e.muscle]||0)+1; });
+  const groups = Object.keys(counts).filter(m=>counts[m]>=3).sort();
+  document.getElementById('gen-muscle-btns').innerHTML = groups.map(m=>`
+    <button onclick="setGenMuscle('${m}')" class="gen-musc" data-m="${m}"
+      style="padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${m===genState.muscle?'var(--lime)':'var(--border)'};background:${m===genState.muscle?'rgba(200,241,53,.15)':'var(--soft)'};color:${m===genState.muscle?'var(--lime)':'var(--muted)'}">${m} <span style="opacity:.6">${counts[m]}</span></button>`).join('');
+}
+function setGenMuscle(m){ genState.muscle=m; renderGenMuscles(); }
+function setGenDifficulty(d){ genState.difficulty=d; renderGenControls(); }
+function setGenMinutes(m){ genState.minutes=m; renderGenControls(); }
+function toggleGenHipSafe(){ genState.hipSafe=!genState.hipSafe; renderGenControls(); }
+function setGenCustomMinutes(v){
+  const n = parseInt(v)||0;
+  if(n>=10 && n<=180){ genState.minutes=n; renderGenControls(); }
+}
+function renderGenControls(){
+  // difficulty
+  ['beginner','intermediate','advanced'].forEach(d=>{
+    const b=document.getElementById('gendiff-'+d);
+    if(b){ const on=genState.difficulty===d;
+      b.style.background=on?'rgba(200,241,53,.15)':'var(--soft)';
+      b.style.color=on?'var(--lime)':'var(--muted)';
+      b.style.borderColor=on?'var(--lime)':'var(--border)'; }
+  });
+  // minutes presets
+  [20,40,60,90].forEach(m=>{
+    const b=document.getElementById('genmin-'+m);
+    if(b){ const on=genState.minutes===m;
+      b.style.background=on?'rgba(200,241,53,.15)':'var(--soft)';
+      b.style.color=on?'var(--lime)':'var(--muted)';
+      b.style.borderColor=on?'var(--lime)':'var(--border)'; }
+  });
+  // hip-safe toggle
+  const t=document.getElementById('gen-hip-toggle'), th=document.getElementById('gen-hip-thumb');
+  if(t){ t.style.background=genState.hipSafe?'var(--lime)':'var(--soft)'; t.style.border=genState.hipSafe?'none':'1px solid var(--border)'; }
+  if(th){ th.style.left=genState.hipSafe?'20px':'2px'; }
+  // custom field reflects current if not a preset
+  const cf=document.getElementById('gen-custom-min');
+  if(cf && ![20,40,60,90].includes(genState.minutes)) cf.value=genState.minutes;
+}
+
 // ══════════════════ WORKOUT ══════════════════
 function startWorkout(id){
   const r = routines.find(x=>x.id===id);
@@ -3287,18 +3544,35 @@ function renderNutrition(){
   }).join('') + '<div style="font-size:11px;color:var(--muted);margin-top:6px">💡 Log micronutrients via food search — most packaged foods include this data automatically</div>';
 
   // ── Meal log ──
-  document.getElementById('meal-log').innerHTML = meals.length ? meals.map((m,i)=>`
-    <div class="card-sm" style="margin-bottom:8px;display:flex;align-items:center;gap:10px">
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:700">${m.name}</div>
-        <div style="font-size:11px;color:var(--muted)">${m.time} · P:${m.protein||0}g C:${m.carbs||0}g F:${m.fat||0}g${m.fibre?' · Fibre:'+m.fibre+'g':''}</div>
+  // ── Meal log grouped by meal type ──
+  const MEAL_SLOTS = [
+    {key:'breakfast', label:'Breakfast', icon:'🌅'},
+    {key:'lunch', label:'Lunch', icon:'☀️'},
+    {key:'dinner', label:'Dinner', icon:'🌙'},
+    {key:'snacks', label:'Snacks', icon:'🍎'},
+  ];
+  document.getElementById('meal-log').innerHTML = MEAL_SLOTS.map(slot=>{
+    const slotMeals = meals.map((m,i)=>({m,i})).filter(x=>(x.m.meal||'snacks')===slot.key);
+    const slotCals = slotMeals.reduce((a,x)=>a+(x.m.cals||0),0);
+    return `
+    <div class="card-sm" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${slotMeals.length?'8px':'0'}">
+        <div style="font-size:14px;font-weight:800">${slot.icon} ${slot.label} ${slotCals?`<span style="font-size:12px;color:var(--muted);font-weight:600">· ${slotCals} kcal</span>`:''}</div>
+        <button onclick="openAddMeal('${slot.key}')" style="background:rgba(200,241,53,.12);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Add</button>
       </div>
-      <div style="text-align:right">
-        <div style="font-size:15px;font-weight:800;color:${uColor}">${m.cals}</div>
-        <button onclick="deleteMeal(${i})" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:0">remove</button>
-      </div>
-    </div>`).join('') :
-    '<div style="color:var(--muted);font-size:14px;padding:12px 0">No meals logged yet today. Tap + Add to start.</div>';
+      ${slotMeals.map(x=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border)">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700">${x.m.name}</div>
+            <div style="font-size:11px;color:var(--muted)">${x.m.time||''} · P:${x.m.protein||0}g C:${x.m.carbs||0}g F:${x.m.fat||0}g${x.m.fibre?' · Fibre:'+x.m.fibre+'g':''}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:14px;font-weight:800;color:${uColor}">${x.m.cals}</div>
+            <button onclick="deleteMeal(${x.i})" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:0">remove</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
 
   // ── Suggestions ──
   const settings2 = getNutSettings();
@@ -3893,7 +4167,11 @@ function renderNutTrends(){
     </div>`;
 }
 
-function openAddMeal(){
+// ── Meal slot tracking ──
+let currentMealSlot = 'snacks';
+
+function openAddMeal(slot){
+  currentMealSlot = slot || 'snacks';
   document.getElementById('meal-search-input').value = '';
   document.getElementById('food-search-results').innerHTML = '';
   document.getElementById('meal-name-input').value = '';
@@ -3901,6 +4179,9 @@ function openAddMeal(){
   document.getElementById('meal-protein').value = '';
   document.getElementById('meal-carbs').value = '';
   document.getElementById('meal-fat').value = '';
+  const slotLabels = {breakfast:'🌅 Breakfast',lunch:'☀️ Lunch',dinner:'🌙 Dinner',snacks:'🍎 Snacks'};
+  const titleEl = document.getElementById('add-meal-title');
+  if(titleEl) titleEl.textContent = 'Add to ' + (slotLabels[currentMealSlot]||'Snacks');
   openModal('modal-add-meal');
 }
 
@@ -3915,7 +4196,7 @@ function openBarcodeScanner(){
   openModal('modal-barcode');
 }
 
-// Fill meal form from food data
+// Fill meal form from food data (used after barcode lookup)
 function fillMealForm(name, cals, protein, carbs, fat){
   document.getElementById('meal-name-input').value = name;
   document.getElementById('meal-cals').value = Math.round(cals)||'';
@@ -3928,38 +4209,155 @@ function fillMealForm(name, cals, protein, carbs, fat){
   toast('Food data loaded — adjust serving size if needed');
 }
 
-// Search Open Food Facts by name
+// ══════════════════ FOOD SEARCH (shared engine) ══════════════════
+// Cache of last results so tap-to-select never relies on fragile inline strings.
+let foodResultCache = [];
 let foodSearchTimer = null;
+
+function escapeHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Core fetch — tries OFF v2 API first, falls back to legacy endpoint.
+async function fetchFoods(q){
+  const headers = { 'Accept':'application/json' };
+  // v2 search — current, faster endpoint
+  const v2 = 'https://world.openfoodfacts.org/api/v2/search'
+    + '?search_terms=' + encodeURIComponent(q)
+    + '&fields=product_name,brands,nutriments,serving_quantity'
+    + '&page_size=8&sort_by=popularity_key';
+  try{
+    const res = await fetch(v2, { headers });
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.products) return data.products;
+    }
+  }catch(e){ /* fall through to legacy */ }
+  // legacy fallback
+  const legacy = 'https://world.openfoodfacts.org/cgi/search.pl'
+    + '?search_terms=' + encodeURIComponent(q)
+    + '&search_simple=1&action=process&json=1&page_size=8'
+    + '&fields=product_name,nutriments,brands';
+  const res2 = await fetch(legacy, { headers });
+  const data2 = await res2.json();
+  return (data2 && data2.products) || [];
+}
+
+// Normalise an OFF product into our food shape (per 100g).
+function normaliseFood(p){
+  const n = p.nutriments || {};
+  const name = p.product_name || p.generic_name || '';
+  if(!name) return null;
+  const cal = Math.round(n['energy-kcal_100g'] != null ? n['energy-kcal_100g'] : (n['energy-kcal'] || 0));
+  const pro = Math.round((n.proteins_100g||0)*10)/10;
+  const carb = Math.round((n.carbohydrates_100g||0)*10)/10;
+  const fat = Math.round((n.fat_100g||0)*10)/10;
+  const fibre = Math.round((n.fiber_100g||0)*10)/10;
+  const sugar = Math.round((n.sugars_100g||0)*10)/10;
+  const sodium = Math.round((n.sodium_100g||0)*1000); // g -> mg
+  const brand = p.brands ? p.brands.split(',')[0].trim() : '';
+  if(cal===0 && pro===0 && carb===0 && fat===0) return null; // skip empty entries
+  return {name, brand, cal, pro, carb, fat, fibre, sugar, sodium};
+}
+
+// Render results into a target element; selecting calls onPick(index).
+function renderFoodResults(foods, targetEl, pickFnName){
+  if(!foods.length){
+    targetEl.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px">No results — try another term or enter manually</div>';
+    return;
+  }
+  targetEl.innerHTML = foods.map((f,idx)=>`
+    <div onclick="${pickFnName}(${idx})"
+      style="padding:9px 10px;border-radius:9px;margin-bottom:5px;background:var(--soft);cursor:pointer;border:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:2px">${escapeHtml(f.name)}${f.brand?` <span style="color:var(--muted);font-weight:500">· ${escapeHtml(f.brand)}</span>`:''}</div>
+      <div style="font-size:11px;color:var(--muted)">${f.cal} kcal · P:${f.pro}g C:${f.carb}g F:${f.fat}g <span style="color:var(--lime);font-size:10px">per 100g — tap to add</span></div>
+    </div>`).join('');
+}
+
+// --- Search inside the Add-Meal modal ---
 function searchFood(q){
   clearTimeout(foodSearchTimer);
   const resultsEl = document.getElementById('food-search-results');
-  if(!q || q.length < 3){ resultsEl.innerHTML=''; return; }
+  if(!q || q.trim().length < 2){ resultsEl.innerHTML=''; return; }
   document.getElementById('meal-loading').style.display='block';
   foodSearchTimer = setTimeout(async ()=>{
     try{
-      const res = await fetch('https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=5&fields=product_name,nutriments,brands');
-      const data = await res.json();
+      const raw = await fetchFoods(q.trim());
+      foodResultCache = raw.map(normaliseFood).filter(Boolean).slice(0,8);
       document.getElementById('meal-loading').style.display='none';
-      const products = (data.products||[]).filter(p=>p.product_name && p.nutriments);
-      if(!products.length){ resultsEl.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px">No results found — try entering manually</div>'; return; }
-      resultsEl.innerHTML = products.map(p=>{
-        const n = p.nutriments;
-        const cal = Math.round(n['energy-kcal_100g']||n['energy-kcal']||0);
-        const pro = Math.round(n.proteins_100g||0);
-        const carb = Math.round(n.carbohydrates_100g||0);
-        const fat = Math.round(n.fat_100g||0);
-        const brand = p.brands ? ' · '+p.brands.split(',')[0] : '';
-        return `<div onclick="fillMealForm('${(p.product_name||'').replace(/'/g,'')}',${cal},${pro},${carb},${fat})"
-          style="padding:9px 10px;border-radius:9px;margin-bottom:5px;background:var(--soft);cursor:pointer;border:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:700;margin-bottom:2px">${p.product_name}${brand}</div>
-          <div style="font-size:11px;color:var(--muted)">${cal} kcal · P:${pro}g C:${carb}g F:${fat}g <span style="color:var(--lime);font-size:10px">per 100g — tap to use</span></div>
-        </div>`;
-      }).join('');
+      renderFoodResults(foodResultCache, resultsEl, 'pickFoodModal');
     }catch(e){
       document.getElementById('meal-loading').style.display='none';
-      resultsEl.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px">Search unavailable — enter manually</div>';
+      resultsEl.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px">Search unavailable right now — enter manually below</div>';
     }
-  }, 600);
+  }, 450);
+}
+// Tap a result in the modal -> fills the manual fields (per 100g)
+function pickFoodModal(idx){
+  const f = foodResultCache[idx];
+  if(!f) return;
+  document.getElementById('meal-name-input').value = f.brand ? `${f.name} (${f.brand})` : f.name;
+  document.getElementById('meal-cals').value = f.cal||'';
+  document.getElementById('meal-protein').value = f.pro||'';
+  document.getElementById('meal-carbs').value = f.carb||'';
+  document.getElementById('meal-fat').value = f.fat||'';
+  document.getElementById('food-search-results').innerHTML = '';
+  document.getElementById('meal-search-input').value = '';
+  toast('Loaded — adjust the amount, then Log Meal');
+}
+
+// --- Quick search box at top of Today tab ---
+let todayFoodCache = [];
+let todaySearchTimer = null;
+function todaySearchFood(q){
+  clearTimeout(todaySearchTimer);
+  const resultsEl = document.getElementById('today-food-results');
+  if(!resultsEl) return;
+  if(!q || q.trim().length < 2){ resultsEl.innerHTML=''; return; }
+  resultsEl.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">Searching…</div>';
+  todaySearchTimer = setTimeout(async ()=>{
+    try{
+      const raw = await fetchFoods(q.trim());
+      todayFoodCache = raw.map(normaliseFood).filter(Boolean).slice(0,6);
+      if(!todayFoodCache.length){ resultsEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">No results — try the + Add buttons to enter manually</div>'; return; }
+      resultsEl.innerHTML = todayFoodCache.map((f,idx)=>`
+        <div style="padding:9px 10px;border-radius:9px;margin-bottom:5px;background:var(--soft);border:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(f.name)}${f.brand?` <span style="color:var(--muted);font-weight:500">· ${escapeHtml(f.brand)}</span>`:''}</div>
+              <div style="font-size:11px;color:var(--muted)">${f.cal} kcal · P:${f.pro}g C:${f.carb}g F:${f.fat}g <span style="font-size:10px">per 100g</span></div>
+            </div>
+            <button onclick="pickTodayFood(${idx})" style="flex-shrink:0;background:var(--lime);color:#050508;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800">Add</button>
+          </div>
+        </div>`).join('');
+    }catch(e){
+      resultsEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">Search unavailable right now — use a meal\u2019s + Add button to enter manually</div>';
+    }
+  }, 450);
+}
+// Tap Add from the Today search -> opens a small slot picker, then logs
+function pickTodayFood(idx){
+  const f = todayFoodCache[idx];
+  if(!f) return;
+  pendingTodayFood = f;
+  openModal('modal-pick-slot');
+}
+let pendingTodayFood = null;
+function logPendingFood(slot){
+  if(!pendingTodayFood) return;
+  const f = pendingTodayFood;
+  const now = new Date();
+  const t = now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+  const meals = getTodayMeals();
+  meals.push({name: f.brand?`${f.name} (${f.brand})`:f.name, cals:f.cal, protein:f.pro, carbs:f.carb, fat:f.fat, fibre:f.fibre||0, sugar:f.sugar||0, sodium:f.sodium||0, time:t, meal:slot});
+  saveTodayMeals(meals);
+  pendingTodayFood = null;
+  closeModal('modal-pick-slot');
+  const sb = document.getElementById('today-food-search'); if(sb) sb.value='';
+  const tr = document.getElementById('today-food-results'); if(tr) tr.innerHTML='';
+  renderNutrition();
+  const slotLabels = {breakfast:'breakfast',lunch:'lunch',dinner:'dinner',snacks:'snacks'};
+  toast('Added to '+(slotLabels[slot]||'snacks'));
 }
 
 // Lookup by barcode using Open Food Facts
@@ -3997,7 +4395,7 @@ function saveMeal(){
   if(!name){ toast('Enter a meal name'); return; }
   const now=new Date(); const t=now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
   const meals = getTodayMeals();
-  meals.push({name,cals,protein,carbs,fat,time:t,fibre:0,sugar:0,sodium:0});
+  meals.push({name,cals,protein,carbs,fat,time:t,fibre:0,sugar:0,sodium:0,meal:currentMealSlot||'snacks'});
   saveTodayMeals(meals);
   closeMealModal();
   renderNutrition();
