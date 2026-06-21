@@ -41,7 +41,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.4}
 .inp:focus{border-color:#3A3A52}
 .inp-sm{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-size:13px;text-align:center;width:48px}
 /* Buttons */
-.btn-primary{background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:15px;font-size:15px;font-weight:800;width:100%;letter-spacing:.3px}
+.btn-primary{background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:15px;font-size:15px;font-weight:800;width:100%;letter-spacing:.3px}
 .btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:13px;padding:14px;font-size:15px;font-weight:700;width:100%}
 .btn-sm{border-radius:9px;padding:7px 14px;font-size:13px;font-weight:700}
 /* Avatar */
@@ -208,7 +208,7 @@ if('serviceWorker' in navigator){
       <div style="font-size:16px;font-weight:800">Family Routines</div>
       <div style="display:flex;gap:6px">
         <button onclick="openWorkoutGenerator()" style="background:rgba(57,255,20,.15);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">✨ Generate</button>
-        <button onclick="openNewRoutine()" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
+        <button onclick="openNewRoutine()" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
       </div>
     </div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:8px;padding-bottom:4px"><div style="display:flex;gap:6px;width:max-content;padding-right:16px" id="routine-filter-bar"></div></div>
@@ -223,7 +223,7 @@ if('serviceWorker' in navigator){
       <div style="font-size:16px;font-weight:800" id="my-view-title">My Routines</div>
       <div style="display:flex;gap:6px">
         <button onclick="confirmDeleteAllMine()" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;border:1px solid rgba(255,77,77,.2)" title="Delete all my routines">Delete all</button>
-        <button onclick="openNewRoutine()" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
+        <button onclick="openNewRoutine()" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
       </div>
     </div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:8px;padding-bottom:4px"><div style="display:flex;gap:6px;width:max-content;padding-right:16px" id="routine-filter-bar-mine"></div></div>
@@ -422,7 +422,7 @@ if('serviceWorker' in navigator){
       <div style="display:flex;gap:6px;flex-wrap:wrap" id="rest-preset-btns">
         <button onclick="setRestTime(30)" class="rest-preset" data-secs="30" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">30s</button>
         <button onclick="setRestTime(45)" class="rest-preset" data-secs="45" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">45s</button>
-        <button onclick="setRestTime(60)" class="rest-preset" data-secs="60" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--lime);background:rgba(57,255,20,.12);color:var(--lime)">60s ✓</button>
+        <button onclick="setRestTime(60)" class="rest-preset" data-secs="60" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--lime);background:rgba(57,255,20,.18);color:var(--lime)">60s ✓</button>
         <button onclick="setRestTime(90)" class="rest-preset" data-secs="90" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">90s</button>
         <button onclick="setRestTime(120)" class="rest-preset" data-secs="120" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">2min</button>
         <button onclick="setRestTime(180)" class="rest-preset" data-secs="180" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">3min</button>
@@ -470,7 +470,7 @@ if('serviceWorker' in navigator){
 
   <!-- Controls -->
   <div style="display:flex;gap:12px;margin-bottom:16px">
-    <button onclick="skipRest()" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:14px 32px;font-size:16px;font-weight:800;min-width:120px">GO! →</button>
+    <button onclick="skipRest()" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:14px 32px;font-size:16px;font-weight:800;min-width:120px">GO! →</button>
     <button onclick="addRestTime(15)" style="background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:14px 20px;font-size:15px;font-weight:700">+15s</button>
   </div>
   <div style="font-size:11px;color:var(--muted)">Tap GO when you're ready — or wait for the beep</div>
@@ -564,7 +564,7 @@ if('serviceWorker' in navigator){
     <div style="text-align:center;margin:20px 0 16px">
       <div style="font-size:72px;font-weight:800;color:var(--lime);font-variant-numeric:tabular-nums;letter-spacing:-2px" id="sport-timer-display">0:00</div>
       <div style="font-size:13px;color:var(--muted)">session time</div>
-      <button onclick="lockSportScreen()" style="margin-top:8px;background:rgba(57,255,20,.1);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700">🔒 Lock screen — prevent accidental pauses</button>
+      <button onclick="lockSportScreen()" style="margin-top:8px;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700">🔒 Lock screen — prevent accidental pauses</button>
     </div>
 
     <!-- Live stats -->
@@ -595,7 +595,7 @@ if('serviceWorker' in navigator){
         style="width:100%;background:var(--soft);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;resize:none;min-height:70px;line-height:1.5;font-family:inherit"></textarea>
     </div>
 
-    <button onclick="finishSportSession()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:16px;font-size:16px;font-weight:800">Finish & Save Session</button>
+    <button onclick="finishSportSession()" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:16px;font-size:16px;font-weight:800">Finish & Save Session</button>
     <div style="height:20px"></div>
   </div>
 </div>
@@ -624,7 +624,7 @@ if('serviceWorker' in navigator){
         </select>
       </div>
     </div>
-    <button onclick="addCustomSport()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:11px;font-size:14px;font-weight:800">+ Add Sport</button>
+    <button onclick="addCustomSport()" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:11px;font-size:14px;font-weight:800">+ Add Sport</button>
   </div>
   <button class="btn-secondary" onclick="closeModal('modal-manage-sports')">Done</button>
 </div>
@@ -850,7 +850,7 @@ if('serviceWorker' in navigator){
       <input type="checkbox" id="nr-auto-warmup" checked style="width:16px;height:16px;accent-color:var(--lime)">
       Add warm-up & cool-down
     </label>
-    <button onclick="autofillManual()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:10px;font-size:13px;font-weight:800">✨ Fill in exercises</button>
+    <button onclick="autofillManual()" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:10px;font-size:13px;font-weight:800">✨ Fill in exercises</button>
   </div>
 
   <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;letter-spacing:.5px">EXERCISES <span id="nr-ex-count" style="color:var(--lime)">0</span></div>
@@ -1113,7 +1113,7 @@ if('serviceWorker' in navigator){
   <!-- Scan & Search row -->
   <div style="display:flex;gap:8px;margin-bottom:10px">
     <input class="inp" id="meal-search-input" placeholder="Search food e.g. banana, chicken..." oninput="searchFood(this.value)" style="flex:1">
-    <button onclick="openBarcodeScanner()" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:10px 12px;font-size:18px;font-weight:800;flex-shrink:0" title="Scan barcode">📷</button>
+    <button onclick="openBarcodeScanner()" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:10px 12px;font-size:18px;font-weight:800;flex-shrink:0" title="Scan barcode">📷</button>
   </div>
 
   <!-- Food search results -->
@@ -1124,7 +1124,7 @@ if('serviceWorker' in navigator){
     <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Enter barcode number manually:</div>
     <div style="display:flex;gap:8px">
       <input class="inp" id="barcode-manual" type="number" placeholder="e.g. 5000159407236" style="flex:1">
-      <button onclick="lookupBarcode(document.getElementById('barcode-manual').value)" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800">Look up</button>
+      <button onclick="lookupBarcode(document.getElementById('barcode-manual').value)" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800">Look up</button>
     </div>
   </div>
 
@@ -1164,7 +1164,7 @@ if('serviceWorker' in navigator){
   <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Barcode number (from packaging):</div>
   <div style="display:flex;gap:8px">
     <input class="inp" id="barcode-scanner-input" type="number" placeholder="e.g. 5000159407236" style="flex:1">
-    <button onclick="lookupBarcode(document.getElementById('barcode-scanner-input').value)" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800">GO</button>
+    <button onclick="lookupBarcode(document.getElementById('barcode-scanner-input').value)" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800">GO</button>
   </div>
   <div id="barcode-result" style="margin-top:12px"></div>
 </div>
@@ -2230,7 +2230,7 @@ function renderNRPairModes(){
   const modes = [{key:'splits',label:'① Splits'},{key:'antagonist',label:'② Pairs'},{key:'custom',label:'③ Custom'}];
   el.innerHTML = modes.map(m=>{
     const on = nrAuto.pairMode===m.key;
-    return `<button onclick="setNRPairMode('${m.key}')" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'#2A2A36'};background:${on?'rgba(57,255,20,.12)':'#16161F'};color:${on?'var(--lime)':'#E8E8F0'}">${m.label}</button>`;
+    return `<button onclick="setNRPairMode('${m.key}')" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'#2A2A36'};background:${on?'rgba(57,255,20,.18)':'#16161F'};color:${on?'var(--lime)':'#E8E8F0'}">${m.label}</button>`;
   }).join('');
   renderNRPairContent();
 }
@@ -2244,7 +2244,7 @@ function renderNRPairContent(){
   const combos = PAIR_COMBOS[nrAuto.pairMode]||[];
   el.innerHTML = combos.map((c,i)=>{
     const on = nrAuto.muscles.slice().sort().join(',')===c.groups.slice().sort().join(',');
-    return `<button onclick="applyNRCombo('${nrAuto.pairMode}',${i})" style="text-align:left;padding:8px 10px;border-radius:8px;border:1px solid ${on?'var(--lime)':'#2A2A36'};background:${on?'rgba(57,255,20,.12)':'#16161F'};margin-bottom:5px;width:100%">
+    return `<button onclick="applyNRCombo('${nrAuto.pairMode}',${i})" style="text-align:left;padding:8px 10px;border-radius:8px;border:1px solid ${on?'var(--lime)':'#2A2A36'};background:${on?'rgba(57,255,20,.18)':'#16161F'};margin-bottom:5px;width:100%">
       <div style="font-size:12px;font-weight:800;color:${on?'var(--lime)':'var(--text)'}">${c.label}</div>
       <div style="font-size:10px;color:var(--muted)">${c.note}</div></button>`;
   }).join('');
@@ -2267,7 +2267,7 @@ function renderNRAutoMuscles(){
     const on = nrAuto.muscles.includes(m);
     const sg = suggested.has(m);
     const border = on?'var(--lime)':(sg?'var(--lime)':'#2A2A36');
-    const bg = on?'rgba(57,255,20,.12)':(sg?'rgba(57,255,20,.08)':'#16161F');
+    const bg = on?'rgba(57,255,20,.18)':(sg?'rgba(57,255,20,.12)':'#16161F');
     const col = on?'var(--lime)':(sg?'var(--lime)':'#E8E8F0');
     return `<button onclick="toggleNRAutoMuscle('${m}')" style="padding:6px 10px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid ${border};background:${bg};color:${col}">${on?'✓ ':''}${m}${sg?' <span style="font-size:8px;opacity:.8">pairs</span>':''}</button>`;
   }).join('');
@@ -2437,7 +2437,7 @@ function openExPicker(){
 function renderPickerGroups(){
   document.getElementById('picker-groups').innerHTML = ['All',...MUSCLE_GROUPS].map(g=>{
     const sel = pickerGroup===g;
-    return `<button onclick="setPickerGroup('${g}')" style="padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid ${sel?'var(--lime)':'#2A2A36'};background:${sel?'rgba(57,255,20,.12)':'#16161F'};color:${sel?'var(--lime)':'#E8E8F0'}">${g}</button>`;
+    return `<button onclick="setPickerGroup('${g}')" style="padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid ${sel?'var(--lime)':'#2A2A36'};background:${sel?'rgba(57,255,20,.18)':'#16161F'};color:${sel?'var(--lime)':'#E8E8F0'}">${g}</button>`;
   }).join('');
 }
 
@@ -2964,7 +2964,7 @@ function renderGeneratedWorkouts(){
           <div style="font-size:15px;font-weight:800">Option ${String.fromCharCode(65+wi)}</div>
           <div style="font-size:11px;color:var(--muted)">${w.exercises.length} exercises · ~${w.estMin} min${(w.muscles||[]).includes('Legs')?' · <span style="color:var(--lime)">full leg ✓</span>':''}</div>
         </div>
-        <button onclick="startRunner(${wi})" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800">Start</button>
+        <button onclick="startRunner(${wi})" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800">Start</button>
       </div>
       ${w.warmup?`<div style="background:rgba(255,140,66,.08);border:1px solid rgba(255,140,66,.2);border-radius:9px;padding:8px 10px;margin-bottom:8px">
         <div style="font-size:11px;font-weight:800;color:#FF8C42;margin-bottom:3px">🔥 WARM-UP (~${w.warmup.reduce((a,m)=>a+m.mins,0)} min)</div>
@@ -3205,12 +3205,12 @@ function renderPreview(){
       ${ex.video?`<a href="${ex.video}" target="_blank" style="display:inline-block;color:var(--lime);font-size:12px;text-decoration:underline;margin-bottom:14px">▶ Watch form video</a>`:'<div style="font-size:11px;color:var(--muted);margin-bottom:14px;font-style:italic">Form video will appear here once your animation library is connected</div>'}
     </div>
     <!-- Auto-play toggle -->
-    <button onclick="togglePreviewPlay()" style="width:100%;background:${playing?'rgba(255,77,77,.12)':'rgba(57,255,20,.12)'};color:${playing?'var(--red)':'var(--lime)'};border:1px solid ${playing?'rgba(255,77,77,.3)':'rgba(57,255,20,.3)'};border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-bottom:8px">${playing?'⏸ Pause auto-play':'▶ Auto-play through workout'}</button>
+    <button onclick="togglePreviewPlay()" style="width:100%;background:${playing?'rgba(255,77,77,.12)':'rgba(57,255,20,.18)'};color:${playing?'var(--red)':'var(--lime)'};border:1px solid ${playing?'rgba(255,77,77,.3)':'rgba(57,255,20,.3)'};border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-bottom:8px">${playing?'⏸ Pause auto-play':'▶ Auto-play through workout'}</button>
     <div style="display:flex;gap:8px">
       <button onclick="previewNav(-1)" ${idx===0?'disabled':''} style="flex:1;background:var(--soft);color:${idx===0?'var(--border)':'var(--text)'};border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:700">← Prev</button>
       ${idx<total-1
-        ? `<button onclick="previewNav(1)" style="flex:2;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:12px;font-size:14px;font-weight:800">Skip → Next</button>`
-        : `<button onclick="closePreview()" style="flex:2;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:12px;font-size:14px;font-weight:800">Got it ✓</button>`}
+        ? `<button onclick="previewNav(1)" style="flex:2;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:12px;font-size:14px;font-weight:800">Skip → Next</button>`
+        : `<button onclick="closePreview()" style="flex:2;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:12px;font-size:14px;font-weight:800">Got it ✓</button>`}
     </div>
     <!-- progress dots -->
     <div style="display:flex;gap:4px;justify-content:center;margin-top:12px">
@@ -3354,7 +3354,7 @@ function renderRunner(){
           <div style="font-size:64px;font-weight:800;color:var(--lime);min-width:140px;font-variant-numeric:tabular-nums" id="runner-weight-val">${logEntry.weight}</div>
           <button onclick="runnerAdjust('weight',2.5)" style="width:56px;height:56px;border-radius:16px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:26px;font-weight:800">+</button>
         </div>
-        <button onclick="runnerConfirmWeight()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:18px;font-size:18px;font-weight:800;margin-bottom:10px">Done — next: reps →</button>
+        <button onclick="runnerConfirmWeight()" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:18px;font-size:18px;font-weight:800;margin-bottom:10px">Done — next: reps →</button>
         <button onclick="runnerSkipToReps()" style="background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline">skip weight</button>
       </div>`;
   } else if(runner.phase === 'reps'){
@@ -3369,7 +3369,7 @@ function renderRunner(){
           <div style="font-size:64px;font-weight:800;color:var(--lime);min-width:140px;font-variant-numeric:tabular-nums" id="runner-reps-val">${logEntry.reps}</div>
           <button onclick="runnerAdjust('reps',1)" style="width:56px;height:56px;border-radius:16px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:26px;font-weight:800">+</button>
         </div>
-        <button onclick="runnerConfirmReps()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:18px;font-size:18px;font-weight:800;margin-bottom:10px">Set done ✓</button>
+        <button onclick="runnerConfirmReps()" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:18px;font-size:18px;font-weight:800;margin-bottom:10px">Set done ✓</button>
         <button onclick="runnerBack()" style="background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline">← back to weight</button>
       </div>`;
   } else if(runner.phase === 'rest'){
@@ -3386,7 +3386,7 @@ function renderRunner(){
           <button onclick="runnerRestAdjust(-15)" style="flex:1;background:var(--soft);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:14px;font-size:14px;font-weight:700">−15s</button>
           <button onclick="runnerRestAdjust(15)" style="flex:1;background:var(--soft);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:14px;font-size:14px;font-weight:700">+15s</button>
         </div>
-        <button onclick="runnerSkipRest()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:16px;font-size:16px;font-weight:800">Skip rest — go now →</button>
+        <button onclick="runnerSkipRest()" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:16px;font-size:16px;font-weight:800">Skip rest — go now →</button>
       </div>`;
   } else if(runner.phase === 'done'){
     const totalVol = runner.log.reduce((a,ex)=>a+ex.sets.reduce((b,s)=>b+(s.done?s.weight*s.reps:0),0),0);
@@ -3396,7 +3396,7 @@ function renderRunner(){
         <div style="font-size:60px;margin-bottom:8px">🎉</div>
         <div style="font-size:26px;font-weight:800;margin-bottom:6px">Workout complete!</div>
         <div style="font-size:14px;color:var(--muted);margin-bottom:20px">${mins} min · ${Math.round(totalVol)} kg total volume</div>
-        <button onclick="finishRunner(true)" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:16px;font-size:16px;font-weight:800;margin-bottom:10px">Save & finish</button>
+        <button onclick="finishRunner(true)" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:16px;font-size:16px;font-weight:800;margin-bottom:10px">Save & finish</button>
         <button onclick="finishRunner(false)" style="background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline">finish without saving</button>
       </div>`;
   }
@@ -3579,7 +3579,7 @@ function renderPairModes(){
   ];
   el.innerHTML = modes.map(m=>{
     const on = genState.pairMode===m.key;
-    return `<button onclick="setPairMode('${m.key}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--lime)':'#2A2A36'};background:${on?'rgba(57,255,20,.12)':'#16161F'};color:${on?'var(--lime)':'#E8E8F0'}">${m.label}</button>`;
+    return `<button onclick="setPairMode('${m.key}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--lime)':'#2A2A36'};background:${on?'rgba(57,255,20,.18)':'#16161F'};color:${on?'var(--lime)':'#E8E8F0'}">${m.label}</button>`;
   }).join('');
   renderPairContent();
 }
@@ -3599,7 +3599,7 @@ function renderPairContent(){
     const sel = genState.muscles.slice().sort().join(',');
     const cg = c.groups.slice().sort().join(',');
     const on = sel===cg;
-    return `<button onclick="applyCombo('${genState.pairMode}',${i})" style="text-align:left;padding:9px 11px;border-radius:9px;border:1px solid ${on?'var(--lime)':'#2A2A36'};background:${on?'rgba(57,255,20,.12)':'#16161F'};margin-bottom:6px;width:100%">
+    return `<button onclick="applyCombo('${genState.pairMode}',${i})" style="text-align:left;padding:9px 11px;border-radius:9px;border:1px solid ${on?'var(--lime)':'#2A2A36'};background:${on?'rgba(57,255,20,.18)':'#16161F'};margin-bottom:6px;width:100%">
       <div style="font-size:13px;font-weight:800;color:${on?'var(--lime)':'var(--text)'}">${c.label}</div>
       <div style="font-size:11px;color:var(--muted)">${c.note}</div>
     </button>`;
@@ -3630,7 +3630,7 @@ function renderGenMuscles(){
     const isSugg = suggested.has(m);
     // chip style 1: white border + black fill default; green border+text when selected; suggestions get green outline
     let border = on ? 'var(--lime)' : (isSugg ? 'var(--lime)' : '#2A2A36');
-    let bg = on ? 'rgba(57,255,20,.12)' : (isSugg ? 'rgba(57,255,20,.08)' : '#16161F');
+    let bg = on ? 'rgba(57,255,20,.18)' : (isSugg ? 'rgba(57,255,20,.12)' : '#16161F');
     let col = on ? 'var(--lime)' : (isSugg ? 'var(--lime)' : '#E8E8F0');
     return `<button onclick="toggleGenMuscle('${m}')" class="gen-musc" data-m="${m}"
       style="padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${border};background:${bg};color:${col};position:relative">
@@ -3765,10 +3765,10 @@ function renderWorkoutExercises(){
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
           <button onclick="removeSet(${ei})" style="width:28px;height:28px;border-radius:7px;background:rgba(255,77,77,.12);color:var(--red);border:1px solid rgba(255,77,77,.25);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1">−</button>
           <div style="font-size:12px;color:var(--muted);min-width:40px;text-align:center">${ex.loggedSets.filter(s=>s.done).length}/${ex.loggedSets.length}</div>
-          <button onclick="addSet(${ei})" style="width:28px;height:28px;border-radius:7px;background:rgba(57,255,20,.12);color:var(--lime);border:1px solid rgba(57,255,20,.25);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1">+</button>
+          <button onclick="addSet(${ei})" style="width:28px;height:28px;border-radius:7px;background:rgba(57,255,20,.18);color:var(--lime);border:1px solid rgba(57,255,20,.25);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1">+</button>
         </div>
       </div>
-      ${ex.notes ? `<div style="font-size:12px;color:var(--lime);margin-bottom:8px;padding:5px 8px;background:rgba(57,255,20,.08);border-radius:7px;border-left:2px solid var(--lime)">📋 ${ex.notes}</div>` : ''}
+      ${ex.notes ? `<div style="font-size:12px;color:var(--lime);margin-bottom:8px;padding:5px 8px;background:rgba(57,255,20,.12);border-radius:7px;border-left:2px solid var(--lime)">📋 ${ex.notes}</div>` : ''}
       ${ex.loggedSets.map((s,si)=>`
         <div class="set-row ${s.done?'done':''}">
           <div style="font-size:12px;color:var(--muted);width:18px;flex-shrink:0">S${si+1}</div>
@@ -4550,7 +4550,7 @@ function renderNutrition(){
     <div class="card-sm" style="margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${slotMeals.length?'8px':'0'}">
         <div style="font-size:14px;font-weight:800">${slot.icon} ${slot.label} ${slotCals?`<span style="font-size:12px;color:var(--muted);font-weight:600">· ${slotCals} kcal</span>`:''}</div>
-        <button onclick="openAddMeal('${slot.key}')" style="background:rgba(57,255,20,.12);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Add</button>
+        <button onclick="openAddMeal('${slot.key}')" style="background:rgba(57,255,20,.18);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Add</button>
       </div>
       ${slotMeals.map(x=>`
         <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border)">
@@ -4690,7 +4690,7 @@ function renderSavedMeals(){
   el.innerHTML = filterBar + `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:16px;font-weight:800">Saved Meals (${meals.length})</div>
-      <button onclick="openModal('modal-add-saved-meal')" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
+      <button onclick="openModal('modal-add-saved-meal')" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
     </div>` + mealCards;
 }
 
@@ -4998,7 +4998,7 @@ function renderBodyStats(){
         <div style="font-size:40px;margin-bottom:10px">⚖️</div>
         <div style="font-size:16px;font-weight:800;margin-bottom:6px">No body stats yet</div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Log your first weigh-in from your Withings scales or enter manually</div>
-        <button onclick="openModal('modal-body-stats')" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:800">Log Body Stats</button>
+        <button onclick="openModal('modal-body-stats')" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:800">Log Body Stats</button>
       </div>`;
     return;
   }
@@ -5319,7 +5319,7 @@ function todaySearchFood(q){
               <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(f.name)}${f.brand?` <span style="color:var(--muted);font-weight:500">· ${escapeHtml(f.brand)}</span>`:''}</div>
               <div style="font-size:11px;color:var(--muted)">${f.cal} kcal · P:${f.pro}g C:${f.carb}g F:${f.fat}g <span style="font-size:10px">per 100g</span></div>
             </div>
-            <button onclick="pickTodayFood(${idx})" style="flex-shrink:0;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800">Add</button>
+            <button onclick="pickTodayFood(${idx})" style="flex-shrink:0;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800">Add</button>
           </div>
         </div>`).join('');
     }catch(e){
@@ -5371,7 +5371,7 @@ async function lookupBarcode(barcode){
     resultEl.innerHTML = `<div style="background:var(--soft);border-radius:10px;padding:12px;border:1px solid var(--lime)44">
       <div style="font-size:14px;font-weight:800;margin-bottom:4px">${name}</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${cal} kcal · Protein ${pro}g · Carbs ${carb}g · Fat ${fat}g <em style="font-size:10px">per 100g</em></div>
-      <button onclick="fillMealForm('${name.replace(/'/g,'')}',${cal},${pro},${carb},${fat})" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800;width:100%">Use This Food</button>
+      <button onclick="fillMealForm('${name.replace(/'/g,'')}',${cal},${pro},${carb},${fat})" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800;width:100%">Use This Food</button>
     </div>`;
   }catch(e){
     resultEl.innerHTML='<div style="color:var(--red);font-size:13px;padding:8px">Lookup failed — check your connection or enter manually</div>';
@@ -6006,7 +6006,7 @@ function expandPhoto(src, name, ei){
     <div style="font-size:16px;font-weight:800;color:white;margin-bottom:16px">${name}</div>
     <img src="${src}" style="max-width:90vw;max-height:70vh;object-fit:contain;border-radius:16px">
     <div style="display:flex;gap:12px;margin-top:24px">
-      <button onclick="this.closest('div[style*=fixed]').remove();triggerPhotoUpload('${ei}')" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:800">Change Photo</button>
+      <button onclick="this.closest('div[style*=fixed]').remove();triggerPhotoUpload('${ei}')" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:800">Change Photo</button>
       <button onclick="this.closest('div[style*=fixed]').remove()" style="background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700">Close</button>
     </div>`;
   document.body.appendChild(overlay);
@@ -6308,7 +6308,7 @@ function setRestTime(secs){
   document.querySelectorAll('.rest-preset').forEach(btn=>{
     const isActive = parseInt(btn.dataset.secs) === secs;
     btn.style.border = isActive ? '1px solid var(--lime)' : '1px solid var(--border)';
-    btn.style.background = isActive ? 'rgba(57,255,20,.12)' : 'var(--soft)';
+    btn.style.background = isActive ? 'rgba(57,255,20,.18)' : 'var(--soft)';
     btn.style.color = isActive ? 'var(--lime)' : 'var(--muted)';
     btn.textContent = btn.dataset.secs + 's' + (isActive ? ' ✓' : '');
     if(btn.dataset.secs === '120') btn.textContent = isActive ? '2min ✓' : '2min';
