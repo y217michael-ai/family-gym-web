@@ -961,6 +961,27 @@ if('serviceWorker' in navigator){
 </div>
 </div>
 
+<!-- Add custom machine modal -->
+<div class="modal-overlay" id="modal-add-machine">
+<div class="modal" style="max-height:90vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:20px;font-weight:800">＋ Add a Machine</div>
+    <button onclick="closeModal('modal-add-machine')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Name the machine and tick which muscle groups it works. Optionally link exact exercises it can do.</div>
+  <input class="inp" id="machine-name" placeholder="Machine name e.g. Plate-Loaded Chest Press" style="margin-bottom:12px">
+  <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:8px">MUSCLE GROUPS IT WORKS</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="machine-muscle-btns"></div>
+  <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">LINK SPECIFIC EXERCISES <span style="font-weight:500">(optional)</span></div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px" id="machine-ex-hint">Tick muscle groups above to see exercises you can link.</div>
+  <div id="machine-ex-list" style="max-height:34vh;overflow-y:auto;margin-bottom:14px"></div>
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+    <button class="btn-secondary" onclick="closeModal('modal-add-machine')">Cancel</button>
+    <button class="btn-primary" onclick="saveCustomMachine()">Save machine</button>
+  </div>
+</div>
+</div>
+
 <!-- Equipment picker end -->
 <div class="modal-overlay" id="modal-history-detail">
 <div class="modal" style="max-height:90vh">
@@ -2357,6 +2378,17 @@ const EQUIP_CATALOG = [
 ];
 const EQUIP_CATS = ['Free weights','Cable','Machines','Cardio','Functional','Pool'];
 
+// Custom machines the family adds (shared). Each: {key,label,icon,muscles:[],exercises:[]}
+function loadCustomMachines(){ try{ return JSON.parse(localStorage.getItem('fgym_custom_machines')||'[]'); }catch(e){ return []; } }
+function saveCustomMachines(m){ try{ localStorage.setItem('fgym_custom_machines', JSON.stringify(m)); }catch(e){} }
+// Full catalogue = built-in + custom (custom carry cat:'My machines')
+function fullCatalog(){
+  return EQUIP_CATALOG.concat(loadCustomMachines().map(c=>({
+    key:c.key, label:c.label, icon:c.icon||'🛠️', cat:'My machines', custom:true,
+    muscles:c.muscles||[], exercises:c.exercises||[]
+  })));
+}
+
 // Shared gym profiles (visible to whole family). Each: {id, name, equip:[keys]}
 function loadGyms(){ try{ return JSON.parse(localStorage.getItem('fgym_gyms')||'[]'); }catch(e){ return []; } }
 function saveGyms(g){ try{ localStorage.setItem('fgym_gyms', JSON.stringify(g)); }catch(e){} }
@@ -2419,6 +2451,12 @@ function inferExerciseEquip(ex){
 function exerciseFitsGym(ex){
   const gym = getActiveGym(); if(!gym) return true;
   const owned = new Set(gym.equip||[]);
+  // Custom machines owned by this gym: cover their linked exercises + muscle groups
+  const machines = loadCustomMachines().filter(m=>owned.has(m.key));
+  for(const m of machines){
+    if((m.exercises||[]).includes(ex.name)) return true;
+    if((m.muscles||[]).includes(ex.muscle)) return true;
+  }
   const needs = inferExerciseEquip(ex);
   if(!needs.length) return true; // bodyweight — always doable
   return needs.some(k=>owned.has(k));
@@ -2846,8 +2884,11 @@ function renderGymEquipGrid(){
   const el = document.getElementById('gym-equip-grid');
   if(!el) return;
   const uCol = USERS[activeUser].color;
-  el.innerHTML = EQUIP_CATS.map(cat=>{
-    const items = EQUIP_CATALOG.filter(e=>e.cat===cat);
+  const cats = EQUIP_CATS.concat(loadCustomMachines().length ? ['My machines'] : []);
+  const catalog = fullCatalog();
+  el.innerHTML = cats.map(cat=>{
+    const items = catalog.filter(e=>e.cat===cat);
+    if(!items.length) return '';
     return `<div style="margin-bottom:12px">
       <div style="font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.5px;margin-bottom:7px">${cat.toUpperCase()}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
@@ -2856,12 +2897,14 @@ function renderGymEquipGrid(){
           return `<button onclick="gymToggle('${e.key}')" style="display:flex;align-items:center;gap:7px;padding:9px 10px;border-radius:9px;text-align:left;border:1px solid ${on?uCol:'var(--border)'};background:${on?uCol+'1A':'#16161F'};color:${on?uCol:'var(--text)'}">
             <span style="font-size:16px">${e.icon}</span>
             <span style="flex:1;font-size:12px;font-weight:700;line-height:1.15">${e.label}</span>
+            ${e.custom?`<span onclick="event.stopPropagation();deleteCustomMachine('${e.key}')" style="color:var(--red);font-size:13px;padding:0 2px">✕</span>`:''}
             ${on?'<span style="font-weight:900">✓</span>':''}
           </button>`;
         }).join('')}
       </div>
     </div>`;
-  }).join('');
+  }).join('') +
+  `<button onclick="openAddMachine()" style="width:100%;background:transparent;color:var(--lime);border:1px dashed var(--lime);border-radius:10px;padding:11px;font-size:13px;font-weight:800;margin-top:4px">＋ Add a machine that's not listed</button>`;
   document.getElementById('gym-count').textContent = _gymEdit.equip.size+' selected';
 }
 function gymToggle(key){
@@ -2869,7 +2912,7 @@ function gymToggle(key){
   renderGymEquipGrid();
 }
 function gymSelectAll(on){
-  _gymEdit.equip = on ? new Set(EQUIP_CATALOG.map(e=>e.key)) : new Set();
+  _gymEdit.equip = on ? new Set(fullCatalog().map(e=>e.key)) : new Set();
   renderGymEquipGrid();
 }
 function saveGymBuilder(){
@@ -2892,6 +2935,84 @@ function saveGymBuilder(){
   updateEquipmentButton();
   renderHome();
   toast('Gym saved');
+}
+
+// ── Add custom machine ──
+const MACHINE_MUSCLES = ['Chest','Back','Legs','Shoulders','Arms','Core','Glutes','Traps','Forearms','Cardio'];
+let _machineDraft = { muscles:new Set(), exercises:new Set() };
+function openAddMachine(){
+  _machineDraft = { muscles:new Set(), exercises:new Set() };
+  document.getElementById('machine-name').value = '';
+  renderMachineMuscles();
+  renderMachineExList();
+  openModal('modal-add-machine');
+}
+function renderMachineMuscles(){
+  const uCol = USERS[activeUser].color;
+  document.getElementById('machine-muscle-btns').innerHTML = MACHINE_MUSCLES.map(m=>{
+    const on = _machineDraft.muscles.has(m);
+    return `<button onclick="machineToggleMuscle('${m}')" style="padding:7px 13px;border-radius:9px;font-size:13px;font-weight:700;border:1px solid ${on?uCol:'var(--border)'};background:${on?uCol+'1A':'#16161F'};color:${on?uCol:'var(--text)'}">${m}${on?' ✓':''}</button>`;
+  }).join('');
+}
+function machineToggleMuscle(m){
+  if(_machineDraft.muscles.has(m)) _machineDraft.muscles.delete(m); else _machineDraft.muscles.add(m);
+  // drop any linked exercises no longer in the ticked muscle set
+  const allowed = new Set();
+  EXERCISES.forEach(e=>{ if(_machineDraft.muscles.has(e.muscle)) allowed.add(e.name); });
+  _machineDraft.exercises.forEach(n=>{ if(!allowed.has(n)) _machineDraft.exercises.delete(n); });
+  renderMachineMuscles();
+  renderMachineExList();
+}
+function renderMachineExList(){
+  const el = document.getElementById('machine-ex-list');
+  const hint = document.getElementById('machine-ex-hint');
+  const uCol = USERS[activeUser].color;
+  if(!_machineDraft.muscles.size){
+    if(hint) hint.style.display='block';
+    el.innerHTML = '';
+    return;
+  }
+  if(hint) hint.style.display='none';
+  const exs = EXERCISES.filter(e=>_machineDraft.muscles.has(e.muscle));
+  if(!exs.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">No library exercises for these groups.</div>'; return; }
+  el.innerHTML = exs.map(e=>{
+    const on = _machineDraft.exercises.has(e.name);
+    return `<div onclick="machineToggleEx('${e.name.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;margin-bottom:5px;border-radius:9px;border:1px solid ${on?uCol:'var(--border)'};background:${on?uCol+'14':'#16161F'};cursor:pointer">
+      <div style="flex:1"><div style="font-size:13px;font-weight:700">${escapeHtml(e.name)}</div><div style="font-size:11px;color:var(--muted)">${e.muscle}</div></div>
+      <div style="font-size:13px;font-weight:800;color:${on?uCol:'var(--muted)'}">${on?'✓ Linked':'+ Link'}</div>
+    </div>`;
+  }).join('');
+}
+function machineToggleEx(name){
+  if(_machineDraft.exercises.has(name)) _machineDraft.exercises.delete(name); else _machineDraft.exercises.add(name);
+  renderMachineExList();
+}
+function saveCustomMachine(){
+  const name = (document.getElementById('machine-name').value||'').trim();
+  if(!name){ toast('Name the machine'); return; }
+  if(!_machineDraft.muscles.size){ toast('Tick at least one muscle group'); return; }
+  const key = 'cm_'+name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')+'_'+Date.now().toString().slice(-4);
+  const machines = loadCustomMachines();
+  machines.push({ key, label:name, icon:'🛠️', muscles:[..._machineDraft.muscles], exercises:[..._machineDraft.exercises] });
+  saveCustomMachines(machines);
+  // auto-select the new machine in the gym being built
+  _gymEdit.equip.add(key);
+  closeModal('modal-add-machine');
+  renderGymEquipGrid();
+  toast('Machine added');
+}
+function deleteCustomMachine(key){
+  const m = loadCustomMachines().find(x=>x.key===key);
+  if(!m) return;
+  if(!confirm('Remove "'+m.label+'"? It will be removed from all gyms.')) return;
+  saveCustomMachines(loadCustomMachines().filter(x=>x.key!==key));
+  // strip from all gyms
+  const gyms = loadGyms();
+  gyms.forEach(g=>{ g.equip = (g.equip||[]).filter(k=>k!==key); });
+  saveGyms(gyms);
+  _gymEdit.equip.delete(key);
+  renderGymEquipGrid();
+  toast('Machine removed');
 }
 
 // Routine matches the active gym if all/most of its exercises fit its equipment.
@@ -6701,6 +6822,34 @@ function saveSavedMeals(user, data){
   try{ localStorage.setItem('fgym_savedmeals_'+(user||activeUser), JSON.stringify(data)); }catch(e){}
 }
 
+// ═══════════ SHARED FAMILY POOL ═══════════
+// A single shared pool everyone can push into and pull from. Generic by type
+// ('meals' now, 'workouts' later) so the future planner can draw from it.
+function familyPool(type){
+  try{ return JSON.parse(localStorage.getItem('fgym_family_'+type)||'[]'); }catch(e){ return []; }
+}
+function saveFamilyPool(type, data){
+  try{ localStorage.setItem('fgym_family_'+type, JSON.stringify(data)); }catch(e){}
+}
+// Push a copy of an item into the family pool, tagged with who added it.
+function pushToFamily(type, item){
+  const pool = familyPool(type);
+  const copy = JSON.parse(JSON.stringify(item));
+  copy.familyId = 'fam_'+Date.now()+'_'+Math.floor(Math.random()*999);
+  copy.addedBy = activeUser;
+  copy.addedAt = Date.now();
+  delete copy.sharedFrom; // it's a family item now
+  pool.unshift(copy);
+  saveFamilyPool(type, pool);
+  return copy;
+}
+function removeFromFamily(type, familyId){
+  saveFamilyPool(type, familyPool(type).filter(x=>x.familyId!==familyId));
+}
+
+// Saved-meals sub-view: 'mine' | 'family'
+let _savedMealsView = 'mine';
+
 // ── Meal plan (7 days × 6 slots) ──
 function loadMealPlan(user){
   try{ return JSON.parse(localStorage.getItem('fgym_mealplan_'+(user||activeUser))||'{}'); }catch(e){ return {}; }
@@ -6717,10 +6866,17 @@ const DAYS7 = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Su
 function renderSavedMeals(){
   const el = document.getElementById('nut-meals-content');
   if(!el) return;
-  const meals = loadSavedMeals(activeUser);
   const uColor = USERS[activeUser].color;
 
-  // Filter bar
+  // Mine / Family sub-tabs
+  const viewTabs = `<div style="display:flex;gap:6px;margin-bottom:12px">
+    <button onclick="_savedMealsView='mine';renderSavedMeals()" style="flex:1;padding:8px;border-radius:9px;font-size:13px;font-weight:800;border:1px solid ${_savedMealsView==='mine'?uColor:'var(--border)'};background:${_savedMealsView==='mine'?uColor+'1A':'var(--soft)'};color:${_savedMealsView==='mine'?uColor:'var(--muted)'}">👤 Mine</button>
+    <button onclick="_savedMealsView='family';renderSavedMeals()" style="flex:1;padding:8px;border-radius:9px;font-size:13px;font-weight:800;border:1px solid ${_savedMealsView==='family'?'var(--lime)':'var(--border)'};background:${_savedMealsView==='family'?'rgba(57,255,20,.12)':'var(--soft)'};color:${_savedMealsView==='family'?'var(--lime)':'var(--muted)'}">👨‍👩‍👧 Family pool (${familyPool('meals').length})</button>
+  </div>`;
+
+  if(_savedMealsView==='family'){ el.innerHTML = viewTabs + renderFamilyMeals(); return; }
+
+  const meals = loadSavedMeals(activeUser);
   let activeMealCat = window._activeMealCat || 'all';
   const cats = ['all','breakfast','lunch','dinner','snack','eveningsnack'];
   const filterBar = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:12px">
@@ -6742,7 +6898,7 @@ function renderSavedMeals(){
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button onclick="logSavedMealToday(${i})" style="background:transparent;color:${uColor};border:1px solid ${uColor};border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Log Today</button>
             ${m.ingredients&&m.ingredients.length?`<button onclick="mbEditSaved(${i})" style="background:var(--soft);color:var(--text);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid var(--border)">✎ Edit</button>`:''}
-            <button onclick="openShareMeal(${i})" style="background:rgba(57,255,20,.12);color:var(--lime);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid rgba(57,255,20,.3)">↗ Share</button>
+            <button onclick="pushMealToFamily(${i})" style="background:rgba(57,255,20,.12);color:var(--lime);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid rgba(57,255,20,.3)">👨‍👩‍👧 Add to Family</button>
             <button onclick="openAssignMeal(${i})" style="background:var(--soft);color:var(--text);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid var(--border)">📅 Plan</button>
             <button onclick="deleteSavedMeal(${i})" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;border:1px solid rgba(255,77,77,.2)">✕</button>
           </div>
@@ -6755,7 +6911,7 @@ function renderSavedMeals(){
       <div style="font-size:12px;color:var(--muted)">Save meals you eat regularly to log them instantly</div>
     </div>`;
 
-  el.innerHTML = filterBar + `
+  el.innerHTML = viewTabs + filterBar + `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:16px;font-weight:800">Saved Meals (${meals.length})</div>
       <div style="display:flex;gap:6px">
@@ -6763,6 +6919,73 @@ function renderSavedMeals(){
         <button onclick="openModal('modal-add-saved-meal')" style="background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700">+ Quick</button>
       </div>
     </div>` + mealCards;
+}
+
+// Family pool of meals — everyone's shared meals, with pull-to-mine + log + plan
+function renderFamilyMeals(){
+  const pool = familyPool('meals');
+  if(!pool.length){
+    return `<div class="card-sm" style="text-align:center;padding:26px;border:1px dashed var(--border)">
+      <div style="font-size:32px;margin-bottom:8px">👨‍👩‍👧</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">The family pool is empty</div>
+      <div style="font-size:12px;color:var(--muted)">From your saved meals, tap "Add to Family" to share one here for everyone.</div>
+    </div>`;
+  }
+  return pool.map((m,i)=>`
+    <div class="card" style="margin-bottom:10px;border-left:3px solid var(--lime)">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="font-size:24px;flex-shrink:0">${CAT_ICONS[m.cat]||'🍽️'}</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:800;margin-bottom:3px">${escapeHtml(m.name)} <span style="font-size:10px;font-weight:700;color:var(--lime);background:rgba(57,255,20,.1);border:1px solid rgba(57,255,20,.3);border-radius:6px;padding:1px 6px">added by ${m.addedBy||'family'}</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${m.cals} kcal · P:${m.protein||0}g C:${m.carbs||0}g F:${m.fat||0}g${m.fibre?' · Fibre:'+m.fibre+'g':''}</div>
+          ${m.ingredients&&m.ingredients.length?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px">${m.ingredients.length} ingredient${m.ingredients.length>1?'s':''}: ${m.ingredients.map(x=>escapeHtml(x.name)).slice(0,4).join(', ')}${m.ingredients.length>4?'…':''}</div>`:''}
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="logFamilyMealToday(${i})" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Log Today</button>
+            <button onclick="saveFamilyMealToMine(${i})" style="background:var(--soft);color:var(--text);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid var(--border)">⭐ Save to Mine</button>
+            ${m.addedBy===activeUser?`<button onclick="deleteFamilyMeal(${i})" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;border:1px solid rgba(255,77,77,.2)">✕ Remove</button>`:''}
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function pushMealToFamily(i){
+  const m = loadSavedMeals(activeUser)[i];
+  if(!m) return;
+  // avoid obvious duplicate (same name + cals already in pool)
+  if(familyPool('meals').some(x=>x.name===m.name && x.cals===m.cals && x.addedBy===activeUser)){ toast('Already in the family pool'); return; }
+  pushToFamily('meals', m);
+  toast('Added to family pool 👨‍👩‍👧');
+  renderSavedMeals();
+}
+function saveFamilyMealToMine(i){
+  const m = familyPool('meals')[i];
+  if(!m) return;
+  const mine = loadSavedMeals(activeUser);
+  const copy = JSON.parse(JSON.stringify(m));
+  delete copy.familyId; delete copy.addedAt;
+  copy.sharedFrom = m.addedBy;
+  mine.unshift(copy);
+  saveSavedMeals(activeUser, mine);
+  toast('Saved to your meals ⭐');
+}
+function logFamilyMealToday(i){
+  const m = familyPool('meals')[i];
+  if(!m) return;
+  const todayMeals = getTodayMeals();
+  const now = new Date();
+  const copy = JSON.parse(JSON.stringify(m));
+  delete copy.familyId; delete copy.addedAt;
+  todayMeals.push({...copy, time: now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes()});
+  saveTodayMeals(todayMeals);
+  toast(m.name+' logged!');
+}
+function deleteFamilyMeal(i){
+  const m = familyPool('meals')[i];
+  if(!m) return;
+  if(!confirm('Remove "'+m.name+'" from the family pool for everyone?')) return;
+  removeFromFamily('meals', m.familyId);
+  renderSavedMeals();
+  toast('Removed from family pool');
 }
 
 function logSavedMealToday(i){
