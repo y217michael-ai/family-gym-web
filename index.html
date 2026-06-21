@@ -1541,8 +1541,8 @@ if('serviceWorker' in navigator){
   </div>
   <div id="barcode-fallback" style="background:var(--soft);border-radius:12px;padding:20px;text-align:center;margin-bottom:14px;display:none">
     <div style="font-size:40px;margin-bottom:8px">🔖</div>
-    <div style="font-size:14px;font-weight:700;margin-bottom:4px">Camera scanning not available here</div>
-    <div style="font-size:12px;color:var(--muted)">Your browser doesn't support live scanning. Type the barcode number from the packaging below.</div>
+    <div data-fb-title style="font-size:14px;font-weight:700;margin-bottom:4px">Camera scanning not available here</div>
+    <div data-fb-body style="font-size:12px;color:var(--muted)">Your browser doesn't support live scanning. Type the barcode number from the packaging below.</div>
   </div>
   <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Or type the barcode number:</div>
   <div style="display:flex;gap:8px">
@@ -6918,46 +6918,76 @@ function focusFoodSearch(){
   el.focus(); el.scrollIntoView({block:'nearest'});
 }
 
-// REAL camera barcode scanning via the browser BarcodeDetector API.
-let _barcodeStream = null, _barcodeRAF = null, _barcodeDetector = null;
+// REAL camera barcode scanning via ZXing — works in iOS Safari (BarcodeDetector does not).
+let _barcodeReader = null, _barcodeControls = null, _zxingLoading = null;
+
+// Lazy-load the ZXing library from CDN on first use, so it never slows app startup.
+function loadZXing(){
+  if(window.ZXingBrowser) return Promise.resolve(window.ZXingBrowser);
+  if(_zxingLoading) return _zxingLoading;
+  _zxingLoading = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js';
+    s.onload = ()=> window.ZXingBrowser ? resolve(window.ZXingBrowser) : reject(new Error('ZXing loaded but missing'));
+    s.onerror = ()=> reject(new Error('Could not load the scanner'));
+    document.head.appendChild(s);
+  });
+  return _zxingLoading;
+}
+
 async function startBarcodeScan(){
   document.getElementById('barcode-scanner-input').value = '';
   document.getElementById('barcode-result').innerHTML = '';
   openModal('modal-barcode');
   const camWrap = document.getElementById('barcode-camera-wrap');
   const fallback = document.getElementById('barcode-fallback');
-  const supported = ('BarcodeDetector' in window) && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
-  if(!supported){ camWrap.style.display='none'; fallback.style.display='block'; return; }
+  const fbTitle = fallback.querySelector('[data-fb-title]');
+  const fbBody  = fallback.querySelector('[data-fb-body]');
+
+  // Camera needs a secure context (https) + getUserMedia. GitHub Pages is https, so fine.
+  if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
+    camWrap.style.display='none'; fallback.style.display='block';
+    if(fbTitle) fbTitle.textContent='Camera not available here';
+    if(fbBody)  fbBody.textContent='Type the barcode number from the packaging below.';
+    return;
+  }
+
   try{
-    _barcodeDetector = new BarcodeDetector({ formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39'] });
-    _barcodeStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+    const ZX = await loadZXing();
+    _barcodeReader = new ZX.BrowserMultiFormatReader();
     const video = document.getElementById('barcode-video');
-    video.srcObject = _barcodeStream;
-    await video.play();
     camWrap.style.display='block'; fallback.style.display='none';
-    const scan = async ()=>{
-      if(!_barcodeStream) return;
-      try{
-        const codes = await _barcodeDetector.detect(video);
-        if(codes && codes.length){
-          const value = codes[0].rawValue;
+    // decodeFromConstraints handles getUserMedia (prompts for camera) + continuous decode.
+    _barcodeControls = await _barcodeReader.decodeFromConstraints(
+      { video:{ facingMode:'environment' } },
+      video,
+      (result, err)=>{
+        if(result){
+          const value = result.getText();
           stopBarcodeScan();
           document.getElementById('barcode-scanner-input').value = value;
           lookupBarcode(value);
-          return;
         }
-      }catch(e){ /* keep trying */ }
-      _barcodeRAF = requestAnimationFrame(scan);
-    };
-    _barcodeRAF = requestAnimationFrame(scan);
+        // err on every non-detected frame is normal — ignore.
+      }
+    );
   }catch(e){
+    // Permission denied, no camera, or library failed to load → fall back to manual entry.
     camWrap.style.display='none'; fallback.style.display='block';
+    const denied = e && (e.name==='NotAllowedError' || e.name==='NotFoundError' || e.name==='SecurityError');
+    if(fbTitle) fbTitle.textContent = denied ? 'Camera access blocked' : 'Camera scanning unavailable';
+    if(fbBody)  fbBody.textContent  = denied
+      ? 'Allow camera access in your browser settings, or type the barcode number below.'
+      : 'Type the barcode number from the packaging below.';
   }
 }
+
 function stopBarcodeScan(){
-  if(_barcodeRAF){ cancelAnimationFrame(_barcodeRAF); _barcodeRAF=null; }
-  if(_barcodeStream){ _barcodeStream.getTracks().forEach(t=>t.stop()); _barcodeStream=null; }
-  const v = document.getElementById('barcode-video'); if(v) v.srcObject=null;
+  try{ if(_barcodeControls && _barcodeControls.stop) _barcodeControls.stop(); }catch(e){}
+  _barcodeControls = null;
+  _barcodeReader = null;
+  const v = document.getElementById('barcode-video');
+  if(v && v.srcObject){ try{ v.srcObject.getTracks().forEach(t=>t.stop()); }catch(e){} v.srcObject=null; }
   const camWrap = document.getElementById('barcode-camera-wrap'); if(camWrap) camWrap.style.display='none';
 }
 
