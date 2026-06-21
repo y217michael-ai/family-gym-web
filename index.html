@@ -750,14 +750,44 @@ if('serviceWorker' in navigator){
 </div>
 </div>
 
+<!-- Run-through Preview Modal -->
+<div class="modal-overlay" id="modal-preview">
+<div class="modal" style="max-width:380px">
+  <div style="font-size:18px;font-weight:800;margin-bottom:4px">Run-through</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Step through to understand the workout before you start</div>
+  <div id="preview-body"></div>
+  <button class="btn-secondary" onclick="closeModal('modal-preview')" style="margin-top:12px">Close</button>
+</div>
+</div>
+
+<!-- Full-Screen Guided Runner -->
+<div id="runner-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;flex-direction:column">
+  <!-- top bar -->
+  <div style="display:flex;align-items:center;gap:10px;padding:16px 16px 8px">
+    <button onclick="exitRunner()" style="background:var(--soft);border-radius:10px;padding:8px 12px;font-size:16px;border:1px solid var(--border)">✕</button>
+    <div style="flex:1;height:6px;background:var(--soft);border-radius:3px;overflow:hidden">
+      <div id="runner-progress" style="height:100%;background:var(--lime);width:0%;transition:width .3s"></div>
+    </div>
+  </div>
+  <!-- body centred -->
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;max-width:480px;margin:0 auto;width:100%">
+    <div id="runner-body" style="width:100%"></div>
+  </div>
+</div>
+
 <!-- Workout Generator Modal -->
 <div class="modal-overlay" id="modal-generator">
 <div class="modal" style="max-height:92vh">
   <div style="font-size:20px;font-weight:800;margin-bottom:4px">✨ Generate Workouts</div>
   <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Pick a muscle, difficulty and time — get 3 options to choose from, rest built in.</div>
 
-  <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">MUSCLE GROUP</div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;max-height:120px;overflow-y:auto" id="gen-muscle-btns"></div>
+  <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">WORKOUT STYLE</div>
+  <div style="display:flex;gap:6px;margin-bottom:10px" id="gen-pairmode-btns"></div>
+  <div id="gen-pair-content" style="margin-bottom:14px"></div>
+
+  <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">MUSCLE GROUPS <span style="font-weight:500;text-transform:none">(tap to add/remove)</span></div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;max-height:140px;overflow-y:auto" id="gen-muscle-btns"></div>
+  <div id="gen-selection-summary" style="font-size:11px;color:var(--lime);margin-bottom:16px"></div>
 
   <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">DIFFICULTY</div>
   <div style="display:flex;gap:6px;margin-bottom:16px">
@@ -780,8 +810,8 @@ if('serviceWorker' in navigator){
 
   <div style="display:flex;align-items:center;justify-content:space-between;background:var(--soft);border-radius:10px;padding:12px;margin-bottom:16px;border:1px solid var(--border)">
     <div>
-      <div style="font-size:13px;font-weight:700">Hip-safe only</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">Exclude deep hip-flexion moves (for Mike's cam lesion)</div>
+      <div style="font-size:13px;font-weight:700">Hip-safe only <span id="gen-hip-user" style="font-size:11px;color:var(--muted);font-weight:600"></span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">Excludes deep hip-flexion moves. Saved per person.</div>
     </div>
     <div onclick="toggleGenHipSafe()" id="gen-hip-toggle" style="width:44px;height:26px;border-radius:13px;background:var(--soft);border:1px solid var(--border);position:relative;cursor:pointer;transition:all .2s;flex-shrink:0">
       <div id="gen-hip-thumb" style="position:absolute;top:3px;left:2px;width:20px;height:20px;border-radius:50%;background:white;transition:left .2s"></div>
@@ -2527,7 +2557,43 @@ function renderHistory(){
 // Builds N distinct workouts for a muscle group, sized to a target duration,
 // with rest times baked in. Works off the existing EXERCISES data.
 
-let genState = { muscle:'Shoulders', difficulty:'intermediate', minutes:60, hipSafe:false };
+let genState = { muscles:['Shoulders'], difficulty:'intermediate', minutes:60, hipSafe:false, pairMode:'custom' };
+
+// Rest rail values (seconds) for the "set all to" control
+const REST_RAIL = [15,30,45,60,90,100,120,140,160,180];
+
+// Pairing combos by mode. Each combo => one tap selects all its groups.
+const PAIR_COMBOS = {
+  splits: [
+    { label:'Push', groups:['Chest','Shoulders','Arms'], note:'Chest, shoulders & triceps' },
+    { label:'Pull', groups:['Back','Arms'], note:'Back & biceps' },
+    { label:'Legs', groups:['Legs','Glutes'], note:'Quads, hams & glutes' },
+    { label:'Upper', groups:['Chest','Back','Shoulders','Arms'], note:'Whole upper body' },
+    { label:'Lower', groups:['Legs','Glutes','Core'], note:'Legs, glutes & core' },
+    { label:'Full Body', groups:['Chest','Back','Legs','Shoulders'], note:'Everything, briefly' },
+  ],
+  antagonist: [
+    { label:'Chest + Back', groups:['Chest','Back'], note:'Opposing push/pull' },
+    { label:'Arms (Bi + Tri)', groups:['Arms'], note:'Biceps & triceps together' },
+    { label:'Legs (Quad + Ham)', groups:['Legs'], note:'Quads & hamstrings' },
+    { label:'Shoulders + Core', groups:['Shoulders','Core'], note:'Delts & midsection' },
+    { label:'Back + Chest + Arms', groups:['Back','Chest','Arms'], note:'Full antagonist upper' },
+  ],
+  // For custom mode: which groups "pair well" with a given group (highlighted as suggestions)
+};
+const PAIR_SUGGESTIONS = {
+  Chest:     ['Shoulders','Arms','Back'],
+  Back:      ['Arms','Shoulders','Chest'],
+  Shoulders: ['Chest','Arms','Back','Core'],
+  Arms:      ['Chest','Back','Shoulders'],
+  Legs:      ['Glutes','Core','Cardio'],
+  Glutes:    ['Legs','Core'],
+  Core:      ['Legs','Shoulders','Cardio'],
+  Cardio:    ['Core','Legs','Walking'],
+  Walking:   ['Cardio','Core'],
+  Traps:     ['Back','Shoulders'],
+  Forearms:  ['Arms','Back'],
+};
 let generatedWorkouts = []; // holds the last batch so "Start" can launch them
 
 // Per-difficulty tuning
@@ -2539,16 +2605,141 @@ const DIFFICULTY_CFG = {
 const SET_WORK_SEC = 45;       // ~time to perform one set
 const EX_SETUP_SEC = 60;       // ~time to find/setup a new exercise
 
-// Estimate minutes for a list of exercises at a given difficulty
-function estimateWorkoutMinutes(exs, restSec){
+// Classify an exercise as compound (multi-joint, heavy) vs isolation (single-joint).
+// Used for best-practice rest defaults.
+const COMPOUND_KEYWORDS = ['press','squat','deadlift','row','pull up','pull-up','pullup','lunge','clean','snatch','thruster','dip','chin','hip thrust','bench'];
+function isCompound(ex){
+  const n = (ex.name||'').toLowerCase();
+  return COMPOUND_KEYWORDS.some(k=>n.includes(k));
+}
+
+// ── Sub-muscle classifier ──
+// Derives a fine-grained target (e.g. biceps vs triceps, quads vs hamstrings)
+// from the exercise name + its broad muscle group. Group-aware so e.g. a "leg curl"
+// is read as hamstrings, never biceps.
+function subMuscle(ex){
+  const name = (ex.name||'').toLowerCase();
+  const group = (ex.muscle||'').toLowerCase();
+  const test = re => re.test(name);
+
+  // LEG group — resolve first so "leg curl" never falls through to arm rules
+  if(group==='legs' || group==='glutes'){
+    if(test(/calf|calves|tibialis|soleus|heel raise/)) return 'calves';
+    if(test(/leg curl|lying.*curl|seated.*curl|standing.*curl|nordic|romanian|rdl|good ?morning|stiff.*leg|ham/)) return 'hamstrings';
+    if(test(/glute|hip thrust|bridge|donkey|hip abduction|hip adduction|abductor|adductor|frog pump/)) return 'glutes';
+    if(test(/squat|leg press|leg extension|lunge|step up|wall sit|sissy|hack|pendulum|leg ext/)) return 'quads';
+    return 'legs';
+  }
+
+  // ARM group
+  if(group==='arms' || group==='forearms'){
+    if(test(/wrist|forearm|grip|plate pinch|fat bar|zottman|reverse curl/)) return 'forearms';
+    if(test(/tricep|pushdown|skull ?crusher|skullcrusher|kickback|jm press|overhead.*extension|close grip bench|dip/)) return 'triceps';
+    if(test(/curl|preacher|spider|concentration|chin/)) return 'biceps';
+    return 'arms';
+  }
+
+  // SHOULDER group
+  if(group==='shoulders'){
+    if(test(/rear delt|reverse fly|face pull|band pull apart|w-raise|bent.*lateral/)) return 'rear delts';
+    if(test(/lateral raise|upright row|lean away|cable lateral/)) return 'side delts';
+    if(test(/front raise|overhead press|shoulder press|arnold|military|cuban|landmine|ohp|press/)) return 'front delts';
+    if(test(/shrug/)) return 'traps';
+    return 'shoulders';
+  }
+
+  // BACK group
+  if(group==='back'){
+    if(test(/deadlift|rack pull|hyperextension|back extension|good morning/)) return 'lower back';
+    if(test(/pulldown|pull up|pull-up|pullup|straight arm|chin/)) return 'lats';
+    if(test(/row|face pull|shrug/)) return 'upper back';
+    return 'back';
+  }
+
+  // CHEST group
+  if(group==='chest'){
+    if(test(/incline/)) return 'upper chest';
+    if(test(/decline|dip/)) return 'lower chest';
+    return 'mid chest';
+  }
+
+  // CORE group
+  if(group==='core'){
+    if(test(/leg raise|reverse crunch|knee raise|hanging|toes to bar|flutter/)) return 'lower abs';
+    if(test(/oblique|russian twist|side bend|woodchop|side plank|windmill/)) return 'obliques';
+    if(test(/crunch|sit ?up|plank|hollow|dead bug|v-up|toe touch/)) return 'abs';
+    return 'core';
+  }
+
+  // Other groups: fall back to the broad group name so sequencing still has a key
+  return group || 'general';
+}
+
+// Best-practice rest (seconds) for a given exercise + difficulty.
+// Heavier/compound + lower reps => longer rest; isolation/high-rep => shorter.
+function bestPracticeRest(ex, difficulty){
+  const compound = isCompound(ex);
+  const reps = ex.reps || 10;
+  if(compound){
+    if(difficulty==='advanced' || reps<=6) return 150;   // heavy strength: 2.5 min
+    if(difficulty==='beginner' || reps>=12) return 90;   // lighter compound: 90s
+    return 120;                                          // moderate compound: 2 min
+  } else {
+    if(reps>=15) return 45;
+    if(difficulty==='advanced') return 60;
+    return 45;
+  }
+}
+
+// Estimate minutes for a list of exercises — uses each exercise's own restSec if set,
+// otherwise the supplied fallback.
+function estimateWorkoutMinutes(exs, fallbackRest){
   let sec = 0;
   exs.forEach(ex=>{
     const sets = ex.sets || 3;
+    const rest = (ex.restSec!=null) ? ex.restSec : fallbackRest;
     sec += EX_SETUP_SEC;
     sec += sets * SET_WORK_SEC;
-    sec += (sets - 1) * restSec; // rest between sets, not after the last
+    sec += (sets - 1) * rest;
   });
   return Math.round(sec / 60);
+}
+
+// Reorder so exercises hitting the SAME sub-muscle are spaced apart, never back-to-back
+// when avoidable. Greedy: at each step pick the exercise whose sub-muscle was used
+// least recently (and ideally differs from the previous one), so e.g. biceps and
+// triceps alternate instead of stacking.
+function antiStackOrder(exs){
+  if(exs.length <= 2) return exs.slice();
+  // annotate with sub-muscle
+  const items = exs.map(e=>({ ex:e, sub:subMuscle(e) }));
+  const out = [];
+  const lastUsedAt = {}; // sub -> index in `out` when last placed
+  const remaining = items.slice();
+  let pos = 0;
+  while(remaining.length){
+    // score each candidate: prefer subs not used recently; hard-avoid repeating the immediate previous sub
+    let best = -1, bestScore = -Infinity;
+    const prevSub = out.length ? out[out.length-1].sub : null;
+    remaining.forEach((cand, i)=>{
+      const last = lastUsedAt[cand.sub];
+      const distance = (last===undefined) ? 999 : (pos - last); // bigger = used longer ago
+      let score = distance;
+      if(cand.sub === prevSub) score -= 1000; // strongly avoid back-to-back same sub
+      if(score > bestScore){ bestScore = score; best = i; }
+    });
+    const picked = remaining.splice(best,1)[0];
+    out.push(picked);
+    lastUsedAt[picked.sub] = pos;
+    pos++;
+  }
+  // Best practice: open with a big compound when present
+  const firstCompoundIdx = out.findIndex(o=>isCompound(o.ex));
+  if(firstCompoundIdx > 0){
+    const c = out.splice(firstCompoundIdx,1)[0];
+    out.unshift(c);
+  }
+  return out.map(o=>o.ex);
 }
 
 // Simple seeded shuffle so the 3 variants differ but are reproducible per-seed
@@ -2563,51 +2754,64 @@ function shuffleWithSeed(arr, seed){
   return a;
 }
 
-// Build one workout variant
-function buildWorkoutVariant(pool, cfg, targetMin, seed){
-  const ordered = shuffleWithSeed(pool, seed);
+// Build one workout variant. When multiple groups are selected, interleave the
+// shuffled pools so each group gets fair representation rather than one dominating.
+function buildWorkoutVariant(pool, cfg, targetMin, seed, groups){
+  let ordered;
+  if(groups && groups.length > 1){
+    // round-robin across groups: take one from each group in turn
+    const byGroup = groups.map(g=>shuffleWithSeed(pool.filter(e=>e.muscle===g), seed));
+    ordered = [];
+    let added = true;
+    while(added){
+      added = false;
+      byGroup.forEach(arr=>{ if(arr.length){ ordered.push(arr.shift()); added = true; } });
+    }
+  } else {
+    ordered = shuffleWithSeed(pool, seed);
+  }
   const chosen = [];
   const [minReps,maxReps] = cfg.reps;
   for(const ex of ordered){
-    // pick sets within the difficulty range (bounded by the exercise's own default)
     const sets = Math.min(cfg.setsRange[1], Math.max(cfg.setsRange[0], ex.sets||3));
     const reps = Math.round((minReps+maxReps)/2);
     const candidate = { name:ex.name, muscle:ex.muscle, sets, reps, weight:ex.weight||0, desc:ex.desc||'', video:ex.video||'' };
+    candidate.restSec = bestPracticeRest(candidate, genState.difficulty);
     const trial = chosen.concat([candidate]);
     const trialMins = estimateWorkoutMinutes(trial, cfg.restSec);
     const currentMins = estimateWorkoutMinutes(chosen, cfg.restSec);
-    // Stop if adding this would overshoot target by more than it undershoots now,
-    // i.e. keep whichever lands closest to the target.
     if(chosen.length >= 3 && trialMins > targetMin){
       const overBy = trialMins - targetMin;
       const underBy = targetMin - currentMins;
-      if(overBy > underBy) break; // current set is closer to target; stop
+      if(overBy > underBy) break;
     }
     chosen.push(candidate);
     if(estimateWorkoutMinutes(chosen, cfg.restSec) >= targetMin) break;
   }
-  return chosen;
+  return antiStackOrder(chosen);
 }
 
 function generateWorkouts(){
-  const { muscle, difficulty, minutes, hipSafe } = genState;
+  const { muscles, difficulty, minutes, hipSafe } = genState;
   const cfg = DIFFICULTY_CFG[difficulty] || DIFFICULTY_CFG.intermediate;
-  // pool: exercises in this muscle group, optionally hip-safe only
-  let pool = EXERCISES.filter(e=>e.muscle===muscle);
+  const groups = (muscles && muscles.length) ? muscles : ['Shoulders'];
+  // pool: exercises across all selected groups, optionally hip-safe only
+  let pool = EXERCISES.filter(e=>groups.includes(e.muscle));
   if(hipSafe) pool = pool.filter(e=>e.hipSafe);
   const resultsEl = document.getElementById('gen-results');
   if(pool.length < 3){
-    resultsEl.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:14px;text-align:center">Only ${pool.length} exercise${pool.length===1?'':'s'} available for ${muscle}${hipSafe?' (hip-safe)':''}. Try another muscle group or turn off the hip-safe filter.</div>`;
+    resultsEl.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:14px;text-align:center">Only ${pool.length} exercise${pool.length===1?'':'s'} available for ${groups.join(' + ')}${hipSafe?' (hip-safe)':''}. Try another group or turn off the hip-safe filter.</div>`;
     generatedWorkouts = [];
     return;
   }
+  const groupLabel = groups.length===1 ? groups[0] : groups.join(' + ');
   // Build 3 distinct variants using different seeds
   generatedWorkouts = [0,1,2].map(i=>{
-    const exs = buildWorkoutVariant(pool, cfg, minutes, i*37+7);
+    const exs = buildWorkoutVariant(pool, cfg, minutes, i*37+7, groups);
     return {
       id: 'gen_'+Date.now()+'_'+i,
-      name: `${muscle} ${cfg.label} · ${minutes}min (Option ${String.fromCharCode(65+i)})`,
-      muscle, difficulty, restSec: cfg.restSec,
+      name: `${groupLabel} ${cfg.label} · ${minutes}min (Option ${String.fromCharCode(65+i)})`,
+      muscle: groupLabel, muscles: groups, difficulty, restSec: cfg.restSec,
       estMin: estimateWorkoutMinutes(exs, cfg.restSec),
       exercises: exs
     };
@@ -2623,27 +2827,177 @@ function renderGeneratedWorkouts(){
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div>
           <div style="font-size:15px;font-weight:800">Option ${String.fromCharCode(65+wi)}</div>
-          <div style="font-size:11px;color:var(--muted)">${w.exercises.length} exercises · ~${w.estMin} min · ${w.restSec}s rest between sets</div>
+          <div style="font-size:11px;color:var(--muted)">${w.exercises.length} exercises · ~${w.estMin} min</div>
         </div>
-        <button onclick="startGeneratedWorkout(${wi})" style="background:var(--lime);color:#050508;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800">Start</button>
+        <button onclick="startRunner(${wi})" style="background:var(--lime);color:#050508;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800">Start</button>
       </div>
-      <div style="border-top:1px solid var(--border);padding-top:8px">
+      <!-- Master rest control -->
+      <div style="display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:10px;padding:8px 10px;margin-bottom:8px;border:1px solid var(--border)">
+        <span style="font-size:11px;color:var(--muted);font-weight:700">REST</span>
+        <button onclick="nudgeAllRest(${wi},-15)" style="width:26px;height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:14px;font-weight:800">−</button>
+        <button onclick="nudgeAllRest(${wi},15)" style="width:26px;height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:14px;font-weight:800">+</button>
+        <span style="font-size:10px;color:var(--muted)">nudge all ±15s</span>
+        <select onchange="setAllRest(${wi},this.value);this.selectedIndex=0" style="margin-left:auto;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:5px 6px">
+          <option value="">set all to…</option>
+          ${REST_RAIL.map(s=>`<option value="${s}">${s>=60?(s/60+'').replace(/\\.0$/,'')+'min':s+'s'}</option>`).join('')}
+        </select>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:8px" id="gen-exlist-${wi}">
         ${w.exercises.map((ex,i)=>`
-          <div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px">
-            <span style="color:var(--muted);font-size:11px;width:18px">${i+1}.</span>
-            <span style="flex:1;font-weight:600">${ex.name}</span>
-            <span style="color:var(--muted);font-size:12px">${ex.sets} × ${ex.reps}</span>
+          <div draggable="true"
+            ondragstart="genDragStart(${wi},${i})" ondragover="event.preventDefault()" ondrop="genDrop(${wi},${i})"
+            style="display:flex;align-items:center;gap:6px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--soft)">
+            <span style="color:var(--muted);cursor:grab;font-size:14px;flex-shrink:0" title="Drag to reorder">⠿</span>
+            <span style="color:var(--muted);font-size:11px;width:14px">${i+1}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ex.name}</div>
+              <div style="font-size:10px;color:var(--muted)">${subMuscle(ex)}${isCompound(ex)?' · compound':''} · <span onclick="nudgeOneRest(${wi},${i},-15)" style="cursor:pointer;color:var(--muted)">◂</span> rest <span style="color:#4FC3F7;font-weight:700">${ex.restSec>=60?(ex.restSec/60+'').replace(/\.0$/,'')+'min':ex.restSec+'s'}</span> <span onclick="nudgeOneRest(${wi},${i},15)" style="cursor:pointer;color:var(--muted)">▸</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
+              <button onclick="editGenSets(${wi},${i},-1)" style="width:22px;height:22px;border-radius:5px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:800">−</button>
+              <span style="font-size:12px;min-width:32px;text-align:center;color:var(--muted)">${ex.sets}×${ex.reps}</span>
+              <button onclick="editGenSets(${wi},${i},1)" style="width:22px;height:22px;border-radius:5px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:800">+</button>
+              <button onclick="swapGenExercise(${wi},${i})" title="Swap" style="width:22px;height:22px;border-radius:5px;background:var(--soft);border:1px solid var(--border);color:var(--lime);font-size:12px">↻</button>
+              <button onclick="removeGenExercise(${wi},${i})" title="Remove" style="width:22px;height:22px;border-radius:5px;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.25);color:var(--red);font-size:13px">×</button>
+            </div>
           </div>`).join('')}
+        <button onclick="addGenExercise(${wi})" style="width:100%;margin-top:8px;background:var(--soft);color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700">+ Add exercise</button>
       </div>
-      <button onclick="regenerateOne(${wi})" style="width:100%;margin-top:8px;background:var(--soft);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:7px;font-size:12px;font-weight:700">↻ Shuffle this option</button>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button onclick="previewRunThrough(${wi})" style="flex:1;background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700">▶ Run-through</button>
+        <button onclick="saveGenToLibrary(${wi})" style="flex:1;background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700">💾 Save to Library</button>
+        <button onclick="regenerateOne(${wi})" style="flex:1;background:var(--soft);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;font-weight:700">↻ Shuffle</button>
+      </div>
     </div>`).join('');
+}
+
+// ── Drag to reorder ──
+let genDrag = { wi:null, from:null };
+function genDragStart(wi, i){ genDrag = { wi, from:i }; }
+function genDrop(wi, to){
+  if(genDrag.wi !== wi || genDrag.from === null) return;
+  const arr = generatedWorkouts[wi].exercises;
+  const [moved] = arr.splice(genDrag.from, 1);
+  arr.splice(to, 0, moved);
+  genDrag = { wi:null, from:null };
+  renderGeneratedWorkouts();
+}
+
+// ── Save a generated option to the library as a reusable routine ──
+function saveGenToLibrary(wi){
+  const w = generatedWorkouts[wi];
+  if(!w) return;
+  const colors = {Mike:'#C8F135',Michelle:'#FF8C42',Amy:'#6C63FF'};
+  const allUsers = ['Mike','Michelle','Amy'];
+  const cfg = DIFFICULTY_CFG[genState.difficulty] || DIFFICULTY_CFG.intermediate;
+  const groups = genState.muscles || [genState.muscle];
+  const niceName = `${groups.join(' + ')} ${cfg.label} (${genState.minutes}min)`;
+  routines.push({
+    id: Date.now() + wi,
+    name: niceName,
+    owner: activeUser,
+    sharedWith: allUsers.filter(u=>u!==activeUser),
+    muscles: groups,
+    color: colors[activeUser] || '#C8F135',
+    generated: true,
+    exercises: w.exercises.map(ex=>({ name:ex.name, muscle:ex.muscle, sets:ex.sets, reps:ex.reps, weight:ex.weight||0, desc:ex.desc||'', video:ex.video||'', restSec:ex.restSec }))
+  });
+  saveRoutines();
+  renderHome();
+  toast('💾 Saved "'+niceName+'" to your library');
+}
+
+// Recompute estimated minutes for an option after edits
+function recalcGenEstimate(wi){
+  const w = generatedWorkouts[wi];
+  w.estMin = estimateWorkoutMinutes(w.exercises, w.restSec);
+}
+
+// Adjust sets up/down (reps stay; sets bounded 1–6)
+function editGenSets(wi, i, delta){
+  const ex = generatedWorkouts[wi].exercises[i];
+  ex.sets = Math.max(1, Math.min(6, ex.sets + delta));
+  recalcGenEstimate(wi);
+  renderGeneratedWorkouts();
+}
+
+// ── Rest adjustment: master (all) + individual ──
+// Nudge every exercise's rest by a step, preserving their differences (bounded 10–300s)
+function nudgeAllRest(wi, delta){
+  generatedWorkouts[wi].exercises.forEach(ex=>{
+    ex.restSec = Math.max(10, Math.min(300, (ex.restSec||60) + delta));
+  });
+  recalcGenEstimate(wi);
+  renderGeneratedWorkouts();
+}
+// Snap every exercise to one value from the rail
+function setAllRest(wi, secs){
+  const v = parseInt(secs)||0;
+  if(!v) return;
+  generatedWorkouts[wi].exercises.forEach(ex=>{ ex.restSec = v; });
+  recalcGenEstimate(wi);
+  renderGeneratedWorkouts();
+}
+// Adjust just one exercise's rest (individual override, bounded 10–300s)
+function nudgeOneRest(wi, i, delta){
+  const ex = generatedWorkouts[wi].exercises[i];
+  ex.restSec = Math.max(10, Math.min(300, (ex.restSec||60) + delta));
+  recalcGenEstimate(wi);
+  renderGeneratedWorkouts();
+}
+
+// Remove an exercise (keep at least 1)
+function removeGenExercise(wi, i){
+  const w = generatedWorkouts[wi];
+  if(w.exercises.length <= 1){ toast('Keep at least one exercise'); return; }
+  w.exercises.splice(i,1);
+  recalcGenEstimate(wi);
+  renderGeneratedWorkouts();
+}
+
+// Swap one exercise for another from the same muscle group not already in this option
+function swapGenExercise(wi, i){
+  const w = generatedWorkouts[wi];
+  const cfg = DIFFICULTY_CFG[genState.difficulty] || DIFFICULTY_CFG.intermediate;
+  let pool = EXERCISES.filter(e=>(genState.muscles||[genState.muscle]).includes(e.muscle));
+  if(genState.hipSafe) pool = pool.filter(e=>e.hipSafe);
+  const usedNames = w.exercises.map(e=>e.name);
+  const options = pool.filter(e=>!usedNames.includes(e.name));
+  if(!options.length){ toast('No other exercises available to swap in'); return; }
+  const pick = options[Math.floor(Math.random()*options.length)];
+  const reps = Math.round((cfg.reps[0]+cfg.reps[1])/2);
+  const sets = Math.min(cfg.setsRange[1], Math.max(cfg.setsRange[0], pick.sets||3));
+  const newEx = { name:pick.name, muscle:pick.muscle, sets, reps, weight:pick.weight||0, desc:pick.desc||'', video:pick.video||'' };
+  newEx.restSec = bestPracticeRest(newEx, genState.difficulty);
+  w.exercises[i] = newEx;
+  recalcGenEstimate(wi);
+  renderGeneratedWorkouts();
+}
+
+// Add another exercise from the pool that isn't already in the option
+function addGenExercise(wi){
+  const w = generatedWorkouts[wi];
+  const cfg = DIFFICULTY_CFG[genState.difficulty] || DIFFICULTY_CFG.intermediate;
+  let pool = EXERCISES.filter(e=>(genState.muscles||[genState.muscle]).includes(e.muscle));
+  if(genState.hipSafe) pool = pool.filter(e=>e.hipSafe);
+  const usedNames = w.exercises.map(e=>e.name);
+  const options = pool.filter(e=>!usedNames.includes(e.name));
+  if(!options.length){ toast('No more exercises available'); return; }
+  const pick = options[Math.floor(Math.random()*options.length)];
+  const reps = Math.round((cfg.reps[0]+cfg.reps[1])/2);
+  const sets = Math.min(cfg.setsRange[1], Math.max(cfg.setsRange[0], pick.sets||3));
+  const newEx = { name:pick.name, muscle:pick.muscle, sets, reps, weight:pick.weight||0, desc:pick.desc||'', video:pick.video||'' };
+  newEx.restSec = bestPracticeRest(newEx, genState.difficulty);
+  w.exercises.push(newEx);
+  recalcGenEstimate(wi);
+  renderGeneratedWorkouts();
 }
 
 function regenerateOne(wi){
   const cfg = DIFFICULTY_CFG[genState.difficulty] || DIFFICULTY_CFG.intermediate;
-  let pool = EXERCISES.filter(e=>e.muscle===genState.muscle);
+  let pool = EXERCISES.filter(e=>(genState.muscles||[genState.muscle]).includes(e.muscle));
   if(genState.hipSafe) pool = pool.filter(e=>e.hipSafe);
-  const exs = buildWorkoutVariant(pool, cfg, genState.minutes, Math.floor(Math.random()*99999));
+  const exs = buildWorkoutVariant(pool, cfg, genState.minutes, Math.floor(Math.random()*99999), genState.muscles);
   generatedWorkouts[wi] = {
     ...generatedWorkouts[wi],
     estMin: estimateWorkoutMinutes(exs, cfg.restSec),
@@ -2662,28 +3016,388 @@ function startGeneratedWorkout(wi){
   startWorkout(w.id);
 }
 
+// ══════════════════ RUN-THROUGH PREVIEW ══════════════════
+// Step through the exercises one at a time so you understand the workout before starting.
+let previewState = null;
+function previewRunThrough(wi){
+  const w = generatedWorkouts[wi];
+  if(!w) return;
+  previewState = { workout:w, idx:0 };
+  renderPreview();
+  openModal('modal-preview');
+}
+function renderPreview(){
+  if(!previewState) return;
+  const { workout, idx } = previewState;
+  const ex = workout.exercises[idx];
+  const total = workout.exercises.length;
+  const restLabel = ex.restSec>=60 ? ((ex.restSec/60+'').replace(/\.0$/,'')+' min') : ex.restSec+'s';
+  document.getElementById('preview-body').innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Exercise ${idx+1} of ${total}</div>
+      <div style="font-size:24px;font-weight:800;margin:6px 0 4px">${ex.name}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px">${ex.muscle} · targets ${subMuscle(ex)}${isCompound(ex)?' · compound':''}</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px">
+        <div style="background:var(--soft);border-radius:10px;padding:12px 16px;border:1px solid var(--border)">
+          <div style="font-size:22px;font-weight:800;color:var(--lime)">${ex.sets}</div>
+          <div style="font-size:10px;color:var(--muted)">sets</div>
+        </div>
+        <div style="background:var(--soft);border-radius:10px;padding:12px 16px;border:1px solid var(--border)">
+          <div style="font-size:22px;font-weight:800;color:var(--lime)">${ex.reps}</div>
+          <div style="font-size:10px;color:var(--muted)">reps</div>
+        </div>
+        <div style="background:var(--soft);border-radius:10px;padding:12px 16px;border:1px solid var(--border)">
+          <div style="font-size:22px;font-weight:800;color:#4FC3F7">${restLabel}</div>
+          <div style="font-size:10px;color:var(--muted)">rest</div>
+        </div>
+      </div>
+      ${ex.desc?`<div style="font-size:13px;color:var(--muted);background:var(--soft);border-radius:10px;padding:10px;margin-bottom:14px">${ex.desc}</div>`:''}
+      ${ex.video?`<a href="${ex.video}" target="_blank" style="display:inline-block;color:var(--lime);font-size:12px;text-decoration:underline;margin-bottom:14px">▶ Watch form video</a>`:''}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button onclick="previewNav(-1)" ${idx===0?'disabled':''} style="flex:1;background:var(--soft);color:${idx===0?'var(--border)':'var(--text)'};border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:700">← Prev</button>
+      ${idx<total-1
+        ? `<button onclick="previewNav(1)" style="flex:2;background:var(--lime);color:#050508;border-radius:10px;padding:12px;font-size:14px;font-weight:800">Next →</button>`
+        : `<button onclick="closeModal('modal-preview')" style="flex:2;background:var(--lime);color:#050508;border-radius:10px;padding:12px;font-size:14px;font-weight:800">Got it ✓</button>`}
+    </div>
+    <!-- progress dots -->
+    <div style="display:flex;gap:4px;justify-content:center;margin-top:12px">
+      ${workout.exercises.map((_,i)=>`<div style="width:7px;height:7px;border-radius:50%;background:${i===idx?'var(--lime)':'var(--border)'}"></div>`).join('')}
+    </div>`;
+}
+function previewNav(dir){
+  if(!previewState) return;
+  const n = previewState.idx + dir;
+  if(n<0 || n>=previewState.workout.exercises.length) return;
+  previewState.idx = n;
+  renderPreview();
+}
+
+// ══════════════════ GUIDED FULL-SCREEN RUNNER ══════════════════
+// Phone-based guided flow: per exercise → log weight → log reps → rest countdown (3-2-1 beep)
+// → next set → next exercise. Toggle between weight/reps/rest screens.
+let runner = null;
+let runnerRestInterval = null;
+
+function startRunner(wi){
+  const w = generatedWorkouts[wi];
+  if(!w) return;
+  runner = {
+    workout: w,
+    exIdx: 0,
+    setIdx: 0,
+    phase: 'weight', // 'weight' | 'reps' | 'rest' | 'done'
+    log: w.exercises.map(ex=>({ name:ex.name, sets:Array(ex.sets).fill(null).map(()=>({weight:ex.weight||0, reps:ex.reps, done:false})) })),
+    restRemaining: 0,
+    startTime: Date.now()
+  };
+  document.getElementById('runner-overlay').style.display = 'flex';
+  renderRunner();
+}
+
+function currentRunnerEx(){ return runner.workout.exercises[runner.exIdx]; }
+
+function renderRunner(){
+  if(!runner) return;
+  const ex = currentRunnerEx();
+  const overlay = document.getElementById('runner-body');
+  const totalSets = ex.sets;
+  const setNum = runner.setIdx + 1;
+  const exNum = runner.exIdx + 1;
+  const exTotal = runner.workout.exercises.length;
+  const logEntry = runner.log[runner.exIdx].sets[runner.setIdx];
+
+  if(runner.phase === 'weight'){
+    overlay.innerHTML = `
+      <div style="text-align:center;width:100%">
+        <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Exercise ${exNum}/${exTotal} · Set ${setNum}/${totalSets}</div>
+        <div style="font-size:26px;font-weight:800;margin:8px 0 18px">${ex.name}</div>
+        ${ex.video?`<a href="${ex.video}" target="_blank" style="display:inline-block;color:var(--lime);font-size:13px;margin-bottom:18px">▶ Watch form video</a><br>`:''}
+        <div style="font-size:13px;color:var(--muted);margin-bottom:6px">WEIGHT (kg)</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:24px">
+          <button onclick="runnerAdjust('weight',-2.5)" style="width:56px;height:56px;border-radius:16px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:26px;font-weight:800">−</button>
+          <div style="font-size:64px;font-weight:800;color:var(--lime);min-width:140px;font-variant-numeric:tabular-nums" id="runner-weight-val">${logEntry.weight}</div>
+          <button onclick="runnerAdjust('weight',2.5)" style="width:56px;height:56px;border-radius:16px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:26px;font-weight:800">+</button>
+        </div>
+        <button onclick="runnerConfirmWeight()" style="width:100%;background:var(--lime);color:#050508;border-radius:14px;padding:18px;font-size:18px;font-weight:800;margin-bottom:10px">Done — next: reps →</button>
+        <button onclick="runnerSkipToReps()" style="background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline">skip weight</button>
+      </div>`;
+  } else if(runner.phase === 'reps'){
+    overlay.innerHTML = `
+      <div style="text-align:center;width:100%">
+        <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Exercise ${exNum}/${exTotal} · Set ${setNum}/${totalSets}</div>
+        <div style="font-size:26px;font-weight:800;margin:8px 0 4px">${ex.name}</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:18px">${logEntry.weight} kg</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:6px">REPS DONE</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:24px">
+          <button onclick="runnerAdjust('reps',-1)" style="width:56px;height:56px;border-radius:16px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:26px;font-weight:800">−</button>
+          <div style="font-size:64px;font-weight:800;color:var(--lime);min-width:140px;font-variant-numeric:tabular-nums" id="runner-reps-val">${logEntry.reps}</div>
+          <button onclick="runnerAdjust('reps',1)" style="width:56px;height:56px;border-radius:16px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:26px;font-weight:800">+</button>
+        </div>
+        <button onclick="runnerConfirmReps()" style="width:100%;background:var(--lime);color:#050508;border-radius:14px;padding:18px;font-size:18px;font-weight:800;margin-bottom:10px">Set done ✓</button>
+        <button onclick="runnerBack()" style="background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline">← back to weight</button>
+      </div>`;
+  } else if(runner.phase === 'rest'){
+    const isLastSet = runner.setIdx >= totalSets - 1;
+    const nextLabel = isLastSet
+      ? (runner.exIdx < exTotal-1 ? 'Next: '+runner.workout.exercises[runner.exIdx+1].name : 'Last exercise!')
+      : 'Next set of '+ex.name;
+    overlay.innerHTML = `
+      <div style="text-align:center;width:100%">
+        <div style="font-size:13px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Rest</div>
+        <div style="font-size:88px;font-weight:800;color:#4FC3F7;font-variant-numeric:tabular-nums;line-height:1;margin:14px 0" id="runner-rest-val">${runner.restRemaining}</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:28px">${nextLabel}</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button onclick="runnerRestAdjust(-15)" style="flex:1;background:var(--soft);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:14px;font-size:14px;font-weight:700">−15s</button>
+          <button onclick="runnerRestAdjust(15)" style="flex:1;background:var(--soft);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:14px;font-size:14px;font-weight:700">+15s</button>
+        </div>
+        <button onclick="runnerSkipRest()" style="width:100%;background:var(--lime);color:#050508;border-radius:14px;padding:16px;font-size:16px;font-weight:800">Skip rest — go now →</button>
+      </div>`;
+  } else if(runner.phase === 'done'){
+    const totalVol = runner.log.reduce((a,ex)=>a+ex.sets.reduce((b,s)=>b+(s.done?s.weight*s.reps:0),0),0);
+    const mins = Math.round((Date.now()-runner.startTime)/60000);
+    overlay.innerHTML = `
+      <div style="text-align:center;width:100%">
+        <div style="font-size:60px;margin-bottom:8px">🎉</div>
+        <div style="font-size:26px;font-weight:800;margin-bottom:6px">Workout complete!</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:20px">${mins} min · ${Math.round(totalVol)} kg total volume</div>
+        <button onclick="finishRunner(true)" style="width:100%;background:var(--lime);color:#050508;border-radius:14px;padding:16px;font-size:16px;font-weight:800;margin-bottom:10px">Save & finish</button>
+        <button onclick="finishRunner(false)" style="background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline">finish without saving</button>
+      </div>`;
+  }
+  // top progress bar
+  const totalSetsAll = runner.workout.exercises.reduce((a,e)=>a+e.sets,0);
+  const doneSets = runner.log.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
+  const pb = document.getElementById('runner-progress');
+  if(pb) pb.style.width = Math.round(doneSets/totalSetsAll*100)+'%';
+}
+
+function runnerAdjust(field, delta){
+  const entry = runner.log[runner.exIdx].sets[runner.setIdx];
+  if(field==='weight'){ entry.weight = Math.max(0, Math.round((entry.weight+delta)*10)/10); const el=document.getElementById('runner-weight-val'); if(el) el.textContent=entry.weight; }
+  if(field==='reps'){ entry.reps = Math.max(0, entry.reps+delta); const el=document.getElementById('runner-reps-val'); if(el) el.textContent=entry.reps; }
+}
+function runnerConfirmWeight(){ runner.phase='reps'; renderRunner(); }
+function runnerSkipToReps(){ runner.phase='reps'; renderRunner(); }
+function runnerBack(){ runner.phase='weight'; renderRunner(); }
+
+function runnerConfirmReps(){
+  const entry = runner.log[runner.exIdx].sets[runner.setIdx];
+  entry.done = true;
+  if(typeof alertSetDone==='function') alertSetDone();
+  const ex = currentRunnerEx();
+  const isLastSet = runner.setIdx >= ex.sets - 1;
+  const isLastEx = runner.exIdx >= runner.workout.exercises.length - 1;
+  if(isLastSet && isLastEx){
+    runner.phase='done'; renderRunner(); return;
+  }
+  // start rest
+  runner.phase='rest';
+  runner.restRemaining = ex.restSec || 60;
+  renderRunner();
+  startRunnerRest();
+}
+
+function startRunnerRest(){
+  if(runnerRestInterval) clearInterval(runnerRestInterval);
+  runnerRestInterval = setInterval(()=>{
+    runner.restRemaining--;
+    const el = document.getElementById('runner-rest-val');
+    if(el) el.textContent = Math.max(0, runner.restRemaining);
+    // 3-2-1 countdown beep
+    if(runner.restRemaining===3 || runner.restRemaining===2 || runner.restRemaining===1){
+      if(typeof beepTick==='function') beepTick();
+    }
+    if(runner.restRemaining<=0){
+      clearInterval(runnerRestInterval); runnerRestInterval=null;
+      if(typeof alertRestDone==='function') alertRestDone(); // "go" beep
+      advanceRunnerAfterRest();
+    }
+  }, 1000);
+}
+function runnerRestAdjust(delta){
+  runner.restRemaining = Math.max(1, runner.restRemaining + delta);
+  const el = document.getElementById('runner-rest-val'); if(el) el.textContent = runner.restRemaining;
+}
+function runnerSkipRest(){
+  if(runnerRestInterval){ clearInterval(runnerRestInterval); runnerRestInterval=null; }
+  advanceRunnerAfterRest();
+}
+function advanceRunnerAfterRest(){
+  const ex = currentRunnerEx();
+  if(runner.setIdx < ex.sets - 1){
+    runner.setIdx++;
+  } else {
+    runner.exIdx++;
+    runner.setIdx = 0;
+  }
+  // carry forward last weight as the starting weight for the next set
+  if(runner.exIdx < runner.workout.exercises.length){
+    const prevEx = runner.log[runner.exIdx];
+    if(runner.setIdx>0){
+      const prev = prevEx.sets[runner.setIdx-1];
+      prevEx.sets[runner.setIdx].weight = prev.weight;
+    }
+  }
+  runner.phase = 'weight';
+  renderRunner();
+}
+
+function exitRunner(){
+  if(!confirm('Exit this workout? Progress won\u2019t be saved.')) return;
+  if(runnerRestInterval){ clearInterval(runnerRestInterval); runnerRestInterval=null; }
+  document.getElementById('runner-overlay').style.display='none';
+  runner=null;
+}
+
+function finishRunner(save){
+  if(runnerRestInterval){ clearInterval(runnerRestInterval); runnerRestInterval=null; }
+  if(save){
+    const totalVol = runner.log.reduce((a,ex)=>a+ex.sets.reduce((b,s)=>b+(s.done?s.weight*s.reps:0),0),0);
+    const mins = Math.round((Date.now()-runner.startTime)/60000);
+    const setsLogged = runner.log.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
+    try{
+      const h = loadHistory();
+      h.unshift({
+        id: Date.now(),
+        user: activeUser,
+        routineName: runner.workout.name || 'Generated Workout',
+        muscles: runner.workout.muscle ? [runner.workout.muscle] : [],
+        cals: Math.round(mins * 6),
+        mins, setsLogged,
+        volume: Math.round(totalVol),
+        exerciseNotes: [],
+        date: Date.now()
+      });
+      if(h.length>100) h.length=100;
+      saveHistory(h);
+      if(typeof autoLogToCalendar==='function') autoLogToCalendar(runner.workout.name||'Workout', null);
+      renderHome();
+      toast('Workout saved! '+mins+'min · '+Math.round(totalVol)+'kg volume 💪');
+    }catch(e){ toast('Workout complete!'); }
+  }
+  document.getElementById('runner-overlay').style.display='none';
+  runner=null;
+  showScreen('home');
+}
+
 // ── Generator modal controls ──
+function getHipSafePref(user){
+  user = user || activeUser;
+  const stored = localStorage.getItem('fgym_hipsafe_'+user);
+  if(stored === null){
+    // default: ON for Mike (cam lesion), off for others
+    return user === 'Mike';
+  }
+  return stored === 'true';
+}
+function setHipSafePref(user, val){
+  try{ localStorage.setItem('fgym_hipsafe_'+user, val ? 'true' : 'false'); }catch(e){}
+}
+
 function openWorkoutGenerator(presetMuscle){
-  if(presetMuscle) genState.muscle = presetMuscle;
+  if(presetMuscle) genState.muscles = [presetMuscle];
+  if(!genState.muscles || !genState.muscles.length) genState.muscles = ['Shoulders'];
+  // hip-safe automatically follows the active user's saved preference
+  genState.hipSafe = getHipSafePref(activeUser);
   generatedWorkouts = [];
   const rEl = document.getElementById('gen-results'); if(rEl) rEl.innerHTML='';
+  renderPairModes();
   renderGenMuscles();
   renderGenControls();
   openModal('modal-generator');
 }
+
+// Render the three pairing-mode tabs (Splits / Antagonist / Custom)
+function renderPairModes(){
+  const el = document.getElementById('gen-pairmode-btns');
+  if(!el) return;
+  const modes = [
+    {key:'splits', label:'① Splits'},
+    {key:'antagonist', label:'② Pairs'},
+    {key:'custom', label:'③ Custom'},
+  ];
+  el.innerHTML = modes.map(m=>{
+    const on = genState.pairMode===m.key;
+    return `<button onclick="setPairMode('${m.key}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(200,241,53,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${m.label}</button>`;
+  }).join('');
+  renderPairContent();
+}
+function setPairMode(mode){ genState.pairMode=mode; renderPairModes(); }
+
+// Render combo buttons (modes 1 & 2) or the suggestion hint (mode 3)
+function renderPairContent(){
+  const el = document.getElementById('gen-pair-content');
+  if(!el) return;
+  if(genState.pairMode==='custom'){
+    el.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:4px 0">Pick any groups below. Companion groups that pair well will be <span style="color:var(--lime)">highlighted</span> — tap to add them.</div>`;
+    return;
+  }
+  const combos = PAIR_COMBOS[genState.pairMode] || [];
+  el.innerHTML = combos.map((c,i)=>{
+    // active if the current selection exactly matches this combo
+    const sel = genState.muscles.slice().sort().join(',');
+    const cg = c.groups.slice().sort().join(',');
+    const on = sel===cg;
+    return `<button onclick="applyCombo('${genState.pairMode}',${i})" style="text-align:left;padding:9px 11px;border-radius:9px;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(200,241,53,.12)':'var(--soft)'};margin-bottom:6px;width:100%">
+      <div style="font-size:13px;font-weight:800;color:${on?'var(--lime)':'var(--text)'}">${c.label}</div>
+      <div style="font-size:11px;color:var(--muted)">${c.note}</div>
+    </button>`;
+  }).join('');
+}
+function applyCombo(mode, i){
+  const c = (PAIR_COMBOS[mode]||[])[i];
+  if(!c) return;
+  // only keep groups that actually have exercises
+  genState.muscles = c.groups.filter(g=>EXERCISES.some(e=>e.muscle===g));
+  renderPairContent();
+  renderGenMuscles();
+}
+
 function renderGenMuscles(){
-  // muscle groups that actually have >=3 exercises, for sensible choices
   const counts = {};
   EXERCISES.forEach(e=>{ counts[e.muscle]=(counts[e.muscle]||0)+1; });
   const groups = Object.keys(counts).filter(m=>counts[m]>=3).sort();
-  document.getElementById('gen-muscle-btns').innerHTML = groups.map(m=>`
-    <button onclick="setGenMuscle('${m}')" class="gen-musc" data-m="${m}"
-      style="padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${m===genState.muscle?'var(--lime)':'var(--border)'};background:${m===genState.muscle?'rgba(200,241,53,.15)':'var(--soft)'};color:${m===genState.muscle?'var(--lime)':'var(--muted)'}">${m} <span style="opacity:.6">${counts[m]}</span></button>`).join('');
+  // suggestions: union of pair suggestions for currently-selected groups
+  const suggested = new Set();
+  if(genState.pairMode==='custom'){
+    genState.muscles.forEach(m=>{
+      (PAIR_SUGGESTIONS[m]||[]).forEach(s=>{ if(!genState.muscles.includes(s)) suggested.add(s); });
+    });
+  }
+  document.getElementById('gen-muscle-btns').innerHTML = groups.map(m=>{
+    const on = genState.muscles.includes(m);
+    const isSugg = suggested.has(m);
+    let border = on ? 'var(--lime)' : (isSugg ? 'rgba(200,241,53,.5)' : 'var(--border)');
+    let bg = on ? 'rgba(200,241,53,.15)' : (isSugg ? 'rgba(200,241,53,.06)' : 'var(--soft)');
+    let col = on ? 'var(--lime)' : (isSugg ? 'var(--lime)' : 'var(--muted)');
+    return `<button onclick="toggleGenMuscle('${m}')" class="gen-musc" data-m="${m}"
+      style="padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${border};background:${bg};color:${col};position:relative">
+      ${on?'✓ ':''}${m} <span style="opacity:.6">${counts[m]}</span>${isSugg?' <span style="font-size:9px;opacity:.8">pairs</span>':''}</button>`;
+  }).join('');
+  // selection summary
+  const sumEl = document.getElementById('gen-selection-summary');
+  if(sumEl){
+    const total = EXERCISES.filter(e=>genState.muscles.includes(e.muscle) && (!genState.hipSafe || e.hipSafe)).length;
+    sumEl.textContent = genState.muscles.length
+      ? `Selected: ${genState.muscles.join(' + ')} · ${total} exercises in pool`
+      : 'Pick at least one group';
+  }
 }
-function setGenMuscle(m){ genState.muscle=m; renderGenMuscles(); }
+// Toggle a group in/out of the multi-selection (custom mode); single-tap in combo modes
+function toggleGenMuscle(m){
+  const idx = genState.muscles.indexOf(m);
+  if(idx>=0){
+    if(genState.muscles.length>1) genState.muscles.splice(idx,1); // keep at least one
+  } else {
+    genState.muscles.push(m);
+  }
+  renderGenMuscles();
+  renderPairContent(); // update combo highlight state
+}
 function setGenDifficulty(d){ genState.difficulty=d; renderGenControls(); }
 function setGenMinutes(m){ genState.minutes=m; renderGenControls(); }
-function toggleGenHipSafe(){ genState.hipSafe=!genState.hipSafe; renderGenControls(); }
+function toggleGenHipSafe(){ genState.hipSafe=!genState.hipSafe; setHipSafePref(activeUser, genState.hipSafe); renderGenControls(); renderGenMuscles(); }
 function setGenCustomMinutes(v){
   const n = parseInt(v)||0;
   if(n>=10 && n<=180){ genState.minutes=n; renderGenControls(); }
@@ -2709,6 +3423,8 @@ function renderGenControls(){
   const t=document.getElementById('gen-hip-toggle'), th=document.getElementById('gen-hip-thumb');
   if(t){ t.style.background=genState.hipSafe?'var(--lime)':'var(--soft)'; t.style.border=genState.hipSafe?'none':'1px solid var(--border)'; }
   if(th){ th.style.left=genState.hipSafe?'20px':'2px'; }
+  const hipUser=document.getElementById('gen-hip-user');
+  if(hipUser) hipUser.textContent = '· for '+activeUser+(activeUser==='Mike'?' (cam lesion)':'');
   // custom field reflects current if not a preset
   const cf=document.getElementById('gen-custom-min');
   if(cf && ![20,40,60,90].includes(genState.minutes)) cf.value=genState.minutes;
