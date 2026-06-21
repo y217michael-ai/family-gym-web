@@ -3758,7 +3758,7 @@ let tempoSetup = {
   speak: true
 };
 const TEMPO_REPS_OPTS = [50, 75, 100];
-const TEMPO_ROUNDS_OPTS = [2, 3, 4, 6];
+const TEMPO_ROUNDS_OPTS = [2, 3, 4, 5, 6];
 const TEMPO_EXREST_OPTS = [30, 45, 60, 90];
 const TEMPO_ROUNDREST_OPTS = [60, 120, 180, 300, 600];
 
@@ -3774,12 +3774,17 @@ function openTempoSetup(){
 
 // ── Reps / tempo ──
 function renderTempoReps(){
+  const isCustom = !TEMPO_REPS_OPTS.includes(tempoSetup.reps);
   document.getElementById('tempo-reps-btns').innerHTML = TEMPO_REPS_OPTS.map(r=>{
     const on = tempoSetup.reps===r;
     return `<button onclick="setTempoReps(${r})" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--michelle)':'var(--border)'};background:${on?'rgba(255,140,66,.16)':'#16161F'};color:${on?'var(--michelle)':'#D8D8E2'}">${r}</button>`;
-  }).join('');
+  }).join('') + `<button onclick="promptTempoReps()" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${isCustom?'var(--michelle)':'var(--border)'};background:${isCustom?'rgba(255,140,66,.16)':'#16161F'};color:${isCustom?'var(--michelle)':'#D8D8E2'}">${isCustom?tempoSetup.reps:'Other'}</button>`;
 }
 function setTempoReps(r){ tempoSetup.reps=r; renderTempoReps(); renderTempoSecs(); renderTempoPlanSummary(); }
+function promptTempoReps(){
+  const v = parseInt(prompt('How many reps per exercise?', tempoSetup.reps));
+  if(v && v>=1 && v<=1000){ tempoSetup.reps=v; renderTempoReps(); renderTempoSecs(); renderTempoPlanSummary(); }
+}
 function adjustTempoSecs(delta){
   tempoSetup.secsPerRep = Math.max(1.0, Math.min(6.0, Math.round((tempoSetup.secsPerRep+delta)*10)/10));
   renderTempoSecs(); renderTempoPlanSummary();
@@ -3800,14 +3805,22 @@ function renderTempoRounds(){
     const on = tempoSetup.rounds===n;
     return `<button onclick="setTempoRounds(${n})" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--michelle)':'var(--border)'};background:${on?'rgba(255,140,66,.16)':'#16161F'};color:${on?'var(--michelle)':'#D8D8E2'}">${n}</button>`;
   }).join('') + `<button onclick="promptTempoRounds()" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${!TEMPO_ROUNDS_OPTS.includes(tempoSetup.rounds)?'var(--michelle)':'var(--border)'};background:${!TEMPO_ROUNDS_OPTS.includes(tempoSetup.rounds)?'rgba(255,140,66,.16)':'#16161F'};color:${!TEMPO_ROUNDS_OPTS.includes(tempoSetup.rounds)?'var(--michelle)':'#D8D8E2'}">${!TEMPO_ROUNDS_OPTS.includes(tempoSetup.rounds)?tempoSetup.rounds:'…'}</button>`;
-  // hint: how rounds map to circuits
+  // hint: how rounds map to circuits — spell it out clearly
   const nC = tempoSetup.circuits.length;
   const hint = document.getElementById('tempo-rounds-hint');
   if(nC>1){
-    const seq = [];
-    for(let i=0;i<tempoSetup.rounds;i++) seq.push(String.fromCharCode(65 + (i % nC)));
-    hint.textContent = '(' + seq.join('-') + ')';
-  } else { hint.textContent = '(same circuit each round)'; }
+    // e.g. "Rounds 1,3,5 = Circuit A · Rounds 2,4 = Circuit B"
+    const byCircuit = {};
+    for(let i=0;i<tempoSetup.rounds;i++){
+      const ci = i % nC;
+      (byCircuit[ci] = byCircuit[ci] || []).push(i+1);
+    }
+    const parts = Object.keys(byCircuit).map(ci=>{
+      const name = tempoSetup.circuits[ci].name || ('Circuit '+String.fromCharCode(65+(+ci)));
+      return `R${byCircuit[ci].join(',')} = ${name}`;
+    });
+    hint.innerHTML = '<span style="color:var(--michelle)">'+parts.join('  ·  ')+'</span>';
+  } else { hint.textContent = '(same circuit every round)'; }
 }
 function setTempoRounds(n){ tempoSetup.rounds=n; renderTempoRounds(); renderTempoPlanSummary(); }
 function promptTempoRounds(){
@@ -3818,19 +3831,29 @@ function promptTempoRounds(){
 // ── Rests ──
 function fmtTempoRest(s){ return s>=60 ? (s%60===0 ? (s/60)+' min' : Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0')) : s+'s'; }
 function renderTempoExRest(){
+  const isCustom = !TEMPO_EXREST_OPTS.includes(tempoSetup.exRestSec);
   document.getElementById('tempo-exrest-btns').innerHTML = TEMPO_EXREST_OPTS.map(s=>{
     const on = tempoSetup.exRestSec===s;
     return `<button onclick="setTempoExRest(${s})" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--michelle)':'var(--border)'};background:${on?'rgba(255,140,66,.16)':'#16161F'};color:${on?'var(--michelle)':'#D8D8E2'}">${fmtTempoRest(s)}</button>`;
-  }).join('');
+  }).join('') + `<button onclick="promptTempoExRest()" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${isCustom?'var(--michelle)':'var(--border)'};background:${isCustom?'rgba(255,140,66,.16)':'#16161F'};color:${isCustom?'var(--michelle)':'#D8D8E2'}">${isCustom?fmtTempoRest(tempoSetup.exRestSec):'Other'}</button>`;
 }
 function setTempoExRest(s){ tempoSetup.exRestSec=s; renderTempoExRest(); renderTempoPlanSummary(); }
+function promptTempoExRest(){
+  const v = parseInt(prompt('Rest between exercises (seconds)?', tempoSetup.exRestSec));
+  if(v!=null && v>=0 && v<=900){ tempoSetup.exRestSec=v; renderTempoExRest(); renderTempoPlanSummary(); }
+}
 function renderTempoRoundRest(){
+  const isCustom = !TEMPO_ROUNDREST_OPTS.includes(tempoSetup.roundRestSec);
   document.getElementById('tempo-roundrest-btns').innerHTML = TEMPO_ROUNDREST_OPTS.map(s=>{
     const on = tempoSetup.roundRestSec===s;
     return `<button onclick="setTempoRoundRest(${s})" style="flex:1;min-width:54px;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--michelle)':'var(--border)'};background:${on?'rgba(255,140,66,.16)':'#16161F'};color:${on?'var(--michelle)':'#D8D8E2'}">${fmtTempoRest(s)}</button>`;
-  }).join('');
+  }).join('') + `<button onclick="promptTempoRoundRest()" style="flex:1;min-width:54px;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${isCustom?'var(--michelle)':'var(--border)'};background:${isCustom?'rgba(255,140,66,.16)':'#16161F'};color:${isCustom?'var(--michelle)':'#D8D8E2'}">${isCustom?fmtTempoRest(tempoSetup.roundRestSec):'Other'}</button>`;
 }
 function setTempoRoundRest(s){ tempoSetup.roundRestSec=s; renderTempoRoundRest(); renderTempoPlanSummary(); }
+function promptTempoRoundRest(){
+  const v = parseInt(prompt('Rest between rounds (seconds)?', tempoSetup.roundRestSec));
+  if(v!=null && v>=0 && v<=1800){ tempoSetup.roundRestSec=v; renderTempoRoundRest(); renderTempoPlanSummary(); }
+}
 
 // ── Circuits ──
 function addTempoCircuit(silent){
@@ -3847,11 +3870,16 @@ function renameTempoCircuit(ci){
   const v = prompt('Circuit name:', tempoSetup.circuits[ci].name);
   if(v && v.trim()){ tempoSetup.circuits[ci].name = v.trim(); renderTempoCircuits(); }
 }
+function toggleTempoCircuit(ci){
+  tempoSetup.circuits[ci]._collapsed = !tempoSetup.circuits[ci]._collapsed;
+  renderTempoCircuits();
+}
 function renderTempoCircuits(){
   document.getElementById('tempo-circ-count').textContent = tempoSetup.circuits.length;
   const multi = tempoSetup.circuits.length>1;
   document.getElementById('tempo-circuits').innerHTML = tempoSetup.circuits.map((c,ci)=>{
     const letter = String.fromCharCode(65+ci);
+    const collapsed = !!c._collapsed;
     const exHtml = c.exercises.length ? c.exercises.map((ex,ei)=>`
       <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--soft)">
         <span style="color:var(--muted);font-size:11px;width:16px">${ei+1}</span>
@@ -3861,17 +3889,24 @@ function renderTempoCircuits(){
         </div>
         <button onclick="removeTempoEx(${ci},${ei})" style="width:24px;height:24px;border-radius:6px;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.25);color:var(--red);font-size:14px">×</button>
       </div>`).join('') : `<div style="font-size:11px;color:var(--muted);padding:8px 0;text-align:center">No exercises yet</div>`;
+    const summary = c.exercises.length
+      ? `${c.exercises.length} exercise${c.exercises.length>1?'s':''} · tap to ${collapsed?'view':'hide'}`
+      : 'empty · tap to add';
     return `<div style="border:1px solid var(--border);border-radius:11px;padding:10px 12px;margin-bottom:8px;background:#16161F">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <div style="display:flex;align-items:center;gap:8px">
         ${multi?`<span style="background:rgba(255,140,66,.16);color:var(--michelle);font-size:11px;font-weight:800;border-radius:6px;padding:2px 8px">${letter}</span>`:''}
-        <div onclick="renameTempoCircuit(${ci})" style="flex:1;font-size:14px;font-weight:700;cursor:pointer">${c.name} <span style="font-size:10px;color:var(--muted)">✎</span></div>
+        <div onclick="toggleTempoCircuit(${ci})" style="flex:1;cursor:pointer">
+          <div style="font-size:14px;font-weight:700">${c.name} <span style="font-size:11px;color:var(--muted)">${collapsed?'▸':'▾'}</span></div>
+          <div style="font-size:10px;color:var(--muted)">${summary}</div>
+        </div>
+        <button onclick="renameTempoCircuit(${ci})" title="Rename" style="background:transparent;border:none;color:var(--muted);font-size:13px">✎</button>
         ${tempoSetup.circuits.length>1?`<button onclick="removeTempoCircuit(${ci})" style="background:transparent;border:none;color:var(--muted);font-size:16px">🗑</button>`:''}
       </div>
-      ${exHtml}
+      ${collapsed ? '' : `${exHtml}
       <div style="display:flex;gap:6px;margin-top:8px">
         <button onclick="openTempoAutofill(${ci})" style="flex:1;background:transparent;color:var(--michelle);border:1px dashed var(--michelle);border-radius:8px;padding:8px;font-size:12px;font-weight:700">✨ Auto-fill</button>
         <button onclick="openTempoPicker(${ci})" style="flex:1;background:transparent;color:var(--michelle);border:1px dashed var(--michelle);border-radius:8px;padding:8px;font-size:12px;font-weight:700">+ Add exercise</button>
-      </div>
+      </div>`}
     </div>`;
   }).join('');
 }
@@ -3949,9 +3984,10 @@ function applyTafCombo(i){
   // name the circuit after the combo if it's still the default
   const cur = tempoSetup.circuits[tafState.circuit];
   if(/^Circuit [A-Z]$/.test(cur.name)) cur.name = c.label;
+  cur._collapsed = true; // show clean summary; tap to view
   closeModal('modal-tempo-autofill');
-  renderTempoCircuits(); renderTempoPlanSummary();
-  toast('Filled with '+picks.length+' exercises');
+  renderTempoCircuits(); renderTempoPlanSummary(); renderTempoRounds();
+  toast('Filled with '+picks.length+' exercises — tap the circuit to view');
 }
 
 // ── Plan summary (total reps + est time) ──
