@@ -6894,10 +6894,48 @@ function escapeHtml(s){
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// Core fetch — tries OFF v2 API first, falls back to legacy endpoint.
+// ── Food database ──
+// YMove Pro nutrition API (the paid library). Put your key below to enable it.
+// Get it from your YMove dashboard. Until set, it falls back to Open Food Facts.
+const YMOVE_API_KEY = ''; // <-- paste your YMove API key here
+const YMOVE_FOODS_URL = 'https://exercise-api.ymove.app/api/v2/foods';
+
+// Normalise a YMove food row -> our food shape (per 100g)
+function normaliseYMoveFood(f){
+  if(!f) return null;
+  const name = f.shortName || f.displayName || f.name || '';
+  if(!name) return null;
+  const serving = f.servingSize || 100; // grams
+  const per100 = (v)=> serving ? Math.round(((v||0)/serving*100)*10)/10 : (v||0);
+  const cal = Math.round(per100(f.calories!=null?f.calories:f.kcal));
+  const pro = per100(f.protein);
+  const carb = per100(f.carbs!=null?f.carbs:f.carbohydrates);
+  const fat = per100(f.fat);
+  const fibre = per100(f.fiber!=null?f.fiber:f.fibre);
+  const sugar = per100(f.sugar!=null?f.sugar:f.sugars);
+  // sodium already in mg per serving -> per 100g
+  const sodium = serving ? Math.round((f.sodium||0)/serving*100) : (f.sodium||0);
+  if(cal===0 && pro===0 && carb===0 && fat===0) return null;
+  return {name, brand: f.brand||'', cal, pro, carb, fat, fibre, sugar, sodium};
+}
+
+// Core fetch — tries YMove Pro first (if key set), then Open Food Facts.
 async function fetchFoods(q){
   const headers = { 'Accept':'application/json' };
-  // v2 search — current, faster endpoint
+  // 1) YMove Pro (the paid food library) — only if a key is configured
+  if(YMOVE_API_KEY){
+    try{
+      const url = YMOVE_FOODS_URL + '?q=' + encodeURIComponent(q) + '&country=GB';
+      const res = await fetch(url, { headers: { ...headers, 'X-API-Key': YMOVE_API_KEY } });
+      if(res.ok){
+        const data = await res.json();
+        const rows = data.foods || data.results || data.data || (Array.isArray(data)?data:[]);
+        const mapped = rows.map(normaliseYMoveFood).filter(Boolean);
+        if(mapped.length) return mapped.map(packAsOFF); // wrap so normaliseFood passes through
+      }
+    }catch(e){ /* fall through to Open Food Facts */ }
+  }
+  // 2) Open Food Facts v2 (free fallback)
   const v2 = 'https://world.openfoodfacts.org/api/v2/search'
     + '?search_terms=' + encodeURIComponent(q)
     + '&fields=product_name,brands,nutriments,serving_quantity'
@@ -6918,9 +6956,14 @@ async function fetchFoods(q){
   const data2 = await res2.json();
   return (data2 && data2.products) || [];
 }
+// YMove rows are already normalised; wrap them so normaliseFood returns them as-is
+function packAsOFF(food){
+  return { __normalised: food };
+}
 
 // Normalise an OFF product into our food shape (per 100g).
 function normaliseFood(p){
+  if(p && p.__normalised) return p.__normalised; // already normalised (YMove)
   const n = p.nutriments || {};
   const name = p.product_name || p.generic_name || '';
   if(!name) return null;
