@@ -207,6 +207,7 @@ if('serviceWorker' in navigator){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-size:16px;font-weight:800">Family Routines</div>
       <div style="display:flex;gap:6px">
+        <button onclick="openTempoSetup()" style="background:rgba(255,140,66,.15);color:var(--michelle);border:1px solid var(--michelle);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">🔥 Tempo</button>
         <button onclick="openWorkoutGenerator()" style="background:rgba(57,255,20,.15);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">✨ Generate</button>
         <button onclick="openNewRoutine()" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
       </div>
@@ -768,6 +769,98 @@ if('serviceWorker' in navigator){
   <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;max-width:480px;margin:0 auto;width:100%">
     <div id="runner-body" style="width:100%"></div>
   </div>
+</div>
+
+<!-- Tempo Training full-screen runner -->
+<div id="tempo-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:10px;padding:16px 16px 8px">
+    <button onclick="exitTempo()" style="background:var(--soft);border-radius:10px;padding:8px 12px;font-size:16px;border:1px solid var(--border)">✕</button>
+    <div style="flex:1;height:6px;background:var(--soft);border-radius:3px;overflow:hidden">
+      <div id="tempo-progress" style="height:100%;background:var(--michelle);width:0%;transition:width .3s"></div>
+    </div>
+    <div id="tempo-round-label" style="font-size:12px;color:var(--muted);font-weight:700"></div>
+  </div>
+  <div id="tempo-stats" style="display:flex;gap:8px;padding:0 16px 4px;max-width:480px;margin:0 auto;width:100%">
+    <div style="flex:1;background:transparent;border:1px solid var(--border);border-radius:10px;padding:7px 10px;text-align:center">
+      <div style="font-size:9px;color:var(--muted);letter-spacing:.5px">EST. HEART RATE</div>
+      <div><span id="tempo-hr" style="font-size:18px;font-weight:800;color:var(--red)">—</span> <span style="font-size:10px;color:var(--muted)">bpm</span></div>
+    </div>
+    <div style="flex:1;background:transparent;border:1px solid var(--border);border-radius:10px;padding:7px 10px;text-align:center">
+      <div style="font-size:9px;color:var(--muted);letter-spacing:.5px">EST. CALORIES</div>
+      <div><span id="tempo-cal" style="font-size:18px;font-weight:800;color:var(--michelle)">0</span> <span style="font-size:10px;color:var(--muted)">kcal</span></div>
+    </div>
+  </div>
+  <div style="text-align:center;font-size:9px;color:var(--muted);padding-bottom:6px">estimated — live watch data comes with the native app</div>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;max-width:480px;margin:0 auto;width:100%">
+    <div id="tempo-body" style="width:100%;text-align:center"></div>
+  </div>
+</div>
+
+<!-- Workout Generator Modal -->
+<div class="modal-overlay" id="modal-tempo-setup">
+<div class="modal" style="max-height:92vh">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:20px;font-weight:800">🔥 Tempo Training</div>
+    <button onclick="openTempoSaved()" id="tempo-load-btn" style="background:#16161F;color:var(--michelle);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700">📂 Saved</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">High-volume burnout. Build circuits of exercises, set your reps & tempo, and grind. The phone counts every rep out loud.</div>
+
+  <!-- Reps + tempo -->
+  <div style="background:transparent;border:1px solid var(--michelle);border-radius:11px;padding:12px;margin-bottom:12px">
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">REPS PER EXERCISE</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px" id="tempo-reps-btns"></div>
+
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">TEMPO <span style="font-weight:500;text-transform:none">(seconds per rep)</span></div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+      <button onclick="adjustTempoSecs(-0.5)" style="width:34px;height:34px;border-radius:8px;background:#16161F;border:1px solid var(--border);color:var(--text);font-size:18px;font-weight:800">−</button>
+      <div style="flex:1;text-align:center"><span id="tempo-secs-val" style="font-size:22px;font-weight:800;color:var(--michelle)">2.0</span><span style="font-size:12px;color:var(--muted)">s / rep</span></div>
+      <button onclick="adjustTempoSecs(0.5)" style="width:34px;height:34px;border-radius:8px;background:#16161F;border:1px solid var(--border);color:var(--text);font-size:18px;font-weight:800">+</button>
+    </div>
+    <div id="tempo-split-hint" style="font-size:10px;color:var(--muted);text-align:center">1.0s up · 1.0s down · ~3:20 per 100 reps</div>
+  </div>
+
+  <!-- Circuits -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px">CIRCUITS <span id="tempo-circ-count" style="color:var(--michelle)">0</span></div>
+    <button onclick="addTempoCircuit()" style="background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:700">+ Circuit</button>
+  </div>
+  <div id="tempo-circuits" style="margin-bottom:12px"></div>
+
+  <!-- Rounds + rests -->
+  <div style="background:transparent;border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:12px">
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">ROUNDS <span style="font-weight:500;text-transform:none" id="tempo-rounds-hint"></span></div>
+    <div style="display:flex;gap:6px;margin-bottom:12px" id="tempo-rounds-btns"></div>
+
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">REST BETWEEN EXERCISES</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px" id="tempo-exrest-btns"></div>
+
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">REST BETWEEN ROUNDS</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap" id="tempo-roundrest-btns"></div>
+  </div>
+
+  <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:8px;cursor:pointer">
+    <input type="checkbox" id="tempo-speak" checked style="width:16px;height:16px;accent-color:var(--michelle)">
+    Speak the rep count out loud
+  </label>
+
+  <div id="tempo-plan-summary" style="font-size:11px;color:var(--michelle);margin-bottom:12px;text-align:center"></div>
+
+  <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:8px">
+    <button onclick="saveTempoWorkout()" title="Save this workout" style="background:#16161F;color:var(--text);border:1px solid var(--border);border-radius:13px;padding:14px 16px;font-size:14px;font-weight:700">💾</button>
+    <button class="btn-secondary" onclick="closeModal('modal-tempo-setup')">Cancel</button>
+    <button onclick="startTempoRunner()" style="background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:13px;padding:14px;font-size:15px;font-weight:800">🔥 Start</button>
+  </div>
+</div>
+</div>
+
+<!-- Saved Tempo Workouts Modal -->
+<div class="modal-overlay" id="modal-tempo-saved">
+<div class="modal" style="max-width:380px">
+  <div style="font-size:18px;font-weight:800;margin-bottom:4px">📂 Saved Tempo Workouts</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Tap one to load it.</div>
+  <div id="tempo-saved-list" style="margin-bottom:12px"></div>
+  <button class="btn-secondary" onclick="closeModal('modal-tempo-saved')">Close</button>
+</div>
 </div>
 
 <!-- Workout Generator Modal -->
@@ -2462,6 +2555,7 @@ function renderPickerList(){
 }
 
 function addExToRoutine(name){
+  if(tempoPickerActive){ addExToTempo(name); return; }
   const ex = EXERCISES.find(e=>e.name===name);
   if(ex){
     const newEx = {...ex};
@@ -3541,7 +3635,459 @@ function finishRunner(save){
   showScreen('home');
 }
 
-// ── Generator modal controls ──
+// ════════════════════════════════════════════════
+//  TEMPO TRAINING — circuit-based high-volume burnout
+// ════════════════════════════════════════════════
+// A "circuit" = { name, exercises:[{name,muscle}] }
+// Rounds cycle through circuits: round i uses circuits[i % circuits.length]
+let tempoSetup = {
+  circuits: [],
+  reps: 100,
+  secsPerRep: 2.0,
+  rounds: 2,
+  exRestSec: 60,     // rest between exercises within a circuit
+  roundRestSec: 300, // rest between rounds (default 5 min)
+  speak: true
+};
+const TEMPO_REPS_OPTS = [50, 75, 100];
+const TEMPO_ROUNDS_OPTS = [2, 3, 4, 6];
+const TEMPO_EXREST_OPTS = [30, 45, 60, 90];
+const TEMPO_ROUNDREST_OPTS = [60, 120, 180, 300, 600];
+
+function openTempoSetup(){
+  if(!tempoSetup.circuits) tempoSetup.circuits = [];
+  if(!tempoSetup.circuits.length) addTempoCircuit(true);
+  renderTempoReps(); renderTempoSecs(); renderTempoRounds();
+  renderTempoExRest(); renderTempoRoundRest(); renderTempoCircuits();
+  document.getElementById('tempo-speak').checked = tempoSetup.speak;
+  renderTempoPlanSummary();
+  openModal('modal-tempo-setup');
+}
+
+// ── Reps / tempo ──
+function renderTempoReps(){
+  document.getElementById('tempo-reps-btns').innerHTML = TEMPO_REPS_OPTS.map(r=>{
+    const on = tempoSetup.reps===r;
+    return `<button onclick="setTempoReps(${r})" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--michelle)':'var(--border)'};background:${on?'rgba(255,140,66,.16)':'#16161F'};color:${on?'var(--michelle)':'#D8D8E2'}">${r}</button>`;
+  }).join('');
+}
+function setTempoReps(r){ tempoSetup.reps=r; renderTempoReps(); renderTempoSecs(); renderTempoPlanSummary(); }
+function adjustTempoSecs(delta){
+  tempoSetup.secsPerRep = Math.max(1.0, Math.min(6.0, Math.round((tempoSetup.secsPerRep+delta)*10)/10));
+  renderTempoSecs(); renderTempoPlanSummary();
+}
+function renderTempoSecs(){
+  const s = tempoSetup.secsPerRep;
+  document.getElementById('tempo-secs-val').textContent = s.toFixed(1);
+  const half = (s/2).toFixed(1);
+  const totalSec = Math.round(s * tempoSetup.reps);
+  const mm = Math.floor(totalSec/60), ss = totalSec%60;
+  document.getElementById('tempo-split-hint').textContent =
+    `${half}s up · ${half}s down · ~${mm}:${ss.toString().padStart(2,'0')} per ${tempoSetup.reps} reps`;
+}
+
+// ── Rounds ──
+function renderTempoRounds(){
+  document.getElementById('tempo-rounds-btns').innerHTML = TEMPO_ROUNDS_OPTS.map(n=>{
+    const on = tempoSetup.rounds===n;
+    return `<button onclick="setTempoRounds(${n})" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--michelle)':'var(--border)'};background:${on?'rgba(255,140,66,.16)':'#16161F'};color:${on?'var(--michelle)':'#D8D8E2'}">${n}</button>`;
+  }).join('') + `<button onclick="promptTempoRounds()" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${!TEMPO_ROUNDS_OPTS.includes(tempoSetup.rounds)?'var(--michelle)':'var(--border)'};background:${!TEMPO_ROUNDS_OPTS.includes(tempoSetup.rounds)?'rgba(255,140,66,.16)':'#16161F'};color:${!TEMPO_ROUNDS_OPTS.includes(tempoSetup.rounds)?'var(--michelle)':'#D8D8E2'}">${!TEMPO_ROUNDS_OPTS.includes(tempoSetup.rounds)?tempoSetup.rounds:'…'}</button>`;
+  // hint: how rounds map to circuits
+  const nC = tempoSetup.circuits.length;
+  const hint = document.getElementById('tempo-rounds-hint');
+  if(nC>1){
+    const seq = [];
+    for(let i=0;i<tempoSetup.rounds;i++) seq.push(String.fromCharCode(65 + (i % nC)));
+    hint.textContent = '(' + seq.join('-') + ')';
+  } else { hint.textContent = '(same circuit each round)'; }
+}
+function setTempoRounds(n){ tempoSetup.rounds=n; renderTempoRounds(); renderTempoPlanSummary(); }
+function promptTempoRounds(){
+  const v = parseInt(prompt('How many rounds?', tempoSetup.rounds));
+  if(v && v>=1 && v<=20){ tempoSetup.rounds=v; renderTempoRounds(); renderTempoPlanSummary(); }
+}
+
+// ── Rests ──
+function fmtTempoRest(s){ return s>=60 ? (s%60===0 ? (s/60)+' min' : Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0')) : s+'s'; }
+function renderTempoExRest(){
+  document.getElementById('tempo-exrest-btns').innerHTML = TEMPO_EXREST_OPTS.map(s=>{
+    const on = tempoSetup.exRestSec===s;
+    return `<button onclick="setTempoExRest(${s})" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--michelle)':'var(--border)'};background:${on?'rgba(255,140,66,.16)':'#16161F'};color:${on?'var(--michelle)':'#D8D8E2'}">${fmtTempoRest(s)}</button>`;
+  }).join('');
+}
+function setTempoExRest(s){ tempoSetup.exRestSec=s; renderTempoExRest(); renderTempoPlanSummary(); }
+function renderTempoRoundRest(){
+  document.getElementById('tempo-roundrest-btns').innerHTML = TEMPO_ROUNDREST_OPTS.map(s=>{
+    const on = tempoSetup.roundRestSec===s;
+    return `<button onclick="setTempoRoundRest(${s})" style="flex:1;min-width:54px;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--michelle)':'var(--border)'};background:${on?'rgba(255,140,66,.16)':'#16161F'};color:${on?'var(--michelle)':'#D8D8E2'}">${fmtTempoRest(s)}</button>`;
+  }).join('');
+}
+function setTempoRoundRest(s){ tempoSetup.roundRestSec=s; renderTempoRoundRest(); renderTempoPlanSummary(); }
+
+// ── Circuits ──
+function addTempoCircuit(silent){
+  const n = tempoSetup.circuits.length;
+  tempoSetup.circuits.push({ name: 'Circuit '+String.fromCharCode(65+n), exercises: [] });
+  if(!silent){ renderTempoCircuits(); renderTempoRounds(); renderTempoPlanSummary(); }
+}
+function removeTempoCircuit(ci){
+  tempoSetup.circuits.splice(ci,1);
+  if(!tempoSetup.circuits.length) addTempoCircuit(true);
+  renderTempoCircuits(); renderTempoRounds(); renderTempoPlanSummary();
+}
+function renameTempoCircuit(ci){
+  const v = prompt('Circuit name:', tempoSetup.circuits[ci].name);
+  if(v && v.trim()){ tempoSetup.circuits[ci].name = v.trim(); renderTempoCircuits(); }
+}
+function renderTempoCircuits(){
+  document.getElementById('tempo-circ-count').textContent = tempoSetup.circuits.length;
+  const multi = tempoSetup.circuits.length>1;
+  document.getElementById('tempo-circuits').innerHTML = tempoSetup.circuits.map((c,ci)=>{
+    const letter = String.fromCharCode(65+ci);
+    const exHtml = c.exercises.length ? c.exercises.map((ex,ei)=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--soft)">
+        <span style="color:var(--muted);font-size:11px;width:16px">${ei+1}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--babyblue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ex.name}</div>
+          <div style="font-size:10px;color:var(--muted)">${ex.muscle} · ${tempoSetup.reps} reps</div>
+        </div>
+        <button onclick="removeTempoEx(${ci},${ei})" style="width:24px;height:24px;border-radius:6px;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.25);color:var(--red);font-size:14px">×</button>
+      </div>`).join('') : `<div style="font-size:11px;color:var(--muted);padding:8px 0;text-align:center">No exercises yet</div>`;
+    return `<div style="border:1px solid var(--border);border-radius:11px;padding:10px 12px;margin-bottom:8px;background:#16161F">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        ${multi?`<span style="background:rgba(255,140,66,.16);color:var(--michelle);font-size:11px;font-weight:800;border-radius:6px;padding:2px 8px">${letter}</span>`:''}
+        <div onclick="renameTempoCircuit(${ci})" style="flex:1;font-size:14px;font-weight:700;cursor:pointer">${c.name} <span style="font-size:10px;color:var(--muted)">✎</span></div>
+        ${tempoSetup.circuits.length>1?`<button onclick="removeTempoCircuit(${ci})" style="background:transparent;border:none;color:var(--muted);font-size:16px">🗑</button>`:''}
+      </div>
+      ${exHtml}
+      <button onclick="openTempoPicker(${ci})" style="width:100%;margin-top:8px;background:transparent;color:var(--michelle);border:1px dashed var(--michelle);border-radius:8px;padding:8px;font-size:12px;font-weight:700">+ Add exercise</button>
+    </div>`;
+  }).join('');
+}
+
+// Picker routes into a specific circuit
+let tempoPickerActive = false;
+let tempoPickerCircuit = 0;
+function openTempoPicker(ci){
+  tempoPickerActive = true;
+  tempoPickerCircuit = ci || 0;
+  pickerGroup='All';
+  renderPickerGroups(); renderPickerList();
+  openModal('modal-ex-picker');
+}
+function addExToTempo(name){
+  const ex = EXERCISES.find(e=>e.name===name);
+  if(ex && tempoSetup.circuits[tempoPickerCircuit]){
+    tempoSetup.circuits[tempoPickerCircuit].exercises.push({name:ex.name, muscle:ex.muscle});
+  }
+  tempoPickerActive = false;
+  closeModal('modal-ex-picker');
+  renderTempoCircuits(); renderTempoPlanSummary();
+  // reopen setup so they can keep building
+}
+function removeTempoEx(ci,ei){
+  tempoSetup.circuits[ci].exercises.splice(ei,1);
+  renderTempoCircuits(); renderTempoPlanSummary();
+}
+
+// ── Plan summary (total reps + est time) ──
+function tempoPlanStats(){
+  const nC = tempoSetup.circuits.length;
+  let totalReps=0, totalSec=0;
+  for(let r=0;r<tempoSetup.rounds;r++){
+    const c = tempoSetup.circuits[r % nC];
+    if(!c) continue;
+    const exs = c.exercises.length;
+    totalReps += exs * tempoSetup.reps;
+    totalSec += exs * tempoSetup.reps * tempoSetup.secsPerRep;          // work
+    if(exs>1) totalSec += (exs-1) * tempoSetup.exRestSec;               // between-exercise rest
+    if(r < tempoSetup.rounds-1) totalSec += tempoSetup.roundRestSec;    // between-round rest
+  }
+  return { totalReps, totalSec: Math.round(totalSec) };
+}
+function renderTempoPlanSummary(){
+  const el = document.getElementById('tempo-plan-summary'); if(!el) return;
+  const {totalReps, totalSec} = tempoPlanStats();
+  if(!totalReps){ el.textContent=''; return; }
+  const mm = Math.floor(totalSec/60), ss = totalSec%60;
+  el.textContent = `Plan: ${tempoSetup.rounds} rounds · ${totalReps} total reps · ~${mm}:${ss.toString().padStart(2,'0')}`;
+}
+
+// ── Save / load named tempo workouts ──
+function loadTempoWorkouts(){ try{ return JSON.parse(localStorage.getItem('fgym_tempo_'+activeUser)||'[]'); }catch(e){ return []; } }
+function saveTempoWorkoutsArr(a){ localStorage.setItem('fgym_tempo_'+activeUser, JSON.stringify(a)); }
+function saveTempoWorkout(){
+  const hasEx = tempoSetup.circuits.some(c=>c.exercises.length);
+  if(!hasEx){ toast('Add some exercises first'); return; }
+  const name = prompt('Name this tempo workout:', 'My Tempo Workout');
+  if(!name || !name.trim()) return;
+  const arr = loadTempoWorkouts();
+  arr.unshift({ id:Date.now(), name:name.trim(), setup: JSON.parse(JSON.stringify(tempoSetup)) });
+  if(arr.length>30) arr.length=30;
+  saveTempoWorkoutsArr(arr);
+  toast('Saved "'+name.trim()+'" 🔥');
+}
+function openTempoSaved(){
+  const arr = loadTempoWorkouts();
+  const el = document.getElementById('tempo-saved-list');
+  if(!arr.length){ el.innerHTML = `<div style="color:var(--muted);font-size:12px;text-align:center;padding:14px">No saved tempo workouts yet. Build one and tap 💾 to save it.</div>`; }
+  else {
+    el.innerHTML = arr.map(w=>{
+      const nC = (w.setup.circuits||[]).length;
+      const totalEx = (w.setup.circuits||[]).reduce((a,c)=>a+c.exercises.length,0);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:10px;margin-bottom:6px;border:1px solid var(--border);border-radius:10px;background:#16161F">
+        <div onclick="loadTempoWorkout(${w.id})" style="flex:1;cursor:pointer">
+          <div style="font-size:14px;font-weight:700;color:var(--michelle)">${w.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${nC} circuit${nC>1?'s':''} · ${totalEx} exercises · ${w.setup.rounds} rounds · ${w.setup.reps} reps</div>
+        </div>
+        <button onclick="deleteTempoWorkout(${w.id})" style="width:28px;height:28px;border-radius:7px;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.25);color:var(--red);font-size:14px">×</button>
+      </div>`;
+    }).join('');
+  }
+  openModal('modal-tempo-saved');
+}
+function loadTempoWorkout(id){
+  const arr = loadTempoWorkouts();
+  const w = arr.find(x=>x.id===id);
+  if(!w) return;
+  tempoSetup = JSON.parse(JSON.stringify(w.setup));
+  closeModal('modal-tempo-saved');
+  openTempoSetup();
+  toast('Loaded "'+w.name+'"');
+}
+function deleteTempoWorkout(id){
+  const arr = loadTempoWorkouts().filter(x=>x.id!==id);
+  saveTempoWorkoutsArr(arr);
+  openTempoSaved();
+}
+
+// ════════════════════════════════════════════════
+//  TEMPO RUNNER
+// ════════════════════════════════════════════════
+let tempoRun = null;
+let tempoTimers = [];
+function clearTempoTimers(){ tempoTimers.forEach(t=>{clearTimeout(t);clearInterval(t);}); tempoTimers=[]; }
+function tBeep(freq=880, dur=0.12, vol=0.3){
+  try{
+    const ctx = window._fgAudio || (window._fgAudio = new (window.AudioContext||window.webkitAudioContext)());
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = freq; o.type='sine';
+    g.gain.value = vol; o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + dur);
+  }catch(e){}
+}
+function tSpeak(text){
+  if(!tempoRun || !tempoRun.speak) return;
+  try{ const u=new SpeechSynthesisUtterance(text); u.rate=1.1; u.volume=1; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }catch(e){}
+}
+
+// Build a flat plan: list of { round, circuitName, exIndex, exTotal, exercise }
+function buildTempoPlan(){
+  const nC = tempoSetup.circuits.length;
+  const steps = [];
+  for(let r=0;r<tempoSetup.rounds;r++){
+    const c = tempoSetup.circuits[r % nC];
+    if(!c || !c.exercises.length) continue;
+    c.exercises.forEach((ex,ei)=>{
+      steps.push({ round:r, roundLabel:r+1, circuitName:c.name, exIndex:ei, exTotal:c.exercises.length, exercise:ex, lastInRound: ei===c.exercises.length-1 });
+    });
+  }
+  return steps;
+}
+
+function startTempoRunner(){
+  const hasEx = tempoSetup.circuits.some(c=>c.exercises.length);
+  if(!hasEx){ toast('Add at least one exercise first'); return; }
+  tempoSetup.speak = document.getElementById('tempo-speak').checked;
+  closeModal('modal-tempo-setup');
+  tBeep(660,0.05,0.15);
+  const plan = buildTempoPlan();
+  tempoRun = {
+    plan, step:0, rep:0, phase:'countdown',
+    startTime: Date.now(), cals:0,
+    speak: tempoSetup.speak,
+    weightKg: (USERS[activeUser] && USERS[activeUser].weight) || 80,
+    totalRounds: tempoSetup.rounds
+  };
+  document.getElementById('tempo-overlay').style.display='flex';
+  startTempoCountdown();
+}
+
+function curStep(){ return tempoRun.plan[tempoRun.step]; }
+
+function updateTempoHeader(){
+  const s = curStep();
+  document.getElementById('tempo-round-label').textContent = s ? `Round ${s.roundLabel}/${tempoRun.totalRounds}` : '';
+  const frac = tempoRun.step / tempoRun.plan.length;
+  document.getElementById('tempo-progress').style.width = (frac*100)+'%';
+}
+
+function startTempoCountdown(){
+  clearTempoTimers();
+  tempoRun.phase='countdown';
+  const s = curStep();
+  if(!s){ finishTempo(); return; }
+  updateTempoHeader();
+  let n = 10;
+  const body = document.getElementById('tempo-body');
+  const circuitLine = (tempoSetup.circuits.length>1) ? `<div style="font-size:12px;color:var(--michelle);font-weight:700;margin-bottom:2px">${s.circuitName}</div>` : '';
+  const tick = ()=>{
+    if(n>3){
+      body.innerHTML = `${circuitLine}<div style="font-size:13px;color:var(--muted);margin-bottom:6px">GET READY · exercise ${s.exIndex+1}/${s.exTotal}</div>
+        <div style="font-size:22px;font-weight:800;color:var(--babyblue);margin-bottom:18px">${s.exercise.name}</div>
+        <div style="font-size:72px;font-weight:900;color:var(--michelle)">${n}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:10px">${tempoSetup.reps} reps · ${tempoSetup.secsPerRep.toFixed(1)}s per rep</div>`;
+      if(n===10) tSpeak('Get ready. '+s.exercise.name);
+    } else if(n>0){
+      body.innerHTML = `<div style="font-size:90px;font-weight:900;color:var(--michelle)">${n}</div>`;
+      tBeep(700,0.12,0.3); tSpeak(String(n));
+    } else {
+      body.innerHTML = `<div style="font-size:60px;font-weight:900;color:var(--lime)">GO!</div>`;
+      tBeep(1000,0.25,0.35); tSpeak('Go');
+      tempoTimers.push(setTimeout(startTempoReps, 700));
+      return;
+    }
+    n--;
+    tempoTimers.push(setTimeout(tick, 1000));
+  };
+  tick();
+}
+
+function startTempoReps(){
+  tempoRun.phase='reps';
+  tempoRun.rep = 0;
+  const s = curStep();
+  const interval = tempoSetup.secsPerRep * 1000;
+  const total = tempoSetup.reps;
+  const circuitLine = (tempoSetup.circuits.length>1) ? `<div style="font-size:12px;color:var(--michelle);font-weight:700;margin-bottom:2px">${s.circuitName}</div>` : '';
+  const repTick = ()=>{
+    tempoRun.rep++;
+    const r = tempoRun.rep;
+    const kcalPerSec = (3.5 * 3.5 * tempoRun.weightKg / 200) / 60;
+    tempoRun.cals += kcalPerSec * tempoSetup.secsPerRep;
+    updateTempoStats();
+    const body = document.getElementById('tempo-body');
+    body.innerHTML = `${circuitLine}<div style="font-size:13px;color:var(--muted);margin-bottom:4px">${s.exercise.name} <span style="color:var(--muted)">· ${s.exIndex+1}/${s.exTotal}</span></div>
+      <div style="font-size:120px;font-weight:900;color:var(--michelle);line-height:1">${r}</div>
+      <div style="font-size:14px;color:var(--muted);margin-top:6px">of ${total} · Round ${s.roundLabel}/${tempoRun.totalRounds}</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:24px">
+        <button onclick="skipTempoExercise()" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:9px 16px;font-size:12px;font-weight:700">Skip exercise</button>
+        <button onclick="finishTempoEarly()" style="background:transparent;border:1px solid var(--michelle);color:var(--michelle);border-radius:10px;padding:9px 16px;font-size:12px;font-weight:700">Finish & save</button>
+      </div>`;
+    tBeep(820,0.08,0.22); tSpeak(String(r));
+    if(r >= total){ tempoTimers.push(setTimeout(afterExercise, interval)); }
+    else { tempoTimers.push(setTimeout(repTick, interval)); }
+  };
+  tempoTimers.push(setTimeout(repTick, interval));
+}
+
+function afterExercise(){
+  clearTempoTimers();
+  const s = curStep();
+  const isLastStep = tempoRun.step >= tempoRun.plan.length-1;
+  if(isLastStep){ finishTempo(); return; }
+  const next = tempoRun.plan[tempoRun.step+1];
+  // decide rest type: same round (between exercises) or new round (between rounds)
+  const newRound = next.round !== s.round;
+  const restSecs = newRound ? tempoSetup.roundRestSec : tempoSetup.exRestSec;
+  tempoRun.step++;
+  if(restSecs<=0){ startTempoCountdown(); return; }
+  startTempoRest(restSecs, newRound, next);
+}
+
+function startTempoRest(restSecs, newRound, next){
+  clearTempoTimers();
+  tempoRun.phase='rest';
+  let n = restSecs;
+  const body = document.getElementById('tempo-body');
+  tSpeak(newRound ? 'Round complete. Rest.' : 'Rest.');
+  const tick = ()=>{
+    const mm = Math.floor(n/60), ss = n%60;
+    const disp = mm>0 ? mm+':'+ss.toString().padStart(2,'0') : String(n);
+    body.innerHTML = `<div style="font-size:15px;color:var(--lime);font-weight:800;margin-bottom:8px">${newRound?'✓ Round done':'✓ Done'}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">${newRound?'REST BETWEEN ROUNDS':'REST'}</div>
+      <div style="font-size:72px;font-weight:900;color:var(--michelle)">${disp}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:16px">Up next: <span style="color:var(--babyblue);font-weight:700">${next.exercise.name}</span></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:18px">
+        <button onclick="tempoRestAdjust(30)" style="background:transparent;border:1px solid var(--border);color:var(--text);border-radius:9px;padding:8px 14px;font-size:12px;font-weight:700">+30s</button>
+        <button onclick="skipTempoRest()" style="background:rgba(255,140,66,.16);border:1px solid var(--michelle);color:var(--michelle);border-radius:9px;padding:8px 14px;font-size:12px;font-weight:700">Skip →</button>
+      </div>`;
+    if(n<=3 && n>0){ tBeep(700,0.1,0.25); tSpeak(String(n)); }
+    if(n<=0){ startTempoCountdown(); return; }
+    tempoRun._restN = n;
+    n--;
+    tempoTimers.push(setTimeout(tick, 1000));
+  };
+  tick();
+}
+function tempoRestAdjust(s){
+  // extend current rest by restarting tick with more time
+  const next = tempoRun.plan[tempoRun.step];
+  const newRound = tempoRun.step>0 && tempoRun.plan[tempoRun.step-1].round !== next.round;
+  clearTempoTimers();
+  startTempoRest((tempoRun._restN||0)+s, newRound, next);
+}
+function skipTempoRest(){ clearTempoTimers(); startTempoCountdown(); }
+function skipTempoExercise(){ clearTempoTimers(); afterExercise(); }
+function finishTempoEarly(){ clearTempoTimers(); finishTempo(); }
+
+function updateTempoStats(){
+  const elapsedMin = (Date.now()-tempoRun.startTime)/60000;
+  const base = 95 + Math.min(55, elapsedMin*7) + (Math.random()*8-4);
+  const hrEl=document.getElementById('tempo-hr'), calEl=document.getElementById('tempo-cal');
+  if(hrEl) hrEl.textContent = Math.round(base);
+  if(calEl) calEl.textContent = Math.round(tempoRun.cals);
+  updateTempoHeader();
+}
+
+function finishTempo(){
+  clearTempoTimers();
+  const mins = Math.max(1, Math.round((Date.now()-tempoRun.startTime)/60000));
+  const cals = Math.round(tempoRun.cals);
+  // reps actually done: completed steps fully + current partial
+  let repsDone = 0;
+  for(let i=0;i<tempoRun.step;i++) repsDone += tempoSetup.reps;
+  repsDone += tempoRun.rep||0;
+  const body = document.getElementById('tempo-body');
+  document.getElementById('tempo-progress').style.width='100%';
+  tSpeak('Workout complete. Well done.');
+  tBeep(1000,0.3,0.35);
+  const totSec = Math.round((Date.now()-tempoRun.startTime)/1000);
+  const tmm = Math.floor(totSec/60), tss = totSec%60;
+  body.innerHTML = `<div style="font-size:48px;margin-bottom:10px">🔥</div>
+    <div style="font-size:24px;font-weight:800;margin-bottom:6px">Crushed it</div>
+    <div style="font-size:14px;color:var(--text);margin-bottom:4px">Total time: <span style="color:var(--michelle);font-weight:800">${tmm}:${tss.toString().padStart(2,'0')}</span></div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">${repsDone} reps · ~${cals} kcal</div>
+    <button onclick="saveTempoToHistory(${mins},${cals},${repsDone})" class="btn-primary" style="margin-bottom:8px">Save to history</button>
+    <button onclick="exitTempo(true)" class="btn-secondary">Done</button>`;
+  tempoRun.phase='done';
+}
+function saveTempoToHistory(mins, cals, reps){
+  try{
+    const muscles = [...new Set(tempoSetup.circuits.flatMap(c=>c.exercises.map(e=>e.muscle)))];
+    const h = loadHistory();
+    h.unshift({ id:Date.now(), user:activeUser, routineName:'🔥 Tempo Training', muscles, cals, mins, setsLogged:reps?Math.round(reps/tempoSetup.reps):0, volume:reps, exerciseNotes:[], date:Date.now() });
+    if(h.length>100) h.length=100;
+    saveHistory(h);
+    if(typeof autoLogToCalendar==='function') autoLogToCalendar('Tempo Training', null);
+  }catch(e){}
+  exitTempo(true);
+  toast('Tempo session saved! 🔥 '+reps+' reps');
+}
+function exitTempo(skipConfirm){
+  if(!skipConfirm && tempoRun && tempoRun.phase!=='done'){
+    if(!confirm('Exit tempo workout? Progress won\u2019t be saved.')) return;
+  }
+  clearTempoTimers();
+  try{ window.speechSynthesis.cancel(); }catch(e){}
+  document.getElementById('tempo-overlay').style.display='none';
+  tempoRun=null;
+  renderHome();
+  showScreen('home');
+}
+
+
+
 function getHipSafePref(user){
   user = user || activeUser;
   const stored = localStorage.getItem('fgym_hipsafe_'+user);
