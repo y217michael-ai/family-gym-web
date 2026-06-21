@@ -7541,30 +7541,37 @@ function renderMbIngredients(){
       const lbl = o.id==='unit' ? (it.amount===1?o.label:(o.plural||o.label)) : o.label;
       return `<button onclick="mbSetUnit(${i},'${o.id}')" style="padding:4px 9px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${lbl}</button>`;
     }).join('');
-    // Quick presets depend on the current unit
-    const presetVals = it.unitId==='g' ? [50,100,150,200] : it.unitId==='ml' ? [100,200,250,330] : [1,2,3,4,6];
-    const presetBtns = presetVals.map(v=>{
-      const on = (parseFloat(it.amount)===v);
-      const lbl = it.unitId==='g' ? v+'g' : it.unitId==='ml' ? v+'ml' : v;
-      return `<button onclick="mbSetAmount(${i},${v})" style="padding:5px 10px;border-radius:7px;font-size:12px;font-weight:800;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--card)'};color:${on?'var(--lime)':'var(--text)'}">${lbl}</button>`;
-    }).join('');
     const measuredBy = it.unitId==='g' ? `${it.amount||0} g`
       : it.unitId==='ml' ? `${it.amount||0} ml`
       : `${it.amount||0} × ${(opts.find(o=>o.id==='unit')||{}).label||'unit'} (≈${Math.round(s.grams)} g)`;
+    const editing = it._editing;
+    const editPanel = editing ? `
+      <div style="background:var(--card);border:1px solid var(--lime)55;border-radius:10px;padding:11px;margin-bottom:8px">
+        <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:8px">Edit this food <span style="font-weight:500">— values per 100g</span></div>
+        <input class="inp" id="mb-edit-name-${i}" value="${escapeHtml(it.name)}" placeholder="Name (you can add the shop/brand here)" style="margin-bottom:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Calories /100g</div><input class="inp" id="mb-edit-cal-${i}" type="number" inputmode="decimal" value="${it.per100.cal||0}"></div>
+          <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Protein /100g</div><input class="inp" id="mb-edit-pro-${i}" type="number" inputmode="decimal" value="${it.per100.pro||0}"></div>
+          <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Carbs /100g</div><input class="inp" id="mb-edit-carb-${i}" type="number" inputmode="decimal" value="${it.per100.carb||0}"></div>
+          <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Fat /100g</div><input class="inp" id="mb-edit-fat-${i}" type="number" inputmode="decimal" value="${it.per100.fat||0}"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button onclick="mbCancelEditItem(${i})" class="btn-secondary" style="font-size:12px">Cancel</button>
+          <button onclick="mbSaveEditItem(${i})" class="btn-primary" style="font-size:12px">Save food</button>
+        </div>
+      </div>` : '';
     return `<div style="background:var(--soft);border:1px solid var(--border);border-radius:11px;padding:11px;margin-bottom:8px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px">
         <div style="font-size:14px;font-weight:800;color:var(--babyblue);flex:1">${escapeHtml(it.name)}</div>
+        <button onclick="mbToggleEditItem(${i})" style="background:var(--card);color:var(--babyblue);border-radius:7px;padding:3px 9px;font-size:12px;font-weight:700;border:1px solid var(--border)">✎ Edit</button>
         <button onclick="mbRemove(${i})" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:7px;padding:3px 8px;font-size:13px;border:1px solid rgba(255,77,77,.2)">✕</button>
       </div>
+      ${editPanel}
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
         <button onclick="mbStep(${i},-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:18px;font-weight:800">−</button>
         <input type="number" inputmode="decimal" value="${it.amount}" onchange="mbSetAmount(${i},this.value)" style="width:60px;text-align:center;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:14px;font-weight:800">
         <button onclick="mbStep(${i},1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:18px;font-weight:800">+</button>
         <div style="display:flex;gap:5px;flex-wrap:wrap">${unitBtns}</div>
-      </div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px">
-        ${presetBtns}
-        <button onclick="mbCustomAmount(${i})" style="padding:5px 10px;border-radius:7px;font-size:12px;font-weight:800;border:1px dashed var(--border);background:var(--card);color:var(--muted)">✎ Custom</button>
       </div>
       <div style="font-size:11px;color:var(--muted)">Measured by: ${measuredBy} → <strong style="color:var(--text)">${Math.round(s.cal)} kcal</strong> · P:${s.pro.toFixed(1)}g C:${s.carb.toFixed(1)}g F:${s.fat.toFixed(1)}g</div>
     </div>`;
@@ -7696,6 +7703,31 @@ function mbCustomAmount(i){
   const n = parseFloat(v);
   if(isNaN(n)||n<0){ toast('Enter a number'); return; }
   it.amount = n; refreshMb();
+}
+// Edit an ingredient's name + per-100g values in place (e.g. correct a database match).
+function mbToggleEditItem(i){
+  const it=mbItems[i]; if(!it) return;
+  // close any other open editors, toggle this one
+  mbItems.forEach((x,j)=>{ if(j!==i) x._editing=false; });
+  it._editing = !it._editing;
+  refreshMb();
+}
+function mbCancelEditItem(i){ const it=mbItems[i]; if(it){ it._editing=false; refreshMb(); } }
+function mbSaveEditItem(i){
+  const it=mbItems[i]; if(!it) return;
+  const name = (document.getElementById('mb-edit-name-'+i).value||'').trim();
+  if(!name){ toast('Give the food a name'); return; }
+  it.name = name;
+  it.per100 = {
+    cal: parseFloat(document.getElementById('mb-edit-cal-'+i).value)||0,
+    pro: parseFloat(document.getElementById('mb-edit-pro-'+i).value)||0,
+    carb: parseFloat(document.getElementById('mb-edit-carb-'+i).value)||0,
+    fat: parseFloat(document.getElementById('mb-edit-fat-'+i).value)||0,
+    fibre: it.per100.fibre||0, sugar: it.per100.sugar||0, sodium: it.per100.sodium||0
+  };
+  it._editing = false;
+  refreshMb();
+  toast('Food updated');
 }
 function mbStep(i,d){
   const it=mbItems[i]; if(!it)return;
