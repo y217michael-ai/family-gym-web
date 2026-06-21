@@ -7057,7 +7057,7 @@ function escapeHtml(s){
 // ── Food database ──
 // YMove Pro nutrition API (the paid library). Put your key below to enable it.
 // Get it from your YMove dashboard. Until set, it falls back to Open Food Facts.
-const YMOVE_API_KEY = ''; // <-- paste your YMove API key here
+const YMOVE_API_KEY = 'ym_30ee39eb6368ff1b5cfe0a9f0993be3ac5600b9d2ff1b463c724e379d835f68d'; // YMove Pro key
 const YMOVE_FOODS_URL = 'https://exercise-api.ymove.app/api/v2/foods';
 
 // Normalise a YMove food row -> our food shape (per 100g)
@@ -7095,26 +7095,32 @@ async function fetchFoods(q){
       }
     }catch(e){ /* fall through to Open Food Facts */ }
   }
-  // 2) Open Food Facts v2 (free fallback)
+  // 2) Open Food Facts — use the search-a-licious / v1 endpoint which is more
+  //    permissive for browser apps. v2 with sort_by often 400s without a UA.
+  const v1 = 'https://world.openfoodfacts.org/cgi/search.pl'
+    + '?search_terms=' + encodeURIComponent(q)
+    + '&search_simple=1&action=process&json=1&page_size=12'
+    + '&fields=product_name,brands,nutriments';
+  try{
+    const res = await fetch(v1, { headers });
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.products && data.products.length) return data.products;
+    }
+  }catch(e){ /* fall through */ }
+  // 3) v2 search as a secondary attempt
   const v2 = 'https://world.openfoodfacts.org/api/v2/search'
     + '?search_terms=' + encodeURIComponent(q)
-    + '&fields=product_name,brands,nutriments,serving_quantity'
-    + '&page_size=8&sort_by=popularity_key';
+    + '&fields=product_name,brands,nutriments'
+    + '&page_size=12';
   try{
     const res = await fetch(v2, { headers });
     if(res.ok){
       const data = await res.json();
       if(data && data.products) return data.products;
     }
-  }catch(e){ /* fall through to legacy */ }
-  // legacy fallback
-  const legacy = 'https://world.openfoodfacts.org/cgi/search.pl'
-    + '?search_terms=' + encodeURIComponent(q)
-    + '&search_simple=1&action=process&json=1&page_size=8'
-    + '&fields=product_name,nutriments,brands';
-  const res2 = await fetch(legacy, { headers });
-  const data2 = await res2.json();
-  return (data2 && data2.products) || [];
+  }catch(e){ /* give up gracefully */ }
+  return [];
 }
 // YMove rows are already normalised; wrap them so normaliseFood returns them as-is
 function packAsOFF(food){
@@ -7164,6 +7170,10 @@ function searchFood(q){
       const raw = await fetchFoods(q.trim());
       foodResultCache = raw.map(normaliseFood).filter(Boolean).slice(0,8);
       document.getElementById('meal-loading').style.display='none';
+      if(!foodResultCache.length){
+        resultsEl.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px;line-height:1.5">No matches found. The free food database can be patchy or busy — add your YMove key for the full library, or enter the food manually below.</div>';
+        return;
+      }
       renderFoodResults(foodResultCache, resultsEl, 'pickFoodModal');
     }catch(e){
       document.getElementById('meal-loading').style.display='none';
@@ -7258,11 +7268,11 @@ async function lookupBarcode(barcode){
       }
     }catch(e){ /* fall through to OFF */ }
   }
-  // 2) Open Food Facts (free fallback)
+  // 2) Open Food Facts (free fallback) — v2 product endpoint
   try{
-    const res = await fetch('https://world.openfoodfacts.org/api/v0/product/'+barcode+'.json');
+    const res = await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(barcode)+'.json?fields=product_name,brands,nutriments,generic_name');
     const data = await res.json();
-    if(data.status !== 1 || !data.product){ resultEl.innerHTML='<div style="color:var(--red);font-size:13px;padding:8px">Product not found — try entering manually</div>'; return; }
+    if(!data || data.status === 0 || !data.product){ resultEl.innerHTML='<div style="color:var(--red);font-size:13px;padding:8px">Product not found in the free database — type the details manually, or add your YMove key for fuller coverage.</div>'; return; }
     const p = data.product;
     const n = p.nutriments||{};
     const name = p.product_name || p.generic_name || 'Unknown product';
@@ -7440,6 +7450,7 @@ function renderConnectedServices(){
   if(!el) return;
   const services = [
     {key:'bluetooth', name:'Bluetooth HR Strap', icon:'📡', desc:'Live heart rate (e.g. Wahoo TICKR) during sessions'},
+    {key:'wahoo', name:'Wahoo (Cloud API)', icon:'🚴', desc:'Rides, offline workouts, HR & GPS — also syncs via Apple Health'},
     {key:'apple', name:'Apple Health', icon:'❤️', desc:'Heart rate, steps, workouts, sleep'},
     {key:'whoop', name:'Whoop', icon:'🟥', desc:'Strain, recovery, HRV, sleep'},
     {key:'withings', name:'Withings', icon:'⚖️', desc:'Weight, body composition, BP'},
@@ -7453,7 +7464,7 @@ function renderConnectedServices(){
       </div>
       <div style="font-size:10px;font-weight:800;color:var(--muted);background:var(--soft);border:1px solid var(--border);border-radius:6px;padding:5px 9px;white-space:nowrap">Coming with the app</div>
     </div>`).join('') +
-    `<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px">These switch on once the native app is built. Bluetooth straps give live HR; on Android this can work in the browser too. Whoop &amp; Withings connect to their own accounts; Apple Health is a one-tap permission.<br><br>📡 <b>Wahoo TICKR X for motocross:</b> it stores your ride in its own memory with no phone needed — sync to the Wahoo app afterwards and it flows in via Apple Health.</div>`;
+    `<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px">These switch on once the native app is built. Bluetooth straps give live HR; on Android this can work in the browser too. Whoop &amp; Withings connect to their own accounts; Apple Health is a one-tap permission.<br><br>📡 <b>Wahoo TICKR X for motocross:</b> it stores your ride in its own memory with no phone needed. Two ways the data comes in: the simple route is via Apple Health, or connect the <b>Wahoo Cloud API</b> directly for the full ride (offline workouts, GPS, power) — that needs a one-time Wahoo developer approval.</div>`;
 }
 
 function renderVideoSettings(){
