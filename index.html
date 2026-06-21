@@ -912,21 +912,7 @@ if('serviceWorker' in navigator){
 </div>
 </div>
 
-<!-- Add equipment modal -->
-<div class="modal-overlay" id="modal-add-equip">
-<div class="modal" style="max-height:90vh">
-  <div style="font-size:20px;font-weight:800;margin-bottom:2px">+ Add Equipment</div>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Pick from the list, search the ExerciseDB types, or add your own.</div>
-
-  <input class="inp" id="add-equip-search" placeholder="🔍 Search equipment..." oninput="renderAddEquipList(this.value)" autocomplete="off" style="margin-bottom:6px">
-  <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Searches the built-in list + ExerciseDB equipment types.</div>
-
-  <div id="add-equip-list" style="max-height:46vh;overflow-y:auto;margin-bottom:12px"></div>
-
-  <button onclick="addEquipTypeManual()" style="width:100%;background:var(--soft);color:var(--text);border:1px dashed var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:700;margin-bottom:8px">✏️ Type my own name instead</button>
-  <button class="btn-secondary" onclick="closeModal('modal-add-equip')">Done</button>
-</div>
-</div>
+<!-- (old add-equipment modal removed — equipment now lives in the Gym builder) -->
 
 <!-- Add equipment end --><!-- Filter picker modal -->
 <div class="modal-overlay" id="modal-filter">
@@ -938,13 +924,40 @@ if('serviceWorker' in navigator){
 </div>
 </div>
 
-<!-- Filter picker end --><!-- Equipment picker modal -->
+<!-- Filter picker end --><!-- Equipment / Gyms modal -->
 <div class="modal-overlay" id="modal-equipment">
-<div class="modal" style="max-height:90vh">
-  <div style="font-size:20px;font-weight:800;margin-bottom:2px">🏋️ Workout by Equipment</div>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Pick what you've got — routines filter to match. Tap 📷 to add a photo of your own kit.</div>
-  <div id="equipment-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
-  <button class="btn-secondary" onclick="closeModal('modal-equipment')">Done</button>
+<div class="modal" style="max-height:90vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+    <div style="font-size:20px;font-weight:800">🏋️ Your Gyms</div>
+    <button onclick="closeModal('modal-equipment')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Pick the gym you're training at — workouts filter to its equipment. Build new ones anytime; the whole family can use them.</div>
+  <div id="gym-list" style="margin-bottom:12px"></div>
+  <button onclick="openGymBuilder()" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:11px;padding:12px;font-size:14px;font-weight:800">＋ Build a new gym</button>
+</div>
+</div>
+
+<!-- Gym builder modal -->
+<div class="modal-overlay" id="modal-gym-builder">
+<div class="modal" style="max-height:92vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:20px;font-weight:800" id="gym-builder-title">Build a Gym</div>
+    <button onclick="closeModal('modal-gym-builder')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Name it, then tap everything this place has.</div>
+  <input class="inp" id="gym-name" placeholder="Gym name e.g. Home Gym, Catterick Gym" style="margin-bottom:8px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-size:12px;color:var(--muted)" id="gym-count">0 selected</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="gymSelectAll(true)" style="font-size:10px;font-weight:700;padding:4px 9px;border-radius:6px;border:1px solid var(--border);background:var(--soft);color:var(--lime)">All</button>
+      <button onclick="gymSelectAll(false)" style="font-size:10px;font-weight:700;padding:4px 9px;border-radius:6px;border:1px solid var(--border);background:var(--soft);color:var(--muted)">None</button>
+    </div>
+  </div>
+  <div id="gym-equip-grid" style="margin-bottom:14px"></div>
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+    <button class="btn-secondary" onclick="closeModal('modal-gym-builder')">Cancel</button>
+    <button class="btn-primary" onclick="saveGymBuilder()">Save gym</button>
+  </div>
 </div>
 </div>
 
@@ -1599,7 +1612,8 @@ if('serviceWorker' in navigator){
   <div id="mb-diet-advice" style="margin-bottom:14px"></div>
 
   <!-- Meal name + slot -->
-  <input class="inp" id="mb-name" placeholder="Meal name e.g. Big Breakfast" style="margin-bottom:8px">
+  <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">NAME THIS MEAL <span style="font-weight:500">— e.g. "Breakfast Option 1", "Big Breakfast"</span></div>
+  <input class="inp" id="mb-name" placeholder="Meal name" style="margin-bottom:10px">
   <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Meal type</div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:14px">
     <div style="display:flex;gap:6px;width:max-content" id="mb-slot-btns"></div>
@@ -2282,6 +2296,140 @@ const EQUIPMENT_LIST = [
   {key:'Cardio',    label:'Cardio (Wahoo)',icon:'🚴', match:['cardio','treadmill','bike','elliptical','rower','wahoo','running']},
   {key:'Pool',      label:'Pool',         icon:'🏊',  match:['pool','swim','water']},
 ];
+
+// ═══════════ EQUIPMENT CATALOG (real machines) + GYM PROFILES ═══════════
+// Big built-in list of actual gym equipment. Each item carries match keywords
+// used to decide which exercises that piece of kit can perform.
+const EQUIP_CATALOG = [
+  // Free weights & racks
+  {key:'dumbbells', label:'Dumbbells', icon:'🏋️', cat:'Free weights', match:['dumbbell']},
+  {key:'barbell', label:'Barbell', icon:'🏋️', cat:'Free weights', match:['barbell','olympic barbell']},
+  {key:'ez_bar', label:'EZ Bar', icon:'🏋️', cat:'Free weights', match:['ez barbell','ez bar']},
+  {key:'kettlebell', label:'Kettlebell', icon:'🔔', cat:'Free weights', match:['kettlebell']},
+  {key:'trap_bar', label:'Trap Bar', icon:'🏋️', cat:'Free weights', match:['trap bar']},
+  {key:'bench', label:'Adjustable Bench', icon:'🪑', cat:'Free weights', match:['bench']},
+  {key:'squat_rack', label:'Squat Rack / Power Cage', icon:'🏗️', cat:'Free weights', match:['barbell','squat','rack']},
+  {key:'smith', label:'Smith Machine', icon:'🛠️', cat:'Free weights', match:['smith machine','smith']},
+  {key:'preacher', label:'Preacher Bench', icon:'💪', cat:'Free weights', match:['preacher','barbell','dumbbell']},
+  // Cable / multistation
+  {key:'cable', label:'Cable Machine', icon:'🔗', cat:'Cable', match:['cable']},
+  {key:'multistation', label:'Multistation / Cable Crossover', icon:'🔗', cat:'Cable', match:['cable','leverage machine']},
+  {key:'lat_pulldown', label:'Lat Pulldown', icon:'💪', cat:'Cable', match:['cable','lat pulldown','pulldown']},
+  {key:'seated_row', label:'Seated Cable Row', icon:'💪', cat:'Cable', match:['cable','row']},
+  // Plate / selectorised machines
+  {key:'leg_press', label:'Leg Press', icon:'🦵', cat:'Machines', match:['leverage machine','sled machine','leg press']},
+  {key:'hack_squat', label:'Hack Squat', icon:'🦵', cat:'Machines', match:['sled machine','hack','leverage machine']},
+  {key:'squat_machine', label:'Squat Machine', icon:'🦵', cat:'Machines', match:['leverage machine','sled machine','machine']},
+  {key:'leg_curl', label:'Leg Curl', icon:'🦵', cat:'Machines', match:['leverage machine','machine','curl']},
+  {key:'leg_extension', label:'Leg Extension', icon:'🦵', cat:'Machines', match:['leverage machine','machine','extension']},
+  {key:'chest_press', label:'Chest Press Machine', icon:'💪', cat:'Machines', match:['leverage machine','machine','chest press']},
+  {key:'shoulder_press', label:'Shoulder Press Machine', icon:'💪', cat:'Machines', match:['leverage machine','machine','shoulder press']},
+  {key:'pec_deck', label:'Pec Deck / Fly', icon:'💪', cat:'Machines', match:['leverage machine','machine','fly']},
+  {key:'rear_delt', label:'Rear Delt Machine', icon:'💪', cat:'Machines', match:['leverage machine','machine']},
+  {key:'row_machine_plate', label:'Plate-Loaded Row', icon:'💪', cat:'Machines', match:['leverage machine','machine','row']},
+  {key:'calf_raise', label:'Calf Raise Machine', icon:'🦵', cat:'Machines', match:['leverage machine','machine','calf']},
+  {key:'ab_machine', label:'Ab Crunch Machine', icon:'🧍', cat:'Machines', match:['leverage machine','machine','crunch']},
+  {key:'back_ext', label:'Back Extension', icon:'🧍', cat:'Machines', match:['body weight','hyperextension','back extension']},
+  {key:'glute_machine', label:'Glute / Hip Thrust Machine', icon:'🍑', cat:'Machines', match:['leverage machine','machine','hip thrust','glute']},
+  // Cardio
+  {key:'treadmill', label:'Treadmill', icon:'🏃', cat:'Cardio', match:['treadmill','running','cardio']},
+  {key:'stepper', label:'Stepper / Stairmaster', icon:'🪜', cat:'Cardio', match:['stepmill machine','stepper','cardio']},
+  {key:'rower', label:'Rowing Machine', icon:'🚣', cat:'Cardio', match:['rower','rowing','cardio']},
+  {key:'assault_bike', label:'Assault / Air Bike', icon:'🚴', cat:'Cardio', match:['stationary bike','bike','cardio']},
+  {key:'spin_bike', label:'Spin Bike', icon:'🚴', cat:'Cardio', match:['stationary bike','bike','cardio']},
+  {key:'elliptical', label:'Elliptical / Cross Trainer', icon:'🏃', cat:'Cardio', match:['elliptical machine','elliptical','cardio']},
+  {key:'ski_erg', label:'SkiErg', icon:'⛷️', cat:'Cardio', match:['skierg machine','cardio']},
+  {key:'wahoo', label:'Wahoo Kickr', icon:'🚴', cat:'Cardio', match:['bike','cardio','wahoo']},
+  // Functional / bodyweight
+  {key:'pullup_bar', label:'Pull-up Bar', icon:'🤸', cat:'Functional', match:['body weight','pull-up','pull up','assisted']},
+  {key:'dip_station', label:'Dip Station', icon:'🤸', cat:'Functional', match:['body weight','dip','assisted']},
+  {key:'bodyweight', label:'Bodyweight (none)', icon:'🧍', cat:'Functional', match:['body weight','bodyweight','none','assisted']},
+  {key:'resistance_bands', label:'Resistance Bands', icon:'🎗️', cat:'Functional', match:['band','resistance band']},
+  {key:'trx', label:'TRX / Suspension', icon:'🎗️', cat:'Functional', match:['body weight','suspension','trx']},
+  {key:'medicine_ball', label:'Medicine Ball', icon:'⚽', cat:'Functional', match:['medicine ball']},
+  {key:'stability_ball', label:'Stability Ball', icon:'⚪', cat:'Functional', match:['stability ball','bosu ball']},
+  {key:'battle_ropes', label:'Battle Ropes', icon:'🪢', cat:'Functional', match:['rope']},
+  {key:'sled', label:'Prowler / Sled', icon:'🛷', cat:'Functional', match:['sled machine','sled']},
+  {key:'box', label:'Plyo Box', icon:'📦', cat:'Functional', match:['body weight','box']},
+  {key:'foam_roller', label:'Foam Roller', icon:'🧻', cat:'Functional', match:['roller','wheel roller']},
+  // Pool
+  {key:'pool', label:'Pool', icon:'🏊', cat:'Pool', match:['pool','swim','water']},
+];
+const EQUIP_CATS = ['Free weights','Cable','Machines','Cardio','Functional','Pool'];
+
+// Shared gym profiles (visible to whole family). Each: {id, name, equip:[keys]}
+function loadGyms(){ try{ return JSON.parse(localStorage.getItem('fgym_gyms')||'[]'); }catch(e){ return []; } }
+function saveGyms(g){ try{ localStorage.setItem('fgym_gyms', JSON.stringify(g)); }catch(e){} }
+// Active gym id is per-user (each person trains where they are)
+function loadActiveGym(){ try{ return localStorage.getItem('fgym_activegym_'+activeUser)||''; }catch(e){ return ''; } }
+function saveActiveGym(id){ try{ if(id) localStorage.setItem('fgym_activegym_'+activeUser, id); else localStorage.removeItem('fgym_activegym_'+activeUser); }catch(e){} }
+function getActiveGym(){ const id=loadActiveGym(); return loadGyms().find(g=>g.id===id)||null; }
+// Build the set of match keywords an active gym supports
+function activeGymMatchTerms(){
+  const gym = getActiveGym(); if(!gym) return null;
+  const terms = new Set();
+  (gym.equip||[]).forEach(k=>{ const e=EQUIP_CATALOG.find(x=>x.key===k); if(e) (e.match||[]).forEach(m=>terms.add(m)); });
+  return terms;
+}
+// Does an exercise fit the active gym? (true if no gym active)
+// Infer which equipment KEYS an exercise needs, from its name (since the
+// library doesn't tag equipment). Returns a list of catalog keys; empty = bodyweight.
+function inferExerciseEquip(ex){
+  const n = (ex.name||'').toLowerCase();
+  const needs = [];
+  const add = k=>{ if(!needs.includes(k)) needs.push(k); };
+  // bodyweight / no kit
+  if(/push[- ]?up|pull[- ]?up|chin[- ]?up|dip|plank|crunch|sit[- ]?up|burpee|mountain climb|lunge(?!.*(barbell|dumbbell))|air squat|bodyweight|stretch|superman|bird dog|glute bridge|calf raise(?!.*machine)/.test(n)){
+    if(/pull[- ]?up|chin[- ]?up/.test(n)) add('pullup_bar');
+    if(/\bdip\b/.test(n)) add('dip_station');
+    return needs; // otherwise pure bodyweight
+  }
+  // cardio machines
+  if(/treadmill|run(?!g)/.test(n)) add('treadmill');
+  if(/stair|step ?mill|stepper/.test(n)) add('stepper');
+  if(/row(ing)? machine|erg/.test(n)) add('rower');
+  if(/assault|air bike/.test(n)) add('assault_bike');
+  if(/spin|stationary bike|cycle|bike/.test(n)) add('spin_bike');
+  if(/elliptical|cross trainer/.test(n)) add('elliptical');
+  if(/ski ?erg/.test(n)) add('ski_erg');
+  if(/swim|pool|aqua/.test(n)) add('pool');
+  // free weights
+  if(/barbell|bench press|deadlift|squat(?!.*machine)|overhead press|ohp|clean|snatch|romanian|rdl|hip thrust|good morning/.test(n)) add('barbell');
+  if(/dumbbell|db |goblet|arnold|hammer curl|lateral raise|incline press/.test(n)) add('dumbbells');
+  if(/kettlebell|\bkb\b|swing/.test(n)) add('kettlebell');
+  if(/ez bar|ez[- ]?curl|preacher/.test(n)) add('ez_bar');
+  if(/smith/.test(n)) add('smith');
+  if(/trap bar/.test(n)) add('trap_bar');
+  // cables / machines
+  if(/cable|crossover|pushdown|face pull|tricep pushdown/.test(n)) add('cable');
+  if(/lat pulldown|pulldown/.test(n)) add('lat_pulldown');
+  if(/seated row|cable row/.test(n)) add('seated_row');
+  if(/leg press/.test(n)) add('leg_press');
+  if(/hack squat/.test(n)) add('hack_squat');
+  if(/leg curl|hamstring curl/.test(n)) add('leg_curl');
+  if(/leg extension/.test(n)) add('leg_extension');
+  if(/chest press machine|machine press/.test(n)) add('chest_press');
+  if(/pec deck|pec fly|machine fly/.test(n)) add('pec_deck');
+  if(/calf raise machine|calf press/.test(n)) add('calf_raise');
+  if(/leverage|machine/.test(n) && !needs.length) add('multistation');
+  return needs;
+}
+// Does an exercise fit the active gym? true if no gym, or gym has at least one
+// piece of kit the exercise can use (bodyweight exercises always fit).
+function exerciseFitsGym(ex){
+  const gym = getActiveGym(); if(!gym) return true;
+  const owned = new Set(gym.equip||[]);
+  const needs = inferExerciseEquip(ex);
+  if(!needs.length) return true; // bodyweight — always doable
+  return needs.some(k=>owned.has(k));
+}
+// Filter an exercise pool to the active gym; if that leaves too few, return the
+// unfiltered pool so generation never dead-ends (we tell the user separately).
+function applyGymFilter(pool){
+  if(!getActiveGym()) return pool;
+  const fit = pool.filter(exerciseFitsGym);
+  return fit.length >= 3 ? fit : pool;
+}
 function loadEquipPhotos(){ try{ return JSON.parse(localStorage.getItem('fgym_equip_photos')||'{}'); }catch(e){ return {}; } }
 function saveEquipPhotos(p){ try{ localStorage.setItem('fgym_equip_photos', JSON.stringify(p)); }catch(e){} }
 // A built-in list of common gym equipment to add from (works offline).
@@ -2543,8 +2691,8 @@ function renderHome(){
     return true;
   }
 
-  const filteredMine = mine.filter(r=>matchesFilter(r, activeRoutineFilter) && matchesEquipment(r, activeEquipment));
-  const filteredShared = shared.filter(r=>matchesFilter(r, activeRoutineFilter) && matchesEquipment(r, activeEquipment));
+  const filteredMine = mine.filter(r=>matchesFilter(r, activeRoutineFilter) && matchesEquipment(r));
+  const filteredShared = shared.filter(r=>matchesFilter(r, activeRoutineFilter) && matchesEquipment(r));
 
   // My routines
   const myList = document.getElementById('my-routines-list');
@@ -2611,155 +2759,150 @@ function renderFilterGrid(){
 }
 
 
-// ── Equipment selector (button + picker modal) ──
+// ── Gym selector (home button + gyms modal) ──
 function updateEquipmentButton(){
-  const eq = allEquipment().find(e=>e.key===activeEquipment) || EQUIPMENT_LIST[0];
-  const photos = loadEquipPhotos();
   const iconEl = document.getElementById('equip-btn-icon');
   const subEl = document.getElementById('equip-btn-sub');
+  const lblEl = document.getElementById('equip-btn-label');
   if(!iconEl) return;
-  const photo = photos[eq.key];
-  iconEl.innerHTML = photo
-    ? `<img src="${photo}" style="width:30px;height:30px;object-fit:cover;border-radius:6px">`
-    : eq.icon;
-  subEl.textContent = activeEquipment==='All' ? 'Showing all — tap to pick your kit' : ('Filtering: '+eq.label+' — tap to change');
+  const gym = getActiveGym();
+  iconEl.innerHTML = gym ? '📍' : '🏋️';
+  if(lblEl) lblEl.textContent = gym ? gym.name : 'Workout by Equipment Available';
+  if(subEl) subEl.textContent = gym ? (gym.equip.length+' items — tap to switch gym') : 'No gym set — tap to build or pick one';
 }
 function openEquipmentPicker(){
-  renderEquipmentGrid();
+  renderGymList();
   openModal('modal-equipment');
 }
-function renderEquipmentGrid(){
-  const grid = document.getElementById('equipment-grid');
-  if(!grid) return;
-  const photos = loadEquipPhotos();
-  const uCol = USERS[activeUser].color;
-  grid.innerHTML = allEquipment().map(e=>{
-    const active = activeEquipment === e.key;
-    const photo = photos[e.key];
-    const visual = photo
-      ? `<img src="${photo}" style="width:100%;height:64px;object-fit:cover;border-radius:8px">`
-      : `<div style="width:100%;height:64px;display:flex;align-items:center;justify-content:center;font-size:30px;background:#0F0F18;border-radius:8px">${e.icon}</div>`;
-    return `<div style="border-radius:12px;border:2px solid ${active?uCol:'var(--border)'};background:${active?uCol+'14':'#16161F'};padding:8px;position:relative">
-      <div onclick="setEquipment('${e.key}')" style="cursor:pointer">
-        ${visual}
-        <div style="font-size:12px;font-weight:700;margin-top:6px;text-align:center;color:${active?uCol:'var(--text)'}">${e.label} ${active?'✓':''}</div>
-      </div>
-      ${e.key!=='All'?`<button onclick="addEquipPhoto('${e.key}')" title="Add photo" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:7px;background:rgba(0,0,0,.5);border:1px solid var(--border);color:#fff;font-size:12px;line-height:1;padding:0">📷</button>`:''}
-      ${e.custom?`<button onclick="removeCustomEquip('${e.key}')" title="Remove" style="position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:7px;background:rgba(255,77,77,.3);border:1px solid rgba(255,77,77,.4);color:#fff;font-size:12px;line-height:1;padding:0">×</button>`:''}
-    </div>`;
-  }).join('') +
-  `<div onclick="addCustomEquip()" style="border-radius:12px;border:2px dashed var(--border);background:#16161F;padding:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:96px">
-    <div style="font-size:28px;color:var(--muted)">+</div>
-    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:4px">Add equipment</div>
-  </div>`;
-}
-function setEquipment(key){
-  activeEquipment = key;
-  renderEquipmentGrid();
-  updateEquipmentButton();
-  renderHome();
-}
-function addCustomEquip(){
-  document.getElementById('add-equip-search').value = '';
-  renderAddEquipList('');
-  openModal('modal-add-equip');
-}
-function renderAddEquipList(q){
-  const el = document.getElementById('add-equip-list');
+function renderGymList(){
+  const el = document.getElementById('gym-list');
   if(!el) return;
-  q = (q||'').trim().toLowerCase();
-  const existing = loadCustomEquip().map(c=>c.label.toLowerCase());
-  // merge common list + ExerciseDB types into one set of {label, icon, source}
-  const seen = {};
-  const items = [];
-  COMMON_EQUIPMENT.forEach(e=>{ const k=e.label.toLowerCase(); if(!seen[k]){ seen[k]=1; items.push({label:e.label, icon:e.icon, source:'list'}); } });
-  EDB_EQUIPMENT_TYPES.forEach(t=>{
-    const label = t.replace(/\b\w/g,c=>c.toUpperCase());
-    const k = label.toLowerCase();
-    if(!seen[k]){ seen[k]=1; items.push({label, icon:'⚙️', source:'edb'}); }
-  });
-  const filtered = q ? items.filter(i=>i.label.toLowerCase().includes(q)) : items;
-  if(!filtered.length){
-    el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:14px;text-align:center">No match — use "Type my own name" below to add "${q}".</div>`;
+  const gyms = loadGyms();
+  const activeId = loadActiveGym();
+  const uCol = USERS[activeUser].color;
+  if(!gyms.length){
+    el.innerHTML = `<div style="text-align:center;padding:22px;border:1px dashed var(--border);border-radius:11px;color:var(--muted);font-size:13px">
+      <div style="font-size:30px;margin-bottom:6px">🏗️</div>No gyms built yet.<br>Build your first below — Home Gym, Work Gym, etc.</div>`;
     return;
   }
-  el.innerHTML = filtered.map(i=>{
-    const added = existing.includes(i.label.toLowerCase());
-    return `<div onclick="${added?'':`addEquipFromList('${i.label.replace(/'/g,"\\'")}','${i.icon}')`}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;margin-bottom:6px;border-radius:10px;border:1px solid var(--border);background:${added?'#0F0F18':'#16161F'};cursor:${added?'default':'pointer'};opacity:${added?'.55':'1'}">
-      <div style="font-size:20px">${i.icon}</div>
-      <div style="flex:1;font-size:14px;font-weight:700">${i.label}</div>
-      ${i.source==='edb'?'<span style="font-size:9px;color:var(--lime);background:rgba(57,255,20,.12);border:1px solid rgba(57,255,20,.25);border-radius:5px;padding:2px 6px">ExerciseDB</span>':''}
-      <div style="font-size:13px;font-weight:800;color:${added?'var(--muted)':'var(--lime)'}">${added?'Added':'+ Add'}</div>
+  // "All equipment" pseudo-option to clear the filter
+  const allRow = `<div onclick="setActiveGym('')" style="display:flex;align-items:center;gap:12px;padding:12px 13px;margin-bottom:8px;border-radius:11px;cursor:pointer;border:1px solid ${!activeId?uCol:'var(--border)'};background:${!activeId?uCol+'14':'#16161F'}">
+    <div style="font-size:22px">🌐</div>
+    <div style="flex:1"><div style="font-size:15px;font-weight:800;color:${!activeId?uCol:'var(--text)'}">All equipment</div>
+    <div style="font-size:11px;color:var(--muted)">No filter — show every exercise</div></div>
+    ${!activeId?`<div style="color:${uCol};font-weight:900">✓</div>`:''}</div>`;
+  el.innerHTML = allRow + gyms.map(g=>{
+    const on = g.id===activeId;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:12px 13px;margin-bottom:8px;border-radius:11px;border:1px solid ${on?uCol:'var(--border)'};background:${on?uCol+'14':'#16161F'}">
+      <div onclick="setActiveGym('${g.id}')" style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer">
+        <div style="font-size:22px">📍</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:800;color:${on?uCol:'var(--text)'}">${escapeHtml(g.name)} ${on?'✓':''}</div>
+          <div style="font-size:11px;color:var(--muted)">${g.equip.length} items</div>
+        </div>
+      </div>
+      <button onclick="editGym('${g.id}')" style="background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--text)">Edit</button>
+      <button onclick="deleteGym('${g.id}')" style="background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.2);border-radius:8px;padding:5px 9px;font-size:11px;color:var(--red)">✕</button>
     </div>`;
   }).join('');
 }
-function addEquipFromList(label, icon){
-  const key = 'custom_'+label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
-  const list = loadCustomEquip();
-  if(list.some(c=>c.key===key)){ toast('Already added'); return; }
-  list.push({key, label, icon:icon||'🏷️'});
-  saveCustomEquip(list);
-  renderAddEquipList(document.getElementById('add-equip-search').value);
-  renderEquipmentGrid();
-  toast('Added '+label);
+function setActiveGym(id){
+  saveActiveGym(id);
+  renderGymList();
+  updateEquipmentButton();
+  renderHome();
+  const g = getActiveGym();
+  toast(g ? ('Training at '+g.name) : 'Showing all equipment');
 }
-function addEquipTypeManual(){
-  const name = prompt('Equipment name:');
-  if(!name || !name.trim()) return;
-  addEquipFromList(name.trim(), '🏷️');
+function deleteGym(id){
+  const g = loadGyms().find(x=>x.id===id); if(!g) return;
+  if(!confirm('Delete "'+g.name+'"? This removes it for everyone.')) return;
+  saveGyms(loadGyms().filter(x=>x.id!==id));
+  if(loadActiveGym()===id) saveActiveGym('');
+  renderGymList(); updateEquipmentButton(); renderHome();
+  toast('Gym deleted');
 }
-function removeCustomEquip(key){
-  if(!confirm('Remove this equipment?')) return;
-  saveCustomEquip(loadCustomEquip().filter(c=>c.key!==key));
-  const photos = loadEquipPhotos(); delete photos[key]; saveEquipPhotos(photos);
-  if(activeEquipment===key) activeEquipment='All';
-  renderEquipmentGrid(); updateEquipmentButton(); renderHome();
+
+// ── Gym builder ──
+let _gymEdit = { id:null, equip:new Set() };
+function openGymBuilder(){
+  _gymEdit = { id:null, equip:new Set() };
+  document.getElementById('gym-builder-title').textContent = 'Build a Gym';
+  document.getElementById('gym-name').value = '';
+  renderGymEquipGrid();
+  closeModal('modal-equipment');
+  openModal('modal-gym-builder');
 }
-function addEquipPhoto(key){
-  const inp = document.createElement('input');
-  inp.type='file'; inp.accept='image/*';
-  inp.onchange = (ev)=>{
-    const file = ev.target.files && ev.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (e)=>{
-      const img = new Image();
-      img.onload = ()=>{
-        const c = document.createElement('canvas');
-        const w = 200, h = Math.round(200*img.height/img.width);
-        c.width=w; c.height=h;
-        c.getContext('2d').drawImage(img,0,0,w,h);
-        const photos = loadEquipPhotos();
-        photos[key] = c.toDataURL('image/jpeg',0.8);
-        saveEquipPhotos(photos);
-        renderEquipmentGrid();
-        updateEquipmentButton();
-        toast('Photo added');
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
-  inp.click();
+function editGym(id){
+  const g = loadGyms().find(x=>x.id===id); if(!g) return;
+  _gymEdit = { id:g.id, equip:new Set(g.equip||[]) };
+  document.getElementById('gym-builder-title').textContent = 'Edit Gym';
+  document.getElementById('gym-name').value = g.name;
+  renderGymEquipGrid();
+  closeModal('modal-equipment');
+  openModal('modal-gym-builder');
 }
-// Equipment filter — matches against exercise names/muscles using the keyword list
+function renderGymEquipGrid(){
+  const el = document.getElementById('gym-equip-grid');
+  if(!el) return;
+  const uCol = USERS[activeUser].color;
+  el.innerHTML = EQUIP_CATS.map(cat=>{
+    const items = EQUIP_CATALOG.filter(e=>e.cat===cat);
+    return `<div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.5px;margin-bottom:7px">${cat.toUpperCase()}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        ${items.map(e=>{
+          const on = _gymEdit.equip.has(e.key);
+          return `<button onclick="gymToggle('${e.key}')" style="display:flex;align-items:center;gap:7px;padding:9px 10px;border-radius:9px;text-align:left;border:1px solid ${on?uCol:'var(--border)'};background:${on?uCol+'1A':'#16161F'};color:${on?uCol:'var(--text)'}">
+            <span style="font-size:16px">${e.icon}</span>
+            <span style="flex:1;font-size:12px;font-weight:700;line-height:1.15">${e.label}</span>
+            ${on?'<span style="font-weight:900">✓</span>':''}
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('gym-count').textContent = _gymEdit.equip.size+' selected';
+}
+function gymToggle(key){
+  if(_gymEdit.equip.has(key)) _gymEdit.equip.delete(key); else _gymEdit.equip.add(key);
+  renderGymEquipGrid();
+}
+function gymSelectAll(on){
+  _gymEdit.equip = on ? new Set(EQUIP_CATALOG.map(e=>e.key)) : new Set();
+  renderGymEquipGrid();
+}
+function saveGymBuilder(){
+  const name = (document.getElementById('gym-name').value||'').trim();
+  if(!name){ toast('Give the gym a name'); return; }
+  if(!_gymEdit.equip.size){ toast('Tick at least one piece of equipment'); return; }
+  const gyms = loadGyms();
+  if(_gymEdit.id){
+    const g = gyms.find(x=>x.id===_gymEdit.id);
+    if(g){ g.name=name; g.equip=[..._gymEdit.equip]; }
+  } else {
+    const id = 'gym_'+Date.now();
+    gyms.push({ id, name, equip:[..._gymEdit.equip] });
+    saveActiveGym(id); // newly built gym becomes active
+  }
+  saveGyms(gyms);
+  closeModal('modal-gym-builder');
+  openModal('modal-equipment');
+  renderGymList();
+  updateEquipmentButton();
+  renderHome();
+  toast('Gym saved');
+}
+
+// Routine matches the active gym if all/most of its exercises fit its equipment.
 function matchesEquipment(r, key){
-  if(key==='All') return true;
-  const eq = allEquipment().find(e=>e.key===key);
-  if(!eq || !eq.match) return true;
-  // First: if the routine is explicitly tagged with this equipment, it matches.
-  if((r.equipment||[]).includes(key)) return true;
-  // Otherwise infer from: routine muscles, exercise names/muscles, the local
-  // EXERCISES library equipment, AND any ExerciseDB equipment tag we've cached.
-  const parts = [(r.muscles||[]).join(' '), (r.equipment||[]).join(' ')];
-  (r.exercises||[]).forEach(e=>{
-    const lib = EXERCISES.find(x=>x.name===e.name);
-    parts.push(e.name, e.muscle||'', lib?.equipment||'');
-    const edb = (typeof EDB_CACHE!=='undefined') ? EDB_CACHE[e.name] : null;
-    if(edb && edb.equipment) parts.push(edb.equipment);
-  });
-  const hay = parts.join(' ').toLowerCase();
-  return eq.match.some(m=>hay.includes(m));
+  const gym = getActiveGym();
+  if(!gym) return true; // no gym set → show everything
+  const exs = r.exercises||[];
+  if(!exs.length) return true;
+  const fitCount = exs.filter(e=>exerciseFitsGym(e)).length;
+  // keep routines where the majority of moves are doable at this gym
+  return fitCount >= Math.ceil(exs.length*0.5);
 }
 
 // Personal routine card — with prominent edit/delete controls
@@ -3795,6 +3938,7 @@ function generateWorkouts(){
   // pool: exercises across all selected groups, optionally hip-safe only
   let pool = EXERCISES.filter(e=>groups.includes(e.muscle));
   if(hipSafe) pool = pool.filter(e=>e.hipSafe);
+  pool = applyGymFilter(pool);
   const resultsEl = document.getElementById('gen-results');
   if(pool.length < 3){
     resultsEl.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:14px;text-align:center">Only ${pool.length} exercise${pool.length===1?'':'s'} available for ${groups.join(' + ')}${hipSafe?' (hip-safe)':''}. Try another group or turn off the hip-safe filter.</div>`;
@@ -3980,6 +4124,7 @@ function swapGenExercise(wi, i){
   const cfg = DIFFICULTY_CFG[genState.difficulty] || DIFFICULTY_CFG.intermediate;
   let pool = EXERCISES.filter(e=>(genState.muscles||[genState.muscle]).includes(e.muscle));
   if(genState.hipSafe) pool = pool.filter(e=>e.hipSafe);
+  pool = applyGymFilter(pool);
   const usedNames = w.exercises.map(e=>e.name);
   const options = pool.filter(e=>!usedNames.includes(e.name));
   if(!options.length){ toast('No other exercises available to swap in'); return; }
@@ -3999,6 +4144,7 @@ function addGenExercise(wi){
   const cfg = DIFFICULTY_CFG[genState.difficulty] || DIFFICULTY_CFG.intermediate;
   let pool = EXERCISES.filter(e=>(genState.muscles||[genState.muscle]).includes(e.muscle));
   if(genState.hipSafe) pool = pool.filter(e=>e.hipSafe);
+  pool = applyGymFilter(pool);
   const usedNames = w.exercises.map(e=>e.name);
   const options = pool.filter(e=>!usedNames.includes(e.name));
   if(!options.length){ toast('No more exercises available'); return; }
@@ -4016,6 +4162,7 @@ function regenerateOne(wi){
   const cfg = DIFFICULTY_CFG[genState.difficulty] || DIFFICULTY_CFG.intermediate;
   let pool = EXERCISES.filter(e=>(genState.muscles||[genState.muscle]).includes(e.muscle));
   if(genState.hipSafe) pool = pool.filter(e=>e.hipSafe);
+  pool = applyGymFilter(pool);
   const exs = buildWorkoutVariant(pool, cfg, genState.minutes, Math.floor(Math.random()*99999), genState.muscles);
   generatedWorkouts[wi] = {
     ...generatedWorkouts[wi],
@@ -6358,20 +6505,35 @@ function renderNutrition(){
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div style="font-size:14px;font-weight:800">${slot.icon} ${slot.label} <span style="font-size:12px;color:var(--muted);font-weight:600">· ${slotCals} kcal</span></div>
       </div>
-      ${slotMeals.map(x=>`
-        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border)">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:700">${x.m.name}</div>
-            <div style="font-size:11px;color:var(--muted)">${x.m.time||''} · P:${x.m.protein||0}g C:${x.m.carbs||0}g F:${x.m.fat||0}g${x.m.fibre?' · Fibre:'+x.m.fibre+'g':''}</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:14px;font-weight:800;color:${uColor}">${x.m.cals}</div>
-            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:2px">
-              <button onclick="editLoggedMeal(${x.i})" style="font-size:10px;color:var(--babyblue);background:none;border:none;cursor:pointer;padding:0">edit</button>
-              <button onclick="deleteMeal(${x.i})" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:0">remove</button>
+      ${slotMeals.map(x=>{
+        const m = x.m;
+        const ingLine = (m.ingredients && m.ingredients.length)
+          ? m.ingredients.map(it=>escapeHtml(it.name)).join(', ')
+          : '';
+        return `<div style="padding:9px 0;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:800">${escapeHtml(m.name)}</div>
+              ${ingLine?`<div style="font-size:11px;color:var(--babyblue);margin-top:2px">${ingLine}</div>`:''}
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">${m.time||''}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:16px;font-weight:800;color:${uColor}">${m.cals}<span style="font-size:10px;color:var(--muted);font-weight:600"> kcal</span></div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:2px">
+                <button onclick="editLoggedMeal(${x.i})" style="font-size:11px;color:var(--babyblue);background:none;border:none;cursor:pointer;padding:0">edit</button>
+                <button onclick="deleteMeal(${x.i})" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;padding:0">remove</button>
+              </div>
             </div>
           </div>
-        </div>`).join('')}
+          <div style="display:flex;gap:14px;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.05);font-size:11px;color:var(--muted)">
+            <span>P <b style="color:var(--text)">${m.protein||0}g</b></span>
+            <span>C <b style="color:var(--text)">${m.carbs||0}g</b></span>
+            <span>F <b style="color:var(--text)">${m.fat||0}g</b></span>
+            ${m.fibre?`<span>Fibre <b style="color:var(--text)">${m.fibre}g</b></span>`:''}
+            ${m.sugar?`<span>Sugar <b style="color:var(--text)">${m.sugar}g</b></span>`:''}
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
   }).join('') :
     `<div class="card-sm" style="text-align:center;padding:22px;border:1px dashed var(--border)">
@@ -7817,8 +7979,9 @@ function mbStartPhoto(){ _mbCaptureMode=true; startFoodPhoto(); }
 function mbBuildMealObject(){
   const name = document.getElementById('mb-name').value.trim();
   const t = mbTotals();
+  const slotName = (typeof CAT_LABELS!=='undefined' && CAT_LABELS[mbSlot]) ? CAT_LABELS[mbSlot] : 'Meal';
   return {
-    name: name || (mbItems[0] ? mbItems[0].name : 'My meal'),
+    name: name || slotName,
     cat: mbSlot,
     cals: Math.round(t.cal), protein: Math.round(t.pro), carbs: Math.round(t.carb),
     fat: Math.round(t.fat), fibre: Math.round(t.fibre), sugar: Math.round(t.sugar),
