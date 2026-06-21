@@ -205,7 +205,7 @@ if('serviceWorker' in navigator){
   <!-- FAMILY VIEW — all shared routines + prebuilts -->
   <div id="routine-view-family">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:16px;font-weight:800">Family Routines</div>
+      <div style="font-size:16px;font-weight:800">Routine Options</div>
       <div style="display:flex;gap:6px">
         <button onclick="openDayPlan()" style="background:rgba(108,99,255,.15);color:var(--purple);border:1px solid var(--purple);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">🗓️ Day Plan</button>
         <button onclick="openTempoSetup()" style="background:rgba(255,140,66,.15);color:var(--michelle);border:1px solid var(--michelle);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">🔥 Tempo</button>
@@ -316,6 +316,7 @@ if('serviceWorker' in navigator){
       <div id="today-food-results" style="margin-top:6px"></div>
     </div>
     <div id="meal-log"></div>
+    <button onclick="openMenuAdvisor()" style="width:100%;background:rgba(255,140,66,.12);color:var(--michelle);border:1px solid var(--michelle);border-radius:10px;padding:11px;font-size:13px;font-weight:800;margin-top:8px">🍽️ Eating Out? Get menu advice</button>
     <button onclick="openSaveMealTemplate()" style="width:100%;background:var(--soft);color:var(--muted);border:1px dashed var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-top:8px">💾 Save Today's Meals as a Template</button>
     <!-- Water tracking -->
     <div style="font-size:16px;font-weight:800;margin:16px 0 10px">Hydration</div>
@@ -531,12 +532,17 @@ if('serviceWorker' in navigator){
 <div style="max-width:480px;margin:0 auto;padding:0 16px">
   <div style="padding:24px 0 16px;display:flex;align-items:center;justify-content:space-between">
     <div>
-      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase">Weekly Planner</div>
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase">Planner</div>
       <div style="font-size:24px;font-weight:800;margin-top:2px" id="planner-title">Mike's Week</div>
     </div>
     <div id="planner-week-label" style="font-size:12px;color:var(--muted);text-align:right"></div>
   </div>
+  <div style="display:flex;gap:6px;background:var(--soft);border-radius:11px;padding:4px;margin-bottom:16px">
+    <button onclick="setPlannerView('week')" id="planv-week" style="flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:var(--card);color:var(--text)">Week</button>
+    <button onclick="setPlannerView('month')" id="planv-month" style="flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:transparent;color:var(--muted)">Month</button>
+  </div>
   <div id="planner-days"></div>
+  <div id="planner-month" style="display:none"></div>
   <div style="height:20px"></div>
 </div>
 </div>
@@ -585,12 +591,9 @@ if('serviceWorker' in navigator){
       </label>
     </div>
 
-    <!-- RUNNING controls (Pause / Finish tabs) -->
+    <!-- RUNNING controls — big Pause at top, Finish & Cancel at bottom -->
     <div id="sport-running-controls" style="display:none">
-      <div style="display:flex;gap:10px;margin-bottom:16px">
-        <button onclick="toggleSportPause()" id="sport-pause-btn" style="flex:1;background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:13px;padding:15px;font-size:15px;font-weight:800">⏸ Pause</button>
-        <button onclick="finishSportSession()" style="flex:1;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:15px;font-size:15px;font-weight:800">■ Finish</button>
-      </div>
+      <button onclick="toggleSportPause()" id="sport-pause-btn" style="width:100%;background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:14px;padding:20px;font-size:20px;font-weight:800;margin-bottom:12px">⏸ Pause</button>
       <button onclick="lockSportScreen()" style="width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:9px;padding:9px;font-size:12px;font-weight:700;margin-bottom:16px">🔒 Lock screen — prevent accidental taps</button>
     </div>
 
@@ -638,6 +641,7 @@ if('serviceWorker' in navigator){
     </div>
 
     <button onclick="finishSportSession()" id="sport-finish-bottom" style="display:none;width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:16px;font-size:16px;font-weight:800">■ Finish & Save Session</button>
+    <button onclick="cancelSportSession()" id="sport-cancel-bottom" style="display:none;width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:11px;padding:12px;font-size:13px;font-weight:700;margin-top:10px">Cancel session</button>
     <div style="height:20px"></div>
   </div>
 </div>
@@ -647,7 +651,7 @@ if('serviceWorker' in navigator){
 <div class="modal-overlay" id="modal-manage-sports">
 <div class="modal">
   <div style="font-size:20px;font-weight:800;margin-bottom:6px">Manage Sports</div>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Add or remove activity types. Changes apply to all family members.</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Add or remove activity types. Changes apply to Mike, Michelle & Amy.</div>
   <div id="manage-sports-list" style="max-height:50vh;overflow-y:auto;margin-bottom:12px"></div>
   <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:12px">
     <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:10px">ADD A CUSTOM SPORT</div>
@@ -895,7 +899,73 @@ if('serviceWorker' in navigator){
 </div>
 </div>
 
-<!-- Day Plan builder modal -->
+<!-- Workout/session history detail modal -->
+<div class="modal-overlay" id="modal-history-detail">
+<div class="modal" style="max-height:90vh">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <div style="font-size:28px" id="hd-icon">💪</div>
+    <div style="flex:1">
+      <div style="font-size:19px;font-weight:800" id="hd-title">Workout</div>
+      <div style="font-size:12px;color:var(--muted)" id="hd-sub"></div>
+    </div>
+  </div>
+  <div id="hd-body"></div>
+  <div style="display:flex;gap:8px;margin-top:18px">
+    <button id="hd-delete" style="flex:1;background:rgba(255,77,77,.12);color:var(--red);border:1px solid rgba(255,77,77,.25);border-radius:11px;padding:13px;font-size:14px;font-weight:700">Delete</button>
+    <button class="btn-secondary" onclick="closeModal('modal-history-detail')" style="flex:2">Close</button>
+  </div>
+</div>
+</div>
+
+<!-- Share routine modal -->
+<div class="modal-overlay" id="modal-share-routine">
+<div class="modal" style="max-width:380px">
+  <div style="font-size:19px;font-weight:800;margin-bottom:4px">↗ Share workout</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px" id="share-routine-name">Pick who to share with.</div>
+  <div id="share-people" style="margin-bottom:16px"></div>
+  <button onclick="confirmShareRoutine()" style="width:100%;background:rgba(108,99,255,.16);color:var(--purple);border:1px solid var(--purple);border-radius:12px;padding:14px;font-size:15px;font-weight:800;margin-bottom:8px">Share</button>
+  <button class="btn-secondary" onclick="closeModal('modal-share-routine')">Cancel</button>
+</div>
+</div>
+
+<!-- Share routine modal end -->
+<div class="modal-overlay" id="modal-menu-advisor">
+<div class="modal" style="max-height:92vh">
+  <div style="font-size:20px;font-weight:800;margin-bottom:4px">🍽️ Eating Out Advisor</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Drop a photo of the menu and I'll suggest what fits your targets for the rest of today.</div>
+
+  <div id="ma-targets" style="background:transparent;border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:14px;font-size:12px"></div>
+
+  <label id="ma-drop" style="display:block;border:1px dashed var(--michelle);border-radius:12px;padding:24px;text-align:center;cursor:pointer;margin-bottom:14px">
+    <input type="file" id="ma-file" accept="image/*" style="display:none" onchange="menuFileChosen(this)">
+    <div style="font-size:32px;margin-bottom:6px">📷</div>
+    <div style="font-size:13px;font-weight:700;color:var(--michelle)">Tap to add a menu photo</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">screenshot or camera</div>
+  </label>
+
+  <div id="ma-preview" style="display:none;margin-bottom:14px"></div>
+  <div id="ma-result" style="margin-bottom:14px"></div>
+
+  <button class="btn-secondary" onclick="closeMenuAdvisor()">Close</button>
+</div>
+</div>
+
+<!-- Menu advisor end -->
+<div class="modal-overlay" id="modal-day-detail">
+<div class="modal" style="max-height:90vh">
+  <div style="font-size:20px;font-weight:800;margin-bottom:2px" id="dd-title">Day</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px" id="dd-sub"></div>
+  <div id="dd-logged"></div>
+  <div id="dd-planned"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+    <button onclick="ddPlanWorkout()" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:11px;padding:12px;font-size:13px;font-weight:800">+ Plan workout</button>
+    <button onclick="ddPlanMeal()" style="background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:11px;padding:12px;font-size:13px;font-weight:800">+ Plan meal</button>
+  </div>
+  <button class="btn-secondary" onclick="closeModal('modal-day-detail')" style="margin-top:12px">Close</button>
+</div>
+</div>
+
+<!-- Day detail modal end -->
 <div class="modal-overlay" id="modal-dayplan">
 <div class="modal" style="max-height:92vh">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -1956,6 +2026,10 @@ const SUGGESTIONS = {
 
 // ══════════════════ STATE ══════════════════
 let activeUser = 'Mike';
+let plannerView = 'week';
+let plannerMonthRef = new Date();
+let planPickDay = null;
+let ddDate = null;
 let newRoutineData = {name:'',muscles:[],exercises:[],structure:'straight'};
 let activeRoutineFilter = 'All';
 let activeRoutineView = 'family'; // 'family' or 'mine'
@@ -2097,7 +2171,7 @@ function renderHome(){
   const tabsEl = document.getElementById('routine-view-tabs');
   if(tabsEl){
     tabsEl.innerHTML = `
-      <button onclick="setRoutineView('family')" style="flex:1;padding:8px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:${activeRoutineView==='family'?'var(--card)':'transparent'};color:${activeRoutineView==='family'?'var(--text)':'var(--muted)'}">👨‍👩‍👧 Family</button>
+      <button onclick="setRoutineView('family')" style="flex:1;padding:8px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:${activeRoutineView==='family'?'var(--card)':'transparent'};color:${activeRoutineView==='family'?'var(--text)':'var(--muted)'}">📋 Routine Options</button>
       <button onclick="setRoutineView('mine')" style="flex:1;padding:8px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:${activeRoutineView==='mine'?'var(--card)':'transparent'};color:${activeRoutineView==='mine'?uColor2:'var(--muted)'}">👤 ${activeUser}</button>`;
     document.getElementById('routine-view-family').style.display = activeRoutineView==='family' ? 'block' : 'none';
     document.getElementById('routine-view-mine').style.display = activeRoutineView==='mine' ? 'block' : 'none';
@@ -2287,11 +2361,48 @@ function routineCardMine(r){
     </div>
     <div style="display:flex;gap:7px;padding-top:10px;border-top:1px solid var(--border)">
       <button onclick="startWorkout(${r.id})" style="flex:2;background:transparent;color:${r.color};border:1px solid ${r.color};border-radius:9px;padding:8px;font-size:13px;font-weight:800">▶ Start</button>
+      <button onclick="openShareRoutine(${r.id})" style="flex:1;background:rgba(108,99,255,.15);color:var(--purple);border:1px solid rgba(108,99,255,.35);border-radius:9px;padding:8px;font-size:13px;font-weight:700" title="Share">↗ Share</button>
       <button onclick="editRoutine(${r.id})" style="flex:1;background:var(--soft);color:var(--text);border-radius:9px;padding:8px;font-size:13px;font-weight:700;border:1px solid var(--border)">Edit</button>
-      <button onclick="duplicateRoutine(${r.id})" style="flex:1;background:var(--soft);color:var(--text);border-radius:9px;padding:8px;font-size:13px;font-weight:700;border:1px solid var(--border)" title="Duplicate">⧉</button>
       <button onclick="deleteRoutine(${r.id})" style="flex:1;background:rgba(255,77,77,.12);color:var(--red);border-radius:9px;padding:8px;font-size:13px;font-weight:700;border:1px solid rgba(255,77,77,.25)">✕</button>
     </div>
   </div>`;
+}
+
+let shareRoutineId = null;
+let shareSelection = [];
+function openShareRoutine(id){
+  const r = routines.find(x=>x.id===id); if(!r) return;
+  shareRoutineId = id;
+  shareSelection = [...(r.sharedWith||[])];
+  document.getElementById('share-routine-name').textContent = 'Share "'+r.name+'" with:';
+  renderSharePeople();
+  openModal('modal-share-routine');
+}
+function renderSharePeople(){
+  const others = ['Mike','Michelle','Amy'].filter(u=>u!==activeUser);
+  const colors = {Mike:'#39FF14',Michelle:'#FF8C42',Amy:'#6C63FF'};
+  document.getElementById('share-people').innerHTML = others.map(u=>{
+    const on = shareSelection.includes(u);
+    return `<div onclick="toggleShareUser('${u}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:8px;border-radius:11px;cursor:pointer;border:1px solid ${on?colors[u]:'var(--border)'};background:${on?colors[u]+'1A':'#16161F'}">
+      <div class="avatar" style="width:38px;height:38px;font-size:14px;background:${colors[u]}22;color:${colors[u]};border:1.5px solid ${colors[u]}44">${u[0]}</div>
+      <div style="flex:1;font-size:15px;font-weight:700">${u}</div>
+      <div style="width:24px;height:24px;border-radius:7px;border:2px solid ${on?colors[u]:'var(--border)'};background:${on?colors[u]:'transparent'};display:flex;align-items:center;justify-content:center;color:#050508;font-size:14px;font-weight:900">${on?'✓':''}</div>
+    </div>`;
+  }).join('');
+}
+function toggleShareUser(u){
+  if(shareSelection.includes(u)) shareSelection = shareSelection.filter(x=>x!==u);
+  else shareSelection.push(u);
+  renderSharePeople();
+}
+function confirmShareRoutine(){
+  const r = routines.find(x=>x.id===shareRoutineId); if(!r) return;
+  r.sharedWith = [...shareSelection];
+  saveRoutines();
+  closeModal('modal-share-routine');
+  renderHome();
+  if(shareSelection.length) toast('Shared with '+shareSelection.join(' & ')+' ✓');
+  else toast('Sharing turned off — now private to you');
 }
 
 function duplicateRoutine(id){
@@ -2717,15 +2828,14 @@ function saveNewRoutine(){
     if(i>=0){ routines[i]={...routines[i], name, muscles:newRoutineData.muscles, exercises:newRoutineData.exercises, warmup:newRoutineData.warmup||null, cooldown:newRoutineData.cooldown||null, structure:newRoutineData.structure||'straight'}; }
   } else {
     const colors = {Mike:'#39FF14',Michelle:'#FF8C42',Amy:'#6C63FF'};
-    const allUsers = ['Mike','Michelle','Amy'];
-    routines.push({id:Date.now(), name, owner:activeUser, sharedWith:allUsers.filter(u=>u!==activeUser), muscles:newRoutineData.muscles, color:colors[activeUser], exercises:newRoutineData.exercises, warmup:newRoutineData.warmup||null, cooldown:newRoutineData.cooldown||null, structure:newRoutineData.structure||'straight'});
+    routines.push({id:Date.now(), name, owner:activeUser, sharedWith:[], muscles:newRoutineData.muscles, color:colors[activeUser], exercises:newRoutineData.exercises, warmup:newRoutineData.warmup||null, cooldown:newRoutineData.cooldown||null, structure:newRoutineData.structure||'straight'});
   }
   saveRoutines();
   closeModal('modal-new-routine');
   // If editing from personal tab, stay there
   if(newRoutineData.id) activeRoutineView = 'mine';
   renderHome();
-  toast(newRoutineData.id ? 'Routine updated!' : 'Routine saved & shared with family!');
+  toast(newRoutineData.id ? 'Routine updated!' : 'Routine saved! Tap ↗ Share to send it to Michelle or Amy');
 }
 
 function deleteRoutine(id){
@@ -2778,21 +2888,91 @@ function renderHistory(){
     const setsLabel = w.isSport ? 'sport session' : (w.setsLogged + ' sets');
     return `<div class="card-sm" style="margin-bottom:8px;border-left:3px solid ${borderCol}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-        <div style="flex:1">
+        <div onclick="openHistoryDetail(${w.id})" style="flex:1;cursor:pointer">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
             ${w.isSport ? `<span style="font-size:16px">${w.sportIcon||'🏅'}</span>` : ''}
-            <div style="font-size:14px;font-weight:800">${w.routineName}</div>
+            <div style="font-size:14px;font-weight:800">${w.routineName} <span style="font-size:11px;color:var(--muted);font-weight:600">ⓘ</span></div>
           </div>
-          <div style="font-size:11px;color:var(--muted)">${dateStr} at ${timeStr}</div>
+          <div style="font-size:11px;color:var(--muted)">${dateStr} at ${timeStr} · tap for details</div>
         </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:13px;font-weight:800;color:${borderCol}">${w.cals} kcal</div>
-          <div style="font-size:11px;color:var(--muted)">${w.mins}min · ${setsLabel}</div>
+        <div style="display:flex;align-items:flex-start;gap:8px;flex-shrink:0">
+          <div onclick="openHistoryDetail(${w.id})" style="text-align:right;cursor:pointer">
+            <div style="font-size:13px;font-weight:800;color:${borderCol}">${w.cals} kcal</div>
+            <div style="font-size:11px;color:var(--muted)">${w.mins}min · ${setsLabel}</div>
+          </div>
+          <button onclick="deleteHistoryEntry(${w.id})" title="Delete" style="width:26px;height:26px;border-radius:7px;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.25);color:var(--red);font-size:14px;flex-shrink:0">×</button>
         </div>
       </div>
       ${notesHtml}
     </div>`;
   }).join('');
+}
+
+function openHistoryDetail(id){
+  const w = loadHistory().find(x=>x.id===id);
+  if(!w) return;
+  const d = new Date(w.date);
+  const dateStr = d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const timeStr = d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const borderCol = w.isSport ? 'var(--michelle)' : 'var(--lime)';
+  // stat tiles
+  const stats = [];
+  if(w.mins) stats.push(['Time', w.mins+' min']);
+  if(w.cals) stats.push(['Calories', w.cals+' kcal']);
+  if(w.distanceKm) stats.push(['Distance', w.distanceKm+' km']);
+  if(w.elevationM) stats.push(['Climbed', w.elevationM+' m']);
+  if(!w.isSport && w.setsLogged) stats.push(['Sets', w.setsLogged]);
+  if(w.volume) stats.push(['Volume', w.volume]);
+  const statsHtml = stats.map(s=>`
+    <div style="background:#16161F;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:800;color:${borderCol}">${s[1]}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">${s[0]}</div>
+    </div>`).join('');
+  // muscles
+  const muscleHtml = (w.muscles&&w.muscles.length&&!w.isSport) ? `
+    <div style="margin-top:14px"><div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">MUSCLES</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px">${w.muscles.map(m=>`<span class="badge" style="background:rgba(57,255,20,.12);color:var(--lime);border:1px solid rgba(57,255,20,.25)">${m}</span>`).join('')}</div></div>` : '';
+  // zones
+  let zonesHtml = '';
+  if(w.zoneTimes && Object.values(w.zoneTimes).some(v=>v>0)){
+    const zlabels = {1:'Rest',2:'Fat Burn',3:'Cardio',4:'Peak',5:'Max'};
+    const zcols = {1:'#4CAF50',2:'#8BC34A',3:'#FFC107',4:'#FF9800',5:'#F44336'};
+    const total = Object.values(w.zoneTimes).reduce((a,b)=>a+b,0)||1;
+    zonesHtml = `<div style="margin-top:14px"><div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:8px">TIME IN ZONE</div>` +
+      [1,2,3,4,5].map(z=>{
+        const secs=w.zoneTimes[z]||0; const pct=Math.round(secs/total*100);
+        const m=Math.floor(secs/60), s=secs%60; const t=m>0?m+'m '+(s<10?'0':'')+s+'s':s+'s';
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="width:9px;height:9px;border-radius:50%;background:${zcols[z]}"></div>
+          <div style="font-size:11px;color:var(--muted);width:70px">Z${z} ${zlabels[z]}</div>
+          <div style="flex:1;background:#16161F;border-radius:3px;height:6px"><div style="width:${pct}%;background:${zcols[z]};height:6px;border-radius:3px"></div></div>
+          <div style="font-size:10px;color:var(--muted);width:42px;text-align:right">${t}</div>
+        </div>`;
+      }).join('') + `</div>`;
+  }
+  // notes
+  const notesHtml = (w.exerciseNotes||[]).length ? `
+    <div style="margin-top:14px"><div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">NOTES</div>
+    ${w.exerciseNotes.map(n=>`<div style="font-size:12px;color:var(--muted);margin-bottom:4px"><span style="color:var(--text);font-weight:700">${n.name}:</span> ${n.note}</div>`).join('')}</div>` : '';
+
+  document.getElementById('hd-icon').textContent = w.isSport ? (w.sportIcon||'🏅') : '💪';
+  document.getElementById('hd-title').textContent = w.routineName;
+  document.getElementById('hd-sub').textContent = dateStr + ' at ' + timeStr;
+  document.getElementById('hd-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(${Math.min(3,stats.length||1)},1fr);gap:8px">${statsHtml}</div>
+    ${muscleHtml}${zonesHtml}${notesHtml}`;
+  document.getElementById('hd-delete').onclick = ()=>{ closeModal('modal-history-detail'); deleteHistoryEntry(id); };
+  openModal('modal-history-detail');
+}
+
+function deleteHistoryEntry(id){
+  const w = loadHistory().find(x=>x.id===id);
+  if(!w) return;
+  if(!confirm('Delete this '+(w.isSport?'session':'workout')+'?\n\n"'+w.routineName+'" — '+(w.cals||0)+' kcal\n\nThis can\u2019t be undone.')) return;
+  const h = loadHistory().filter(x=>x.id!==id);
+  saveHistory(h);
+  renderHome();
+  toast('Deleted');
 }
 
 // ══════════════════ WORKOUT GENERATOR ══════════════════
@@ -3287,7 +3467,7 @@ function saveGenToLibrary(wi){
     id: Date.now() + wi,
     name: niceName,
     owner: activeUser,
-    sharedWith: allUsers.filter(u=>u!==activeUser),
+    sharedWith: [],
     muscles: groups,
     color: colors[activeUser] || '#39FF14',
     generated: true,
@@ -5706,6 +5886,127 @@ function renderNutrition(){
   renderWater();
 }
 
+// ════════════════════════════════════════════════
+//  EATING OUT — menu photo advisor (AI vision)
+// ════════════════════════════════════════════════
+let menuImageData = null; // base64 (no prefix)
+let menuImageMime = null;
+
+function todayTargetsRemaining(){
+  const s = loadNutSettings(activeUser) || getDefaultNutSettings(activeUser);
+  const meals = getTodayMeals();
+  const eaten = meals.reduce((a,m)=>({
+    cal: a.cal + (m.cals||m.cal||0),
+    protein: a.protein + (m.protein||0),
+    carbs: a.carbs + (m.carbs||0),
+    fat: a.fat + (m.fat||0),
+  }), {cal:0,protein:0,carbs:0,fat:0});
+  return {
+    target: { cal:s.cal, protein:s.protein, carbs:s.carbs, fat:s.fat },
+    eaten,
+    remaining: {
+      cal: Math.max(0, s.cal - eaten.cal),
+      protein: Math.max(0, s.protein - eaten.protein),
+      carbs: Math.max(0, s.carbs - eaten.carbs),
+      fat: Math.max(0, s.fat - eaten.fat),
+    }
+  };
+}
+
+function openMenuAdvisor(){
+  menuImageData = null; menuImageMime = null;
+  document.getElementById('ma-preview').style.display='none';
+  document.getElementById('ma-preview').innerHTML='';
+  document.getElementById('ma-result').innerHTML='';
+  document.getElementById('ma-file').value='';
+  const t = todayTargetsRemaining();
+  document.getElementById('ma-targets').innerHTML = `
+    <div style="font-weight:700;color:var(--michelle);margin-bottom:6px">${activeUser}'s remaining today</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center">
+      <div><div style="font-size:18px;font-weight:800">${t.remaining.cal}</div><div style="font-size:9px;color:var(--muted)">kcal left</div></div>
+      <div><div style="font-size:18px;font-weight:800;color:var(--lime)">${t.remaining.protein}g</div><div style="font-size:9px;color:var(--muted)">protein</div></div>
+      <div><div style="font-size:18px;font-weight:800;color:var(--babyblue)">${t.remaining.carbs}g</div><div style="font-size:9px;color:var(--muted)">carbs</div></div>
+      <div><div style="font-size:18px;font-weight:800;color:var(--michelle)">${t.remaining.fat}g</div><div style="font-size:9px;color:var(--muted)">fat</div></div>
+    </div>`;
+  openModal('modal-menu-advisor');
+}
+function closeMenuAdvisor(){ closeModal('modal-menu-advisor'); }
+
+function menuFileChosen(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const dataUrl = e.target.result;
+    menuImageMime = (dataUrl.match(/^data:(.*?);/)||[])[1] || 'image/jpeg';
+    menuImageData = dataUrl.split(',')[1];
+    document.getElementById('ma-preview').style.display='block';
+    document.getElementById('ma-preview').innerHTML = `
+      <img src="${dataUrl}" style="width:100%;max-height:200px;object-fit:contain;border-radius:10px;border:1px solid var(--border)">
+      <button onclick="analyseMenu()" style="width:100%;margin-top:10px;background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:12px;padding:14px;font-size:15px;font-weight:800">✨ What can I eat?</button>`;
+    document.getElementById('ma-result').innerHTML='';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyseMenu(){
+  if(!menuImageData){ toast('Add a menu photo first'); return; }
+  const t = todayTargetsRemaining();
+  const resultEl = document.getElementById('ma-result');
+  resultEl.innerHTML = `<div style="text-align:center;padding:18px;color:var(--muted);font-size:13px">📖 Reading the menu and matching to your targets…</div>`;
+
+  const prompt = `You are a nutrition coach helping someone choose from a restaurant menu in the photo.
+Their remaining nutrition budget for the rest of TODAY is:
+- Calories: ${t.remaining.cal} kcal
+- Protein: ${t.remaining.protein} g
+- Carbs: ${t.remaining.carbs} g
+- Fat: ${t.remaining.fat} g
+
+Read the menu in the image. Recommend 2-3 specific dishes (and any simple swaps, e.g. "skip the chips, ask for salad") that best fit their remaining budget, prioritising hitting protein without going over calories. For each suggestion give a rough kcal/protein estimate. Be concise and practical. If the menu is unreadable, say so.
+
+Respond in this exact format:
+PICK: <dish name> — <why it fits, ~kcal / ~protein>
+PICK: <dish name> — <why it fits, ~kcal / ~protein>
+TIP: <one short practical tip>`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: menuImageMime, data: menuImageData } },
+            { type: "text", text: prompt }
+          ]
+        }]
+      })
+    });
+    const data = await response.json();
+    const text = (data.content||[]).map(b=>b.text||'').join('\n').trim();
+    if(!text){ resultEl.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:10px">Couldn't read that one — try a clearer photo.</div>`; return; }
+    // render nicely
+    const lines = text.split('\n').filter(l=>l.trim());
+    let html = `<div style="background:rgba(255,140,66,.08);border:1px solid var(--michelle);border-radius:12px;padding:14px">`;
+    lines.forEach(l=>{
+      if(l.startsWith('PICK:')){
+        html += `<div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:15px">✅</span><div style="font-size:13px;line-height:1.4">${l.replace('PICK:','').trim()}</div></div>`;
+      } else if(l.startsWith('TIP:')){
+        html += `<div style="display:flex;gap:8px;margin-top:6px;padding-top:10px;border-top:1px solid var(--border)"><span style="font-size:15px">💡</span><div style="font-size:13px;line-height:1.4;color:var(--muted)">${l.replace('TIP:','').trim()}</div></div>`;
+      } else {
+        html += `<div style="font-size:13px;line-height:1.4;margin-bottom:6px">${l}</div>`;
+      }
+    });
+    html += `</div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px">AI estimates — actual values vary by kitchen</div>`;
+    resultEl.innerHTML = html;
+  } catch(err) {
+    resultEl.innerHTML = `<div style="color:var(--red);font-size:13px;padding:10px">Couldn't reach the advisor right now. Check your connection and try again.</div>`;
+  }
+}
+
 // ── Meal helpers ──
 function getTodayMeals(){
   const key = 'fgym_meals_'+activeUser+'_'+new Date().toDateString();
@@ -7970,6 +8271,7 @@ function startSportSession(id){
   document.getElementById('sport-ready-controls').style.display = 'block';
   document.getElementById('sport-running-controls').style.display = 'none';
   document.getElementById('sport-finish-bottom').style.display = 'none';
+  document.getElementById('sport-cancel-bottom').style.display = 'none';
   document.getElementById('sport-route-card').style.display = 'none';
   document.getElementById('sport-track-route').checked = false;
   document.getElementById('sport-pick-view').style.display = 'none';
@@ -7987,6 +8289,7 @@ function beginSportSession(){
   document.getElementById('sport-ready-controls').style.display = 'none';
   document.getElementById('sport-running-controls').style.display = 'block';
   document.getElementById('sport-finish-bottom').style.display = 'block';
+  document.getElementById('sport-cancel-bottom').style.display = 'block';
   if(sportState.trackRoute){
     document.getElementById('sport-route-card').style.display = 'block';
     startSportGPS();
@@ -8146,6 +8449,19 @@ function stopSportSession(){
   document.getElementById('sport-active-view').style.display = 'none';
 }
 
+function cancelSportSession(){
+  if(!confirm('Are you sure you want to cancel this session? It won\u2019t be saved.')) return;
+  stopSportGPS();
+  if(sportInterval) clearInterval(sportInterval);
+  if(sportWatchInterval) clearInterval(sportWatchInterval);
+  sportState = null;
+  document.getElementById('sport-watch-overlay').style.display = 'none';
+  document.getElementById('sport-lock-overlay').style.display = 'none';
+  document.getElementById('sport-pick-view').style.display = 'block';
+  document.getElementById('sport-active-view').style.display = 'none';
+  toast('Session cancelled');
+}
+
 function finishSportSession(){
   stopSportGPS();
   if(sportInterval) clearInterval(sportInterval);
@@ -8265,9 +8581,209 @@ function savePlan(plan){
   try{ localStorage.setItem('fgym_plan_'+activeUser, JSON.stringify(plan)); }catch(e){}
 }
 
-let planPickDay = null;
+function openDayDetail(ds){
+  ddDate = ds;
+  const date = new Date(ds);
+  document.getElementById('dd-title').textContent = date.toLocaleDateString('en-GB',{weekday:'long'});
+  document.getElementById('dd-sub').textContent = date.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  renderDayDetail();
+  openModal('modal-day-detail');
+}
+function renderDayDetail(){
+  const date = new Date(ddDate);
+  const history = loadHistory();
+  const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
+  const dayEnd = new Date(date); dayEnd.setHours(23,59,59,999);
+  const done = history.filter(w=>w.user===activeUser && w.date>=dayStart.getTime() && w.date<=dayEnd.getTime());
+
+  // logged sessions with full stats
+  let loggedHtml = '';
+  if(done.length){
+    loggedHtml = `<div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">LOGGED</div>` +
+      done.map(w=>{
+        const time = new Date(w.date).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+        const stats = [];
+        if(w.mins) stats.push(w.mins+' min');
+        if(w.cals) stats.push(w.cals+' kcal');
+        if(w.distanceKm) stats.push(w.distanceKm+' km');
+        if(w.elevationM) stats.push(w.elevationM+' m');
+        if(w.volume) stats.push(w.volume+' reps/vol');
+        if(w.setsLogged) stats.push(w.setsLogged+' sets');
+        return `<div style="background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.25);border-radius:10px;padding:10px 12px;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+            <span style="font-size:16px">${w.sportIcon||'💪'}</span>
+            <div style="flex:1;font-size:14px;font-weight:700">${w.routineName}</div>
+            <span style="font-size:11px;color:var(--muted)">${time}</span>
+          </div>
+          <div style="font-size:11px;color:#4CAF50;font-weight:600">${stats.join(' · ')||'completed'}</div>
+        </div>`;
+      }).join('');
+  } else {
+    loggedHtml = `<div style="font-size:12px;color:var(--muted);text-align:center;padding:6px 0 12px">Nothing logged this day yet.</div>`;
+  }
+  document.getElementById('dd-logged').innerHTML = loggedHtml;
+
+  // planned ahead
+  const datePlan = loadDatePlan();
+  const mealPlan = loadMealPlan();
+  const pw = datePlan[ddDate];
+  const pwRoutine = pw ? routines.find(r=>r.id==pw) : null;
+  const meals = mealPlan[ddDate] || [];
+  let plannedHtml = '';
+  if(pwRoutine || meals.length){
+    plannedHtml = `<div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin:10px 0 8px">PLANNED</div>`;
+    if(pwRoutine){
+      plannedHtml += `<div style="display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:10px;padding:10px 12px;margin-bottom:6px">
+        <div style="width:4px;height:30px;border-radius:2px;background:${pwRoutine.color||'var(--lime)'}"></div>
+        <div style="flex:1;font-size:13px;font-weight:700">${pwRoutine.name}</div>
+        <button onclick="ddRemoveWorkout()" style="background:transparent;border:none;color:var(--red);font-size:16px">×</button>
+      </div>`;
+    }
+    meals.forEach((m,i)=>{
+      plannedHtml += `<div style="display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:10px;padding:10px 12px;margin-bottom:6px">
+        <span style="font-size:16px">🍽️</span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">${m.name}</div>${m.cals?`<div style="font-size:10px;color:var(--muted)">${m.cals} kcal${m.protein?' · '+m.protein+'g protein':''}</div>`:''}</div>
+        <button onclick="ddRemoveMeal(${i})" style="background:transparent;border:none;color:var(--red);font-size:16px">×</button>
+      </div>`;
+    });
+  }
+  document.getElementById('dd-planned').innerHTML = plannedHtml;
+}
+function ddPlanWorkout(){
+  const mine = routines.filter(r=>!r.prebuilt);
+  if(!mine.length){ toast('Create a workout first with + New'); return; }
+  const names = mine.map((r,i)=>`${i+1}. ${r.name}`).join('\n');
+  const pick = prompt('Plan which workout?\n\n'+names+'\n\nEnter number:');
+  const idx = parseInt(pick)-1;
+  if(idx>=0 && idx<mine.length){
+    const dp = loadDatePlan(); dp[ddDate] = mine[idx].id; saveDatePlan(dp);
+    renderDayDetail(); renderPlannerMonth();
+    toast('Workout planned 📅');
+  }
+}
+function ddRemoveWorkout(){ const dp=loadDatePlan(); delete dp[ddDate]; saveDatePlan(dp); renderDayDetail(); renderPlannerMonth(); }
+function ddPlanMeal(){
+  // offer saved meals, else free text
+  const saved = (typeof loadSavedMeals==='function') ? loadSavedMeals() : [];
+  let name, cals=null, protein=null;
+  if(saved && saved.length){
+    const list = saved.map((m,i)=>`${i+1}. ${m.name}${m.cals?' ('+m.cals+'kcal)':''}`).join('\n');
+    const pick = prompt('Plan a meal — pick a saved meal by number, or type a new name:\n\n'+list);
+    if(!pick) return;
+    const idx = parseInt(pick)-1;
+    if(!isNaN(idx) && saved[idx]){ name=saved[idx].name; cals=saved[idx].cals; protein=saved[idx].protein; }
+    else name = pick.trim();
+  } else {
+    name = prompt('Meal name:'); if(!name) return; name=name.trim();
+  }
+  if(!name) return;
+  const mp = loadMealPlan(); if(!mp[ddDate]) mp[ddDate]=[];
+  mp[ddDate].push({name, cals, protein}); saveMealPlan(mp);
+  renderDayDetail(); renderPlannerMonth();
+  toast('Meal planned 🍽️');
+}
+function ddRemoveMeal(i){ const mp=loadMealPlan(); if(mp[ddDate]){ mp[ddDate].splice(i,1); saveMealPlan(mp); } renderDayDetail(); renderPlannerMonth(); }
+
+function setPlannerView(v){
+  plannerView = v;
+  document.getElementById('planv-week').style.background = v==='week'?'var(--card)':'transparent';
+  document.getElementById('planv-week').style.color = v==='week'?'var(--text)':'var(--muted)';
+  document.getElementById('planv-month').style.background = v==='month'?'var(--card)':'transparent';
+  document.getElementById('planv-month').style.color = v==='month'?'var(--text)':'var(--muted)';
+  renderPlanner();
+}
+
+// ── Meal plan storage (per user, keyed by date) ──
+function loadMealPlan(){ try{ return JSON.parse(localStorage.getItem('fgym_mealplan_'+activeUser)||'{}'); }catch(e){ return {}; } }
+function saveMealPlan(p){ try{ localStorage.setItem('fgym_mealplan_'+activeUser, JSON.stringify(p)); }catch(e){} }
+
+// ── Planned workouts by date (distinct from weekday plan) ──
+function loadDatePlan(){ try{ return JSON.parse(localStorage.getItem('fgym_dateplan_'+activeUser)||'{}'); }catch(e){ return {}; } }
+function saveDatePlan(p){ try{ localStorage.setItem('fgym_dateplan_'+activeUser, JSON.stringify(p)); }catch(e){} }
+
+function plannerMonthShift(delta){
+  plannerMonthRef = new Date(plannerMonthRef.getFullYear(), plannerMonthRef.getMonth()+delta, 1);
+  renderPlannerMonth();
+}
+
+function renderPlannerMonth(){
+  document.getElementById('planner-days').style.display='none';
+  document.getElementById('planner-month').style.display='block';
+  document.getElementById('planner-title').textContent = activeUser + "'s Month";
+  const ref = plannerMonthRef;
+  const year = ref.getFullYear(), month = ref.getMonth();
+  const monthName = ref.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  document.getElementById('planner-week-label').textContent = '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const userColor = USERS[activeUser].color;
+  const history = loadHistory();
+  const dayLog = getDayLog(activeUser);
+  const mealPlan = loadMealPlan();
+  const datePlan = loadDatePlan();
+
+  // grid: start on Monday
+  const first = new Date(year, month, 1);
+  const startOffset = (first.getDay()+6)%7; // Mon=0
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const cells = [];
+  for(let i=0;i<startOffset;i++) cells.push(null);
+  for(let d=1; d<=daysInMonth; d++) cells.push(new Date(year, month, d));
+  while(cells.length % 7 !== 0) cells.push(null);
+
+  const dow = ['M','T','W','T','F','S','S'];
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button onclick="plannerMonthShift(-1)" style="background:var(--soft);border:1px solid var(--border);border-radius:9px;padding:8px 14px;font-size:16px;color:var(--text)">‹</button>
+      <div style="font-size:16px;font-weight:800">${monthName}</div>
+      <button onclick="plannerMonthShift(1)" style="background:var(--soft);border:1px solid var(--border);border-radius:9px;padding:8px 14px;font-size:16px;color:var(--text)">›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px">
+      ${dow.map(d=>`<div style="text-align:center;font-size:10px;color:var(--muted);font-weight:700;padding:4px 0">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">`;
+
+  cells.forEach(date=>{
+    if(!date){ html += `<div></div>`; return; }
+    const ds = date.toDateString();
+    const isToday = date.toDateString()===new Date().toDateString();
+    const isPast = date < today;
+    // logged sessions that day
+    const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
+    const dayEnd = new Date(date); dayEnd.setHours(23,59,59,999);
+    const done = history.filter(w=>w.user===activeUser && w.date>=dayStart.getTime() && w.date<=dayEnd.getTime());
+    const logged = (dayLog[ds]||[]);
+    const hasWorkout = done.length>0 || logged.length>0;
+    // planned ahead
+    const plannedWorkout = datePlan[ds];
+    const plannedMeals = (mealPlan[ds]||[]).length;
+    const dots = [];
+    if(hasWorkout) dots.push(`<span style="width:6px;height:6px;border-radius:50%;background:#4CAF50"></span>`);
+    if(plannedWorkout && !hasWorkout) dots.push(`<span style="width:6px;height:6px;border-radius:50%;background:${userColor}"></span>`);
+    if(plannedMeals) dots.push(`<span style="width:6px;height:6px;border-radius:50%;background:var(--michelle)"></span>`);
+    html += `
+      <div onclick="openDayDetail('${ds}')" style="aspect-ratio:1;border-radius:9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+        background:${isToday?userColor+'22':(hasWorkout?'rgba(76,175,80,.08)':'#16161F')};
+        border:1px solid ${isToday?userColor:(hasWorkout?'rgba(76,175,80,.3)':'var(--border)')}">
+        <div style="font-size:13px;font-weight:${isToday?'800':'600'};color:${isToday?userColor:(isPast?'var(--muted)':'var(--text)')}">${date.getDate()}</div>
+        <div style="display:flex;gap:2px;height:6px">${dots.join('')}</div>
+      </div>`;
+  });
+  html += `</div>
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:14px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#4CAF50"></span><span style="font-size:10px;color:var(--muted)">Done</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${userColor}"></span><span style="font-size:10px;color:var(--muted)">Planned workout</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--michelle)"></span><span style="font-size:10px;color:var(--muted)">Planned meals</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px">Tap any day to plan workouts &amp; meals or see what you logged.</div>`;
+  document.getElementById('planner-month').innerHTML = html;
+}
+
+
 
 function renderPlanner(){
+  if(plannerView==='month'){ renderPlannerMonth(); return; }
+  document.getElementById('planner-days').style.display='block';
+  document.getElementById('planner-month').style.display='none';
   document.getElementById('planner-title').textContent = activeUser + "'s Week";
   const today = new Date();
   const dayOfWeek = today.getDay();
