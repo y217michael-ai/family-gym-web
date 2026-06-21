@@ -15,9 +15,9 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#08080E;--surface:#0F0F18;--card:#68687A;--border:#7E7E90;
+  --bg:#08080E;--surface:#0F0F18;--card:#101018;--border:#3A3A48;
   --lime:#39FF14;--lime-dim:#2BC40E;--purple:#6C63FF;--red:#FF4D4D;
-  --text:#FFFFFF;--muted:#E4E4EE;--soft:#7A7A8C;--michelle:#FF8C42;--babyblue:#A9DCF5;
+  --text:#FFFFFF;--muted:#C8C8D4;--soft:#16161F;--michelle:#FF8C42;--babyblue:#A9DCF5;
 }
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;min-height:100vh}
 input,button,select,textarea{font-family:inherit;outline:none}
@@ -32,8 +32,8 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.4}
 .nav-btn.active{color:var(--lime)}
 .nav-btn svg{width:22px;height:22px;stroke-width:1.8}
 /* Cards */
-.card{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px}
-.card-sm{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:12px}
+.card{background:#16161F;border-radius:16px;border:1px solid var(--border);padding:16px}
+.card-sm{background:#16161F;border-radius:12px;border:1px solid var(--border);padding:12px}
 /* Badges */
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.4px}
 /* Inputs */
@@ -41,8 +41,8 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.4}
 .inp:focus{border-color:#3A3A52}
 .inp-sm{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-size:13px;text-align:center;width:48px}
 /* Buttons */
-.btn-primary{background:var(--lime);color:#050508;border-radius:13px;padding:15px;font-size:15px;font-weight:800;width:100%;letter-spacing:.3px}
-.btn-secondary{background:var(--soft);color:var(--text);border-radius:13px;padding:14px;font-size:15px;font-weight:700;width:100%}
+.btn-primary{background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:15px;font-size:15px;font-weight:800;width:100%;letter-spacing:.3px}
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:13px;padding:14px;font-size:15px;font-weight:700;width:100%}
 .btn-sm{border-radius:9px;padding:7px 14px;font-size:13px;font-weight:700}
 /* Avatar */
 .avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
@@ -208,7 +208,7 @@ if('serviceWorker' in navigator){
       <div style="font-size:16px;font-weight:800">Family Routines</div>
       <div style="display:flex;gap:6px">
         <button onclick="openWorkoutGenerator()" style="background:rgba(57,255,20,.15);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">✨ Generate</button>
-        <button onclick="openNewRoutine()" style="background:var(--lime);color:#050508;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
+        <button onclick="openNewRoutine()" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
       </div>
     </div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:8px;padding-bottom:4px"><div style="display:flex;gap:6px;width:max-content;padding-right:16px" id="routine-filter-bar"></div></div>
@@ -223,7 +223,7 @@ if('serviceWorker' in navigator){
       <div style="font-size:16px;font-weight:800" id="my-view-title">My Routines</div>
       <div style="display:flex;gap:6px">
         <button onclick="confirmDeleteAllMine()" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;border:1px solid rgba(255,77,77,.2)" title="Delete all my routines">Delete all</button>
-        <button onclick="openNewRoutine()" style="background:var(--lime);color:#050508;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
+        <button onclick="openNewRoutine()" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
       </div>
     </div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:8px;padding-bottom:4px"><div style="display:flex;gap:6px;width:max-content;padding-right:16px" id="routine-filter-bar-mine"></div></div>
@@ -470,7 +470,7 @@ if('serviceWorker' in navigator){
 
   <!-- Controls -->
   <div style="display:flex;gap:12px;margin-bottom:16px">
-    <button onclick="skipRest()" style="background:var(--lime);color:#050508;border:none;border-radius:14px;padding:14px 32px;font-size:16px;font-weight:800;min-width:120px">GO! →</button>
+    <button onclick="skipRest()" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:14px 32px;font-size:16px;font-weight:800;min-width:120px">GO! →</button>
     <button onclick="addRestTime(15)" style="background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:14px 20px;font-size:15px;font-weight:700">+15s</button>
   </div>
   <div style="font-size:11px;color:var(--muted)">Tap GO when you're ready — or wait for the beep</div>
@@ -595,7 +595,7 @@ if('serviceWorker' in navigator){
         style="width:100%;background:var(--soft);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;resize:none;min-height:70px;line-height:1.5;font-family:inherit"></textarea>
     </div>
 
-    <button onclick="finishSportSession()" style="width:100%;background:var(--lime);color:#050508;border-radius:13px;padding:16px;font-size:16px;font-weight:800">Finish & Save Session</button>
+    <button onclick="finishSportSession()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:16px;font-size:16px;font-weight:800">Finish & Save Session</button>
     <div style="height:20px"></div>
   </div>
 </div>
@@ -624,7 +624,7 @@ if('serviceWorker' in navigator){
         </select>
       </div>
     </div>
-    <button onclick="addCustomSport()" style="width:100%;background:var(--lime);color:#050508;border-radius:10px;padding:11px;font-size:14px;font-weight:800">+ Add Sport</button>
+    <button onclick="addCustomSport()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:11px;font-size:14px;font-weight:800">+ Add Sport</button>
   </div>
   <button class="btn-secondary" onclick="closeModal('modal-manage-sports')">Done</button>
 </div>
@@ -1115,7 +1115,7 @@ if('serviceWorker' in navigator){
   <!-- Scan & Search row -->
   <div style="display:flex;gap:8px;margin-bottom:10px">
     <input class="inp" id="meal-search-input" placeholder="Search food e.g. banana, chicken..." oninput="searchFood(this.value)" style="flex:1">
-    <button onclick="openBarcodeScanner()" style="background:var(--lime);color:#050508;border-radius:10px;padding:10px 12px;font-size:18px;font-weight:800;flex-shrink:0" title="Scan barcode">📷</button>
+    <button onclick="openBarcodeScanner()" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:10px 12px;font-size:18px;font-weight:800;flex-shrink:0" title="Scan barcode">📷</button>
   </div>
 
   <!-- Food search results -->
@@ -1126,7 +1126,7 @@ if('serviceWorker' in navigator){
     <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Enter barcode number manually:</div>
     <div style="display:flex;gap:8px">
       <input class="inp" id="barcode-manual" type="number" placeholder="e.g. 5000159407236" style="flex:1">
-      <button onclick="lookupBarcode(document.getElementById('barcode-manual').value)" style="background:var(--lime);color:#050508;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800">Look up</button>
+      <button onclick="lookupBarcode(document.getElementById('barcode-manual').value)" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800">Look up</button>
     </div>
   </div>
 
@@ -1166,7 +1166,7 @@ if('serviceWorker' in navigator){
   <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Barcode number (from packaging):</div>
   <div style="display:flex;gap:8px">
     <input class="inp" id="barcode-scanner-input" type="number" placeholder="e.g. 5000159407236" style="flex:1">
-    <button onclick="lookupBarcode(document.getElementById('barcode-scanner-input').value)" style="background:var(--lime);color:#050508;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800">GO</button>
+    <button onclick="lookupBarcode(document.getElementById('barcode-scanner-input').value)" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800">GO</button>
   </div>
   <div id="barcode-result" style="margin-top:12px"></div>
 </div>
@@ -2960,7 +2960,7 @@ function renderGeneratedWorkouts(){
           <div style="font-size:15px;font-weight:800">Option ${String.fromCharCode(65+wi)}</div>
           <div style="font-size:11px;color:var(--muted)">${w.exercises.length} exercises · ~${w.estMin} min${(w.muscles||[]).includes('Legs')?' · <span style="color:var(--lime)">full leg ✓</span>':''}</div>
         </div>
-        <button onclick="startRunner(${wi})" style="background:var(--lime);color:#050508;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800">Start</button>
+        <button onclick="startRunner(${wi})" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800">Start</button>
       </div>
       ${w.warmup?`<div style="background:rgba(255,140,66,.08);border:1px solid rgba(255,140,66,.2);border-radius:9px;padding:8px 10px;margin-bottom:8px">
         <div style="font-size:11px;font-weight:800;color:#FF8C42;margin-bottom:3px">🔥 WARM-UP (~${w.warmup.reduce((a,m)=>a+m.mins,0)} min)</div>
@@ -3205,8 +3205,8 @@ function renderPreview(){
     <div style="display:flex;gap:8px">
       <button onclick="previewNav(-1)" ${idx===0?'disabled':''} style="flex:1;background:var(--soft);color:${idx===0?'var(--border)':'var(--text)'};border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:700">← Prev</button>
       ${idx<total-1
-        ? `<button onclick="previewNav(1)" style="flex:2;background:var(--lime);color:#050508;border-radius:10px;padding:12px;font-size:14px;font-weight:800">Skip → Next</button>`
-        : `<button onclick="closePreview()" style="flex:2;background:var(--lime);color:#050508;border-radius:10px;padding:12px;font-size:14px;font-weight:800">Got it ✓</button>`}
+        ? `<button onclick="previewNav(1)" style="flex:2;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:12px;font-size:14px;font-weight:800">Skip → Next</button>`
+        : `<button onclick="closePreview()" style="flex:2;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:12px;font-size:14px;font-weight:800">Got it ✓</button>`}
     </div>
     <!-- progress dots -->
     <div style="display:flex;gap:4px;justify-content:center;margin-top:12px">
@@ -3350,7 +3350,7 @@ function renderRunner(){
           <div style="font-size:64px;font-weight:800;color:var(--lime);min-width:140px;font-variant-numeric:tabular-nums" id="runner-weight-val">${logEntry.weight}</div>
           <button onclick="runnerAdjust('weight',2.5)" style="width:56px;height:56px;border-radius:16px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:26px;font-weight:800">+</button>
         </div>
-        <button onclick="runnerConfirmWeight()" style="width:100%;background:var(--lime);color:#050508;border-radius:14px;padding:18px;font-size:18px;font-weight:800;margin-bottom:10px">Done — next: reps →</button>
+        <button onclick="runnerConfirmWeight()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:18px;font-size:18px;font-weight:800;margin-bottom:10px">Done — next: reps →</button>
         <button onclick="runnerSkipToReps()" style="background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline">skip weight</button>
       </div>`;
   } else if(runner.phase === 'reps'){
@@ -3365,7 +3365,7 @@ function renderRunner(){
           <div style="font-size:64px;font-weight:800;color:var(--lime);min-width:140px;font-variant-numeric:tabular-nums" id="runner-reps-val">${logEntry.reps}</div>
           <button onclick="runnerAdjust('reps',1)" style="width:56px;height:56px;border-radius:16px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:26px;font-weight:800">+</button>
         </div>
-        <button onclick="runnerConfirmReps()" style="width:100%;background:var(--lime);color:#050508;border-radius:14px;padding:18px;font-size:18px;font-weight:800;margin-bottom:10px">Set done ✓</button>
+        <button onclick="runnerConfirmReps()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:18px;font-size:18px;font-weight:800;margin-bottom:10px">Set done ✓</button>
         <button onclick="runnerBack()" style="background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline">← back to weight</button>
       </div>`;
   } else if(runner.phase === 'rest'){
@@ -3382,7 +3382,7 @@ function renderRunner(){
           <button onclick="runnerRestAdjust(-15)" style="flex:1;background:var(--soft);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:14px;font-size:14px;font-weight:700">−15s</button>
           <button onclick="runnerRestAdjust(15)" style="flex:1;background:var(--soft);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:14px;font-size:14px;font-weight:700">+15s</button>
         </div>
-        <button onclick="runnerSkipRest()" style="width:100%;background:var(--lime);color:#050508;border-radius:14px;padding:16px;font-size:16px;font-weight:800">Skip rest — go now →</button>
+        <button onclick="runnerSkipRest()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:16px;font-size:16px;font-weight:800">Skip rest — go now →</button>
       </div>`;
   } else if(runner.phase === 'done'){
     const totalVol = runner.log.reduce((a,ex)=>a+ex.sets.reduce((b,s)=>b+(s.done?s.weight*s.reps:0),0),0);
@@ -3392,7 +3392,7 @@ function renderRunner(){
         <div style="font-size:60px;margin-bottom:8px">🎉</div>
         <div style="font-size:26px;font-weight:800;margin-bottom:6px">Workout complete!</div>
         <div style="font-size:14px;color:var(--muted);margin-bottom:20px">${mins} min · ${Math.round(totalVol)} kg total volume</div>
-        <button onclick="finishRunner(true)" style="width:100%;background:var(--lime);color:#050508;border-radius:14px;padding:16px;font-size:16px;font-weight:800;margin-bottom:10px">Save & finish</button>
+        <button onclick="finishRunner(true)" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:14px;padding:16px;font-size:16px;font-weight:800;margin-bottom:10px">Save & finish</button>
         <button onclick="finishRunner(false)" style="background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline">finish without saving</button>
       </div>`;
   }
@@ -4686,7 +4686,7 @@ function renderSavedMeals(){
   el.innerHTML = filterBar + `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:16px;font-weight:800">Saved Meals (${meals.length})</div>
-      <button onclick="openModal('modal-add-saved-meal')" style="background:var(--lime);color:#050508;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
+      <button onclick="openModal('modal-add-saved-meal')" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
     </div>` + mealCards;
 }
 
@@ -4994,7 +4994,7 @@ function renderBodyStats(){
         <div style="font-size:40px;margin-bottom:10px">⚖️</div>
         <div style="font-size:16px;font-weight:800;margin-bottom:6px">No body stats yet</div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Log your first weigh-in from your Withings scales or enter manually</div>
-        <button onclick="openModal('modal-body-stats')" style="background:var(--lime);color:#050508;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:800">Log Body Stats</button>
+        <button onclick="openModal('modal-body-stats')" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:800">Log Body Stats</button>
       </div>`;
     return;
   }
@@ -5315,7 +5315,7 @@ function todaySearchFood(q){
               <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(f.name)}${f.brand?` <span style="color:var(--muted);font-weight:500">· ${escapeHtml(f.brand)}</span>`:''}</div>
               <div style="font-size:11px;color:var(--muted)">${f.cal} kcal · P:${f.pro}g C:${f.carb}g F:${f.fat}g <span style="font-size:10px">per 100g</span></div>
             </div>
-            <button onclick="pickTodayFood(${idx})" style="flex-shrink:0;background:var(--lime);color:#050508;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800">Add</button>
+            <button onclick="pickTodayFood(${idx})" style="flex-shrink:0;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800">Add</button>
           </div>
         </div>`).join('');
     }catch(e){
@@ -5367,7 +5367,7 @@ async function lookupBarcode(barcode){
     resultEl.innerHTML = `<div style="background:var(--soft);border-radius:10px;padding:12px;border:1px solid var(--lime)44">
       <div style="font-size:14px;font-weight:800;margin-bottom:4px">${name}</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${cal} kcal · Protein ${pro}g · Carbs ${carb}g · Fat ${fat}g <em style="font-size:10px">per 100g</em></div>
-      <button onclick="fillMealForm('${name.replace(/'/g,'')}',${cal},${pro},${carb},${fat})" style="background:var(--lime);color:#050508;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800;width:100%">Use This Food</button>
+      <button onclick="fillMealForm('${name.replace(/'/g,'')}',${cal},${pro},${carb},${fat})" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800;width:100%">Use This Food</button>
     </div>`;
   }catch(e){
     resultEl.innerHTML='<div style="color:var(--red);font-size:13px;padding:8px">Lookup failed — check your connection or enter manually</div>';
@@ -6002,7 +6002,7 @@ function expandPhoto(src, name, ei){
     <div style="font-size:16px;font-weight:800;color:white;margin-bottom:16px">${name}</div>
     <img src="${src}" style="max-width:90vw;max-height:70vh;object-fit:contain;border-radius:16px">
     <div style="display:flex;gap:12px;margin-top:24px">
-      <button onclick="this.closest('div[style*=fixed]').remove();triggerPhotoUpload('${ei}')" style="background:var(--lime);color:#050508;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:800">Change Photo</button>
+      <button onclick="this.closest('div[style*=fixed]').remove();triggerPhotoUpload('${ei}')" style="background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:800">Change Photo</button>
       <button onclick="this.closest('div[style*=fixed]').remove()" style="background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700">Close</button>
     </div>`;
   document.body.appendChild(overlay);
