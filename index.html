@@ -563,25 +563,42 @@ if('serviceWorker' in navigator){
     <div style="padding:20px 0 0;display:flex;align-items:center;gap:10px">
       <button onclick="stopSportSession()" style="background:var(--soft);border-radius:10px;padding:8px 12px;font-size:18px">←</button>
       <div style="flex:1">
-        <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Live Session</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase" id="sport-status-label">Ready</div>
         <div style="font-size:20px;font-weight:800" id="sport-session-name">Karting</div>
       </div>
       <div style="font-size:28px" id="sport-session-icon">🏎️</div>
       <button onclick="openSportWatchMode()" title="View on Apple Watch" style="background:var(--soft);border-radius:10px;padding:8px 10px;font-size:18px;border:1px solid var(--border)">⌚</button>
     </div>
 
-    <!-- Big timer — tap to lock screen -->
+    <!-- Big timer -->
     <div style="text-align:center;margin:20px 0 16px">
       <div style="font-size:72px;font-weight:800;color:var(--lime);font-variant-numeric:tabular-nums;letter-spacing:-2px" id="sport-timer-display">0:00</div>
-      <div style="font-size:13px;color:var(--muted)">session time</div>
-      <button onclick="lockSportScreen()" style="margin-top:8px;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700">🔒 Lock screen — prevent accidental pauses</button>
+      <div style="font-size:13px;color:var(--muted)" id="sport-timer-sub">tap Start when you're ready</div>
+    </div>
+
+    <!-- READY controls (before start) -->
+    <div id="sport-ready-controls" style="margin-bottom:16px">
+      <button onclick="beginSportSession()" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:18px;font-size:18px;font-weight:800">▶ Start</button>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--muted);margin-top:12px;cursor:pointer">
+        <input type="checkbox" id="sport-track-route" style="width:16px;height:16px;accent-color:var(--lime)">
+        Map my route (outdoor activities · beta)
+      </label>
+    </div>
+
+    <!-- RUNNING controls (Pause / Finish tabs) -->
+    <div id="sport-running-controls" style="display:none">
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <button onclick="toggleSportPause()" id="sport-pause-btn" style="flex:1;background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:13px;padding:15px;font-size:15px;font-weight:800">⏸ Pause</button>
+        <button onclick="finishSportSession()" style="flex:1;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:15px;font-size:15px;font-weight:800">■ Finish</button>
+      </div>
+      <button onclick="lockSportScreen()" style="width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:9px;padding:9px;font-size:12px;font-weight:700;margin-bottom:16px">🔒 Lock screen — prevent accidental taps</button>
     </div>
 
     <!-- Live stats -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div class="card" style="text-align:center">
         <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:4px">HEART RATE</div>
-        <div style="font-size:36px;font-weight:800;line-height:1" id="sport-hr">148</div>
+        <div style="font-size:36px;font-weight:800;line-height:1" id="sport-hr">—</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px" id="sport-hr-zone">Zone 3 — Cardio</div>
         <div class="hr-bar" style="margin-top:8px"><div class="hr-marker" id="sport-hr-marker" style="left:52%;background:#FFC107"></div></div>
       </div>
@@ -590,6 +607,21 @@ if('serviceWorker' in navigator){
         <div style="font-size:36px;font-weight:800;line-height:1;color:var(--michelle)" id="sport-cals">0</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">kcal burned</div>
       </div>
+    </div>
+    <div style="text-align:center;font-size:9px;color:var(--muted);margin-bottom:10px">heart rate &amp; calories are estimated — live watch data comes with the native app</div>
+
+    <!-- Route / distance (shows when tracking) -->
+    <div id="sport-route-card" class="card" style="display:none;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.5px">ROUTE <span style="color:var(--michelle)">· beta</span></div>
+        <div style="font-size:9px;color:var(--muted)">full map comes with native app</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+        <div><div style="font-size:22px;font-weight:800;color:var(--lime)" id="sport-distance">0.00</div><div style="font-size:10px;color:var(--muted)">km</div></div>
+        <div><div style="font-size:22px;font-weight:800;color:var(--babyblue)" id="sport-elevation">0</div><div style="font-size:10px;color:var(--muted)">m climbed</div></div>
+        <div><div style="font-size:22px;font-weight:800;color:var(--michelle)" id="sport-pace">—</div><div style="font-size:10px;color:var(--muted)">min/km</div></div>
+      </div>
+      <div id="sport-gps-status" style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px"></div>
     </div>
 
     <!-- Intensity zones hit -->
@@ -605,7 +637,7 @@ if('serviceWorker' in navigator){
         style="width:100%;background:var(--soft);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;resize:none;min-height:70px;line-height:1.5;font-family:inherit"></textarea>
     </div>
 
-    <button onclick="finishSportSession()" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:16px;font-size:16px;font-weight:800">Finish & Save Session</button>
+    <button onclick="finishSportSession()" id="sport-finish-bottom" style="display:none;width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:13px;padding:16px;font-size:16px;font-weight:800">■ Finish & Save Session</button>
     <div style="height:20px"></div>
   </div>
 </div>
@@ -7923,21 +7955,117 @@ function confirmFinishFromSportWatch(){
 function startSportSession(id){
   const sport = getSportSessions().find(s=>s.id===id);
   if(!sport) return;
-  sportState = {sport, elapsed:0, calories:0, hr:130};
+  sportState = {sport, elapsed:0, calories:0, hr:0, paused:false, started:false,
+                trackRoute:false, distance:0, elevation:0, lastPos:null, gpsWatchId:null};
   sportZoneTimes = {1:0, 2:0, 3:0, 4:0, 5:0};
   document.getElementById('sport-session-name').textContent = sport.name;
   document.getElementById('sport-session-icon').textContent = sport.icon;
   document.getElementById('sport-notes').value = '';
+  document.getElementById('sport-timer-display').textContent = '0:00';
+  document.getElementById('sport-hr').textContent = '—';
+  document.getElementById('sport-cals').textContent = '0';
+  document.getElementById('sport-status-label').textContent = 'Ready';
+  document.getElementById('sport-timer-sub').textContent = "tap Start when you're ready";
+  // show ready, hide running
+  document.getElementById('sport-ready-controls').style.display = 'block';
+  document.getElementById('sport-running-controls').style.display = 'none';
+  document.getElementById('sport-finish-bottom').style.display = 'none';
+  document.getElementById('sport-route-card').style.display = 'none';
+  document.getElementById('sport-track-route').checked = false;
   document.getElementById('sport-pick-view').style.display = 'none';
   document.getElementById('sport-active-view').style.display = 'block';
   updateSportZonesDisplay();
+}
+
+function beginSportSession(){
+  if(!sportState) return;
+  sportState.started = true;
+  sportState.paused = false;
+  sportState.trackRoute = document.getElementById('sport-track-route').checked;
+  document.getElementById('sport-status-label').textContent = 'Live Session';
+  document.getElementById('sport-timer-sub').textContent = 'session time';
+  document.getElementById('sport-ready-controls').style.display = 'none';
+  document.getElementById('sport-running-controls').style.display = 'block';
+  document.getElementById('sport-finish-bottom').style.display = 'block';
+  if(sportState.trackRoute){
+    document.getElementById('sport-route-card').style.display = 'block';
+    startSportGPS();
+  }
   startSportTimer();
+}
+
+function toggleSportPause(){
+  if(!sportState || !sportState.started) return;
+  sportState.paused = !sportState.paused;
+  const btn = document.getElementById('sport-pause-btn');
+  const label = document.getElementById('sport-status-label');
+  if(sportState.paused){
+    btn.innerHTML = '▶ Resume';
+    label.textContent = 'Paused';
+    label.style.color = 'var(--michelle)';
+  } else {
+    btn.innerHTML = '⏸ Pause';
+    label.textContent = 'Live Session';
+    label.style.color = 'var(--muted)';
+  }
+}
+
+// ── GPS route tracking (beta — reliable only with screen on; native app does background) ──
+function startSportGPS(){
+  if(!('geolocation' in navigator)){
+    document.getElementById('sport-gps-status').textContent = 'GPS not available on this device';
+    return;
+  }
+  document.getElementById('sport-gps-status').textContent = 'Getting GPS fix…';
+  sportState.gpsWatchId = navigator.geolocation.watchPosition(
+    (pos)=>{
+      if(!sportState || sportState.paused) return;
+      const {latitude, longitude, altitude, accuracy} = pos.coords;
+      if(accuracy && accuracy > 50){ document.getElementById('sport-gps-status').textContent = 'Weak GPS signal…'; return; }
+      document.getElementById('sport-gps-status').textContent = 'GPS tracking · keep screen on for best results';
+      if(sportState.lastPos){
+        const d = haversineKm(sportState.lastPos.lat, sportState.lastPos.lng, latitude, longitude);
+        if(d > 0.002 && d < 0.5){ // ignore jitter & teleports
+          sportState.distance += d;
+          if(altitude!=null && sportState.lastPos.alt!=null){
+            const gain = altitude - sportState.lastPos.alt;
+            if(gain > 0.5) sportState.elevation += gain;
+          }
+        }
+      }
+      sportState.lastPos = {lat:latitude, lng:longitude, alt:altitude};
+      updateSportRouteDisplay();
+    },
+    (err)=>{ document.getElementById('sport-gps-status').textContent = 'GPS blocked — allow location to map your route'; },
+    { enableHighAccuracy:true, maximumAge:1000, timeout:10000 }
+  );
+}
+function stopSportGPS(){
+  if(sportState && sportState.gpsWatchId!=null && navigator.geolocation){
+    navigator.geolocation.clearWatch(sportState.gpsWatchId);
+    sportState.gpsWatchId = null;
+  }
+}
+function haversineKm(lat1,lng1,lat2,lng2){
+  const R=6371, toRad=x=>x*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLng=toRad(lng2-lng1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function updateSportRouteDisplay(){
+  if(!sportState) return;
+  document.getElementById('sport-distance').textContent = sportState.distance.toFixed(2);
+  document.getElementById('sport-elevation').textContent = Math.round(sportState.elevation);
+  const mins = sportState.elapsed/60;
+  const pace = (sportState.distance>0.05) ? (mins/sportState.distance) : 0;
+  document.getElementById('sport-pace').textContent = pace>0 ? pace.toFixed(1) : '—';
 }
 
 function startSportTimer(){
   if(sportInterval) clearInterval(sportInterval);
   sportInterval = setInterval(()=>{
     if(!sportState) return;
+    if(sportState.paused) return; // frozen while paused
     sportState.elapsed++;
     const mins = sportState.elapsed / 60;
     // Timer display
@@ -7947,6 +8075,7 @@ function startSportTimer(){
     // Calories
     sportState.calories = Math.round(mins * sportState.sport.calPerMin);
     document.getElementById('sport-cals').textContent = sportState.calories;
+    if(sportState.trackRoute) updateSportRouteDisplay();
     // Update lock screen if active
     updateLockScreen();
     // Update sport watch if open
@@ -8004,6 +8133,10 @@ function updateSportZonesDisplay(){
 }
 
 function stopSportSession(){
+  if(sportState && sportState.started && sportState.elapsed>5){
+    if(!confirm('Leave this session? It won\u2019t be saved.')) return;
+  }
+  stopSportGPS();
   if(sportInterval) clearInterval(sportInterval);
   if(sportWatchInterval) clearInterval(sportWatchInterval);
   sportState = null;
@@ -8014,6 +8147,7 @@ function stopSportSession(){
 }
 
 function finishSportSession(){
+  stopSportGPS();
   if(sportInterval) clearInterval(sportInterval);
   if(sportWatchInterval) clearInterval(sportWatchInterval);
   document.getElementById('sport-watch-overlay').style.display='none';
@@ -8022,6 +8156,8 @@ function finishSportSession(){
   const notes = document.getElementById('sport-notes').value.trim();
   const mins = Math.round(sportState.elapsed/60);
   const cals = sportState.calories;
+  const dist = sportState.distance || 0;
+  const elev = Math.round(sportState.elevation || 0);
   const h = loadHistory();
   h.unshift({
     id: Date.now(),
@@ -8032,6 +8168,8 @@ function finishSportSession(){
     setsLogged: 0,
     isSport: true,
     sportIcon: sportState.sport.icon,
+    distanceKm: dist>0.05 ? +dist.toFixed(2) : null,
+    elevationM: elev>0 ? elev : null,
     exerciseNotes: notes ? [{name:'Session notes', note:notes}] : [],
     zoneTimes: {...sportZoneTimes},
     date: Date.now()
