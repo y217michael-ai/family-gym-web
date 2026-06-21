@@ -918,7 +918,23 @@ if('serviceWorker' in navigator){
 </div>
 </div>
 
-<!-- Filter picker modal -->
+<!-- Add equipment modal -->
+<div class="modal-overlay" id="modal-add-equip">
+<div class="modal" style="max-height:90vh">
+  <div style="font-size:20px;font-weight:800;margin-bottom:2px">+ Add Equipment</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Pick from the list, search the ExerciseDB types, or add your own.</div>
+
+  <input class="inp" id="add-equip-search" placeholder="🔍 Search equipment..." oninput="renderAddEquipList(this.value)" autocomplete="off" style="margin-bottom:6px">
+  <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Searches the built-in list + ExerciseDB equipment types.</div>
+
+  <div id="add-equip-list" style="max-height:46vh;overflow-y:auto;margin-bottom:12px"></div>
+
+  <button onclick="addEquipTypeManual()" style="width:100%;background:var(--soft);color:var(--text);border:1px dashed var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:700;margin-bottom:8px">✏️ Type my own name instead</button>
+  <button class="btn-secondary" onclick="closeModal('modal-add-equip')">Done</button>
+</div>
+</div>
+
+<!-- Add equipment end --><!-- Filter picker modal -->
 <div class="modal-overlay" id="modal-filter">
 <div class="modal" style="max-height:88vh">
   <div style="font-size:20px;font-weight:800;margin-bottom:2px">🎯 Filter Workouts</div>
@@ -2110,6 +2126,28 @@ const EQUIPMENT_LIST = [
 ];
 function loadEquipPhotos(){ try{ return JSON.parse(localStorage.getItem('fgym_equip_photos')||'{}'); }catch(e){ return {}; } }
 function saveEquipPhotos(p){ try{ localStorage.setItem('fgym_equip_photos', JSON.stringify(p)); }catch(e){} }
+// A built-in list of common gym equipment to add from (works offline).
+const COMMON_EQUIPMENT = [
+  {label:'Dumbbells', icon:'🏋️'}, {label:'Barbell', icon:'🏋️'}, {label:'EZ Bar', icon:'🏋️'},
+  {label:'Kettlebell', icon:'🔔'}, {label:'Trap Bar', icon:'🏋️'}, {label:'Smith Machine', icon:'🛠️'},
+  {label:'Cable Machine', icon:'🔗'}, {label:'Leg Press', icon:'🦵'}, {label:'Leg Curl', icon:'🦵'},
+  {label:'Leg Extension', icon:'🦵'}, {label:'Chest Press', icon:'💪'}, {label:'Lat Pulldown', icon:'💪'},
+  {label:'Seated Row', icon:'💪'}, {label:'Pec Deck', icon:'💪'}, {label:'Shoulder Press', icon:'💪'},
+  {label:'Hack Squat', icon:'🦵'}, {label:'Pull-up Bar', icon:'🤸'}, {label:'Dip Station', icon:'🤸'},
+  {label:'Resistance Bands', icon:'🎗️'}, {label:'Medicine Ball', icon:'⚽'}, {label:'Stability Ball', icon:'⚪'},
+  {label:'Foam Roller', icon:'🧻'}, {label:'Bench', icon:'🪑'}, {label:'Squat Rack', icon:'🏗️'},
+  {label:'Treadmill', icon:'🏃'}, {label:'Assault Bike', icon:'🚴'}, {label:'Rowing Machine', icon:'🚣'},
+  {label:'Elliptical', icon:'🏃'}, {label:'Spin Bike', icon:'🚴'}, {label:'Wahoo Kickr', icon:'🚴'},
+  {label:'Battle Ropes', icon:'🪢'}, {label:'Sled', icon:'🛷'}, {label:'TRX Suspension', icon:'🎗️'},
+];
+// ExerciseDB's official equipment types (free data, ~14 types)
+const EDB_EQUIPMENT_TYPES = [
+  'assisted','band','barbell','body weight','bosu ball','cable','dumbbell',
+  'elliptical machine','ez barbell','hammer','kettlebell','leverage machine',
+  'medicine ball','olympic barbell','resistance band','roller','rope','skierg machine',
+  'sled machine','smith machine','stability ball','stationary bike','stepmill machine',
+  'tire','trap bar','upper body ergometer','weighted','wheel roller'
+];
 // User-added custom equipment (name becomes both key and a match keyword)
 function loadCustomEquip(){ try{ return JSON.parse(localStorage.getItem('fgym_custom_equip')||'[]'); }catch(e){ return []; } }
 function saveCustomEquip(a){ try{ localStorage.setItem('fgym_custom_equip', JSON.stringify(a)); }catch(e){} }
@@ -2464,16 +2502,53 @@ function setEquipment(key){
   renderHome();
 }
 function addCustomEquip(){
-  const name = prompt('Equipment name (e.g. Assault Bike, Wahoo Kickr, Trap Bar):');
-  if(!name || !name.trim()) return;
-  const label = name.trim();
+  document.getElementById('add-equip-search').value = '';
+  renderAddEquipList('');
+  openModal('modal-add-equip');
+}
+function renderAddEquipList(q){
+  const el = document.getElementById('add-equip-list');
+  if(!el) return;
+  q = (q||'').trim().toLowerCase();
+  const existing = loadCustomEquip().map(c=>c.label.toLowerCase());
+  // merge common list + ExerciseDB types into one set of {label, icon, source}
+  const seen = {};
+  const items = [];
+  COMMON_EQUIPMENT.forEach(e=>{ const k=e.label.toLowerCase(); if(!seen[k]){ seen[k]=1; items.push({label:e.label, icon:e.icon, source:'list'}); } });
+  EDB_EQUIPMENT_TYPES.forEach(t=>{
+    const label = t.replace(/\b\w/g,c=>c.toUpperCase());
+    const k = label.toLowerCase();
+    if(!seen[k]){ seen[k]=1; items.push({label, icon:'⚙️', source:'edb'}); }
+  });
+  const filtered = q ? items.filter(i=>i.label.toLowerCase().includes(q)) : items;
+  if(!filtered.length){
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:14px;text-align:center">No match — use "Type my own name" below to add "${q}".</div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(i=>{
+    const added = existing.includes(i.label.toLowerCase());
+    return `<div onclick="${added?'':`addEquipFromList('${i.label.replace(/'/g,"\\'")}','${i.icon}')`}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;margin-bottom:6px;border-radius:10px;border:1px solid var(--border);background:${added?'#0F0F18':'#16161F'};cursor:${added?'default':'pointer'};opacity:${added?'.55':'1'}">
+      <div style="font-size:20px">${i.icon}</div>
+      <div style="flex:1;font-size:14px;font-weight:700">${i.label}</div>
+      ${i.source==='edb'?'<span style="font-size:9px;color:var(--lime);background:rgba(57,255,20,.12);border:1px solid rgba(57,255,20,.25);border-radius:5px;padding:2px 6px">ExerciseDB</span>':''}
+      <div style="font-size:13px;font-weight:800;color:${added?'var(--muted)':'var(--lime)'}">${added?'Added':'+ Add'}</div>
+    </div>`;
+  }).join('');
+}
+function addEquipFromList(label, icon){
   const key = 'custom_'+label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
   const list = loadCustomEquip();
   if(list.some(c=>c.key===key)){ toast('Already added'); return; }
-  list.push({key, label, icon:'🏷️'});
+  list.push({key, label, icon:icon||'🏷️'});
   saveCustomEquip(list);
+  renderAddEquipList(document.getElementById('add-equip-search').value);
   renderEquipmentGrid();
-  toast('Added "'+label+'" — add a photo & tag your workouts with it');
+  toast('Added '+label);
+}
+function addEquipTypeManual(){
+  const name = prompt('Equipment name:');
+  if(!name || !name.trim()) return;
+  addEquipFromList(name.trim(), '🏷️');
 }
 function removeCustomEquip(key){
   if(!confirm('Remove this equipment?')) return;
