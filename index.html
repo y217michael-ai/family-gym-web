@@ -792,16 +792,7 @@ if('serviceWorker' in navigator){
   </div>
 
   <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">DURATION</div>
-  <div style="display:flex;gap:6px;margin-bottom:8px">
-    <button id="genmin-20" onclick="setGenMinutes(20)" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">20 min</button>
-    <button id="genmin-40" onclick="setGenMinutes(40)" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">40 min</button>
-    <button id="genmin-60" onclick="setGenMinutes(60)" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">60 min</button>
-    <button id="genmin-90" onclick="setGenMinutes(90)" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">90 min</button>
-  </div>
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
-    <span style="font-size:12px;color:var(--muted)">Custom:</span>
-    <input id="gen-custom-min" type="number" min="10" max="180" placeholder="mins" oninput="setGenCustomMinutes(this.value)" class="inp" style="flex:1;padding:8px">
-  </div>
+  <div style="display:flex;gap:6px;margin-bottom:16px" id="gen-mins-btns"></div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;background:var(--soft);border-radius:10px;padding:12px;margin-bottom:16px;border:1px solid var(--border)">
     <div>
@@ -838,7 +829,7 @@ if('serviceWorker' in navigator){
   <input class="inp" id="nr-name" placeholder="Routine name e.g. Upper Body Power" style="margin-bottom:12px">
 
   <!-- Smart auto-fill with pairing options -->
-  <div style="background:rgba(57,255,20,.06);border:1px solid rgba(57,255,20,.2);border-radius:11px;padding:12px;margin-bottom:14px">
+  <div style="background:transparent;border:1px solid var(--lime);border-radius:11px;padding:12px;margin-bottom:14px">
     <div style="font-size:13px;font-weight:800;color:var(--lime);margin-bottom:3px">✨ Auto-fill a starting point</div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Pick a pairing & length and we'll fill in exercises — then edit freely below.</div>
 
@@ -849,24 +840,17 @@ if('serviceWorker' in navigator){
     <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">GROUPS <span style="font-weight:500;text-transform:none">(tap to add/remove)</span></div>
     <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;max-height:120px;overflow-y:auto" id="nr-auto-muscles"></div>
 
-    <div style="display:flex;gap:6px;margin-bottom:8px">
-      <select id="nr-auto-diff" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px">
-        <option value="beginner">Beginner</option>
-        <option value="intermediate" selected>Intermediate</option>
-        <option value="advanced">Advanced</option>
-      </select>
-      <select id="nr-auto-mins" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px">
-        <option value="20">20 min</option>
-        <option value="40">40 min</option>
-        <option value="60" selected>60 min</option>
-        <option value="90">90 min</option>
-      </select>
-    </div>
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">DIFFICULTY</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px" id="nr-auto-diff-btns"></div>
+
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">DURATION</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px" id="nr-auto-mins-btns"></div>
+
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:10px;cursor:pointer">
       <input type="checkbox" id="nr-auto-warmup" checked style="width:16px;height:16px;accent-color:var(--lime)">
       Add warm-up & cool-down
     </label>
-    <button onclick="autofillManual()" style="width:100%;background:rgba(57,255,20,.15);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:9px;padding:10px;font-size:13px;font-weight:800">✨ Fill in exercises</button>
+    <button onclick="autofillManual()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:10px;font-size:13px;font-weight:800">✨ Fill in exercises</button>
   </div>
 
   <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;letter-spacing:.5px">MUSCLE GROUPS</div>
@@ -877,6 +861,32 @@ if('serviceWorker' in navigator){
   <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
     <button class="btn-secondary" onclick="closeModal('modal-new-routine')">Cancel</button>
     <button class="btn-primary" onclick="saveNewRoutine()">Save & Share</button>
+  </div>
+</div>
+</div>
+
+<!-- Custom minutes popup for generator -->
+<div class="modal-overlay" id="modal-gen-custom-mins">
+<div class="modal" style="max-width:300px">
+  <div style="font-size:17px;font-weight:800;margin-bottom:4px">Custom length</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">How many minutes? (10–180)</div>
+  <input class="inp" type="number" id="gen-custom-mins-input" placeholder="e.g. 45" min="10" max="180" style="margin-bottom:14px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <button class="btn-secondary" onclick="closeModal('modal-gen-custom-mins')">Cancel</button>
+    <button class="btn-primary" onclick="applyGenCustomMins()">Set</button>
+  </div>
+</div>
+</div>
+
+<!-- Custom minutes popup for manual auto-fill -->
+<div class="modal-overlay" id="modal-nr-custom-mins">
+<div class="modal" style="max-width:300px">
+  <div style="font-size:17px;font-weight:800;margin-bottom:4px">Custom length</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">How many minutes? (10–180)</div>
+  <input class="inp" type="number" id="nr-custom-mins-input" placeholder="e.g. 45" min="10" max="180" style="margin-bottom:14px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <button class="btn-secondary" onclick="closeModal('modal-nr-custom-mins')">Cancel</button>
+    <button class="btn-primary" onclick="applyNRCustomMins()">Set</button>
   </div>
 </div>
 </div>
@@ -2159,24 +2169,61 @@ function editRoutine(id){
   const r = routines.find(x=>x.id===id);
   if(!r) return;
   newRoutineData = {id:r.id, name:r.name, muscles:[...(r.muscles||[])], exercises:(r.exercises||[]).map(e=>({...e})), warmup:r.warmup||null, cooldown:r.cooldown||null};
-  nrAuto = { pairMode:'custom', muscles:[] };
+  nrAuto = { pairMode:'custom', muscles:[], difficulty:'intermediate', minutes:60 };
   document.getElementById('nr-name').value = r.name;
   renderNRPairModes(); renderNRAutoMuscles();
+  renderNRAutoDiff(); renderNRAutoMins();
   renderNRMuscles(); renderNRExercises();
   openModal('modal-new-routine');
 }
 
 // ══════════════════ NEW ROUTINE ══════════════════
-let nrAuto = { pairMode:'custom', muscles:[] };
+let nrAuto = { pairMode:'custom', muscles:[], difficulty:'intermediate', minutes:60 };
 
 function openNewRoutine(){
   newRoutineData = {name:'',muscles:[],exercises:[]};
-  nrAuto = { pairMode:'custom', muscles:[] };
+  nrAuto = { pairMode:'custom', muscles:[], difficulty:'intermediate', minutes:60 };
   document.getElementById('nr-name').value = '';
   renderNRPairModes();
   renderNRAutoMuscles();
+  renderNRAutoDiff(); renderNRAutoMins();
   renderNRMuscles(); renderNRExercises();
   openModal('modal-new-routine');
+}
+
+// ── Manual auto-fill: difficulty & duration tabs ──
+function renderNRAutoDiff(){
+  const el = document.getElementById('nr-auto-diff-btns'); if(!el) return;
+  const diffs = [['beginner','Beginner'],['intermediate','Intermediate'],['advanced','Advanced']];
+  el.innerHTML = diffs.map(([k,label])=>{
+    const on = nrAuto.difficulty===k;
+    return `<button onclick="setNRAutoDiff('${k}')" style="flex:1;padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'transparent':'var(--bg)'};color:${on?'var(--lime)':'var(--muted)'}">${label}</button>`;
+  }).join('');
+}
+function setNRAutoDiff(d){ nrAuto.difficulty=d; renderNRAutoDiff(); }
+function renderNRAutoMins(){
+  const el = document.getElementById('nr-auto-mins-btns'); if(!el) return;
+  const presets = [30,60,90];
+  const isOther = !presets.includes(nrAuto.minutes);
+  let html = presets.map(m=>{
+    const on = nrAuto.minutes===m;
+    return `<button onclick="setNRAutoMins(${m})" style="flex:1;padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'transparent':'var(--bg)'};color:${on?'var(--lime)':'var(--muted)'}">${m} min</button>`;
+  }).join('');
+  html += `<button onclick="promptNRCustomMins()" style="flex:1;padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid ${isOther?'var(--lime)':'var(--border)'};background:${isOther?'transparent':'var(--bg)'};color:${isOther?'var(--lime)':'var(--muted)'}">${isOther?nrAuto.minutes+' min':'Other'}</button>`;
+  el.innerHTML = html;
+}
+function setNRAutoMins(m){ nrAuto.minutes=m; renderNRAutoMins(); }
+function promptNRCustomMins(){
+  document.getElementById('nr-custom-mins-input').value = nrAuto.minutes;
+  openModal('modal-nr-custom-mins');
+  setTimeout(()=>{ const el=document.getElementById('nr-custom-mins-input'); if(el) el.focus(); }, 100);
+}
+function applyNRCustomMins(){
+  const v = parseInt(document.getElementById('nr-custom-mins-input').value);
+  if(!v || v<10 || v>180){ toast('Enter a time between 10 and 180 minutes'); return; }
+  nrAuto.minutes = v;
+  renderNRAutoMins();
+  closeModal('modal-nr-custom-mins');
 }
 
 // ── Manual builder: pairing-mode controls (mirror the generator) ──
@@ -2185,7 +2232,7 @@ function renderNRPairModes(){
   const modes = [{key:'splits',label:'① Splits'},{key:'antagonist',label:'② Pairs'},{key:'custom',label:'③ Custom'}];
   el.innerHTML = modes.map(m=>{
     const on = nrAuto.pairMode===m.key;
-    return `<button onclick="setNRPairMode('${m.key}')" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${m.label}</button>`;
+    return `<button onclick="setNRPairMode('${m.key}')" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'#FFFFFF'};background:var(--bg);color:${on?'var(--lime)':'#FFFFFF'}">${m.label}</button>`;
   }).join('');
   renderNRPairContent();
 }
@@ -2199,7 +2246,7 @@ function renderNRPairContent(){
   const combos = PAIR_COMBOS[nrAuto.pairMode]||[];
   el.innerHTML = combos.map((c,i)=>{
     const on = nrAuto.muscles.slice().sort().join(',')===c.groups.slice().sort().join(',');
-    return `<button onclick="applyNRCombo('${nrAuto.pairMode}',${i})" style="text-align:left;padding:8px 10px;border-radius:8px;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.12)':'var(--soft)'};margin-bottom:5px;width:100%">
+    return `<button onclick="applyNRCombo('${nrAuto.pairMode}',${i})" style="text-align:left;padding:8px 10px;border-radius:8px;border:1px solid ${on?'var(--lime)':'#FFFFFF'};background:var(--bg);margin-bottom:5px;width:100%">
       <div style="font-size:12px;font-weight:800;color:${on?'var(--lime)':'var(--text)'}">${c.label}</div>
       <div style="font-size:10px;color:var(--muted)">${c.note}</div></button>`;
   }).join('');
@@ -2221,9 +2268,9 @@ function renderNRAutoMuscles(){
   el.innerHTML = groups.map(m=>{
     const on = nrAuto.muscles.includes(m);
     const sg = suggested.has(m);
-    const border = on?'var(--lime)':(sg?'rgba(57,255,20,.5)':'var(--border)');
-    const bg = on?'rgba(57,255,20,.15)':(sg?'rgba(57,255,20,.06)':'var(--soft)');
-    const col = on?'var(--lime)':(sg?'var(--lime)':'var(--muted)');
+    const border = on?'var(--lime)':(sg?'var(--lime)':'#FFFFFF');
+    const bg = 'var(--bg)';
+    const col = on?'var(--lime)':(sg?'var(--lime)':'#FFFFFF');
     return `<button onclick="toggleNRAutoMuscle('${m}')" style="padding:6px 10px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid ${border};background:${bg};color:${col}">${on?'✓ ':''}${m}${sg?' <span style="font-size:8px;opacity:.8">pairs</span>':''}</button>`;
   }).join('');
 }
@@ -2235,8 +2282,8 @@ function toggleNRAutoMuscle(m){
 // Build exercises from the pairing options and drop them into the manual builder
 function autofillManual(){
   if(!nrAuto.muscles.length){ toast('Pick at least one muscle group above'); return; }
-  const difficulty = document.getElementById('nr-auto-diff').value;
-  const minutes = parseInt(document.getElementById('nr-auto-mins').value)||60;
+  const difficulty = nrAuto.difficulty || 'intermediate';
+  const minutes = nrAuto.minutes || 60;
   const addWarmup = document.getElementById('nr-auto-warmup').checked;
   const cfg = DIFFICULTY_CFG[difficulty] || DIFFICULTY_CFG.intermediate;
   let pool = EXERCISES.filter(e=>nrAuto.muscles.includes(e.muscle));
@@ -2268,7 +2315,7 @@ function autofillManual(){
 function renderNRMuscles(){
   document.getElementById('nr-muscle-groups').innerHTML = MUSCLE_GROUPS.map(m=>{
     const sel = newRoutineData.muscles.includes(m);
-    return `<button onclick="toggleNRMuscle('${m}')" style="padding:6px 13px;border-radius:8px;font-size:13px;font-weight:700;border:1px solid ${sel?'var(--lime)':'var(--border)'};background:${sel?'rgba(57,255,20,.15)':'var(--soft)'};color:${sel?'var(--lime)':'var(--muted)'}">${m}</button>`;
+    return `<button onclick="toggleNRMuscle('${m}')" style="padding:6px 13px;border-radius:8px;font-size:13px;font-weight:700;border:1px solid ${sel?'var(--lime)':'#FFFFFF'};background:var(--bg);color:${sel?'var(--lime)':'#FFFFFF'}">${m}</button>`;
   }).join('');
 }
 
@@ -2386,7 +2433,7 @@ function openExPicker(){
 function renderPickerGroups(){
   document.getElementById('picker-groups').innerHTML = ['All',...MUSCLE_GROUPS].map(g=>{
     const sel = pickerGroup===g;
-    return `<button onclick="setPickerGroup('${g}')" style="padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid ${sel?'var(--lime)':'var(--border)'};background:${sel?'rgba(57,255,20,.15)':'var(--soft)'};color:${sel?'var(--lime)':'var(--muted)'}">${g}</button>`;
+    return `<button onclick="setPickerGroup('${g}')" style="padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid ${sel?'var(--lime)':'#FFFFFF'};background:var(--bg);color:${sel?'var(--lime)':'#FFFFFF'}">${g}</button>`;
   }).join('');
 }
 
@@ -3528,7 +3575,7 @@ function renderPairModes(){
   ];
   el.innerHTML = modes.map(m=>{
     const on = genState.pairMode===m.key;
-    return `<button onclick="setPairMode('${m.key}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${m.label}</button>`;
+    return `<button onclick="setPairMode('${m.key}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--lime)':'#FFFFFF'};background:var(--bg);color:${on?'var(--lime)':'#FFFFFF'}">${m.label}</button>`;
   }).join('');
   renderPairContent();
 }
@@ -3548,7 +3595,7 @@ function renderPairContent(){
     const sel = genState.muscles.slice().sort().join(',');
     const cg = c.groups.slice().sort().join(',');
     const on = sel===cg;
-    return `<button onclick="applyCombo('${genState.pairMode}',${i})" style="text-align:left;padding:9px 11px;border-radius:9px;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.12)':'var(--soft)'};margin-bottom:6px;width:100%">
+    return `<button onclick="applyCombo('${genState.pairMode}',${i})" style="text-align:left;padding:9px 11px;border-radius:9px;border:1px solid ${on?'var(--lime)':'#FFFFFF'};background:var(--bg);margin-bottom:6px;width:100%">
       <div style="font-size:13px;font-weight:800;color:${on?'var(--lime)':'var(--text)'}">${c.label}</div>
       <div style="font-size:11px;color:var(--muted)">${c.note}</div>
     </button>`;
@@ -3577,9 +3624,10 @@ function renderGenMuscles(){
   document.getElementById('gen-muscle-btns').innerHTML = groups.map(m=>{
     const on = genState.muscles.includes(m);
     const isSugg = suggested.has(m);
-    let border = on ? 'var(--lime)' : (isSugg ? 'rgba(57,255,20,.5)' : 'var(--border)');
-    let bg = on ? 'rgba(57,255,20,.15)' : (isSugg ? 'rgba(57,255,20,.06)' : 'var(--soft)');
-    let col = on ? 'var(--lime)' : (isSugg ? 'var(--lime)' : 'var(--muted)');
+    // chip style 1: white border + black fill default; green border+text when selected; suggestions get green outline
+    let border = on ? 'var(--lime)' : (isSugg ? 'var(--lime)' : '#FFFFFF');
+    let bg = 'var(--bg)';
+    let col = on ? 'var(--lime)' : (isSugg ? 'var(--lime)' : '#FFFFFF');
     return `<button onclick="toggleGenMuscle('${m}')" class="gen-musc" data-m="${m}"
       style="padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${border};background:${bg};color:${col};position:relative">
       ${on?'✓ ':''}${m} <span style="opacity:.6">${counts[m]}</span>${isSugg?' <span style="font-size:9px;opacity:.8">pairs</span>':''}</button>`;
@@ -3608,27 +3656,40 @@ function setGenDifficulty(d){ genState.difficulty=d; renderGenControls(); }
 function setGenMinutes(m){ genState.minutes=m; renderGenControls(); }
 function toggleGenHipSafe(){ genState.hipSafe=!genState.hipSafe; setHipSafePref(activeUser, genState.hipSafe); renderGenControls(); renderGenMuscles(); }
 function toggleGenWarmup(){ genState.warmup=!genState.warmup; renderGenControls(); }
-function setGenCustomMinutes(v){
-  const n = parseInt(v)||0;
-  if(n>=10 && n<=180){ genState.minutes=n; renderGenControls(); }
+function promptGenCustomMins(){
+  document.getElementById('gen-custom-mins-input').value = genState.minutes;
+  openModal('modal-gen-custom-mins');
+  setTimeout(()=>{ const el=document.getElementById('gen-custom-mins-input'); if(el) el.focus(); }, 100);
+}
+function applyGenCustomMins(){
+  const v = parseInt(document.getElementById('gen-custom-mins-input').value);
+  if(!v || v<10 || v>180){ toast('Enter a time between 10 and 180 minutes'); return; }
+  genState.minutes = v;
+  renderGenControls();
+  closeModal('modal-gen-custom-mins');
+}
+function renderGenMins(){
+  const el = document.getElementById('gen-mins-btns'); if(!el) return;
+  const presets = [30,60,90];
+  const isOther = !presets.includes(genState.minutes);
+  let html = presets.map(m=>{
+    const on = genState.minutes===m;
+    return `<button onclick="setGenMinutes(${m})" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'transparent':'var(--bg)'};color:${on?'var(--lime)':'var(--muted)'}">${m} min</button>`;
+  }).join('');
+  html += `<button onclick="promptGenCustomMins()" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${isOther?'var(--lime)':'var(--border)'};background:${isOther?'transparent':'var(--bg)'};color:${isOther?'var(--lime)':'var(--muted)'}">${isOther?genState.minutes+' min':'Other'}</button>`;
+  el.innerHTML = html;
 }
 function renderGenControls(){
   // difficulty
   ['beginner','intermediate','advanced'].forEach(d=>{
     const b=document.getElementById('gendiff-'+d);
     if(b){ const on=genState.difficulty===d;
-      b.style.background=on?'rgba(57,255,20,.15)':'var(--soft)';
+      b.style.background=on?'transparent':'var(--bg)';
       b.style.color=on?'var(--lime)':'var(--muted)';
       b.style.borderColor=on?'var(--lime)':'var(--border)'; }
   });
-  // minutes presets
-  [20,40,60,90].forEach(m=>{
-    const b=document.getElementById('genmin-'+m);
-    if(b){ const on=genState.minutes===m;
-      b.style.background=on?'rgba(57,255,20,.15)':'var(--soft)';
-      b.style.color=on?'var(--lime)':'var(--muted)';
-      b.style.borderColor=on?'var(--lime)':'var(--border)'; }
-  });
+  // minutes tabs (30/60/90/Other)
+  renderGenMins();
   // hip-safe toggle
   const t=document.getElementById('gen-hip-toggle'), th=document.getElementById('gen-hip-thumb');
   if(t){ t.style.background=genState.hipSafe?'var(--lime)':'var(--soft)'; t.style.border=genState.hipSafe?'none':'1px solid var(--border)'; }
@@ -3639,9 +3700,6 @@ function renderGenControls(){
   if(wth){ wth.style.left=genState.warmup?'20px':'2px'; }
   const hipUser=document.getElementById('gen-hip-user');
   if(hipUser) hipUser.textContent = '· for '+activeUser+(activeUser==='Mike'?' (cam lesion)':'');
-  // custom field reflects current if not a preset
-  const cf=document.getElementById('gen-custom-min');
-  if(cf && ![20,40,60,90].includes(genState.minutes)) cf.value=genState.minutes;
 }
 
 // ══════════════════ WORKOUT ══════════════════
