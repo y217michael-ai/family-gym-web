@@ -392,6 +392,13 @@ if('serviceWorker' in navigator){
   <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Devices & Integrations</div>
   <div id="device-settings"></div>
 
+  <!-- Connected Services (placeholder — activates with the native app) -->
+  <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Connected Services</div>
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Once Family Gym is a native app on your phone, connect these once and your real data (heart rate, recovery, sleep, weight) flows in automatically.</div>
+    <div id="connected-services"></div>
+  </div>
+
   <!-- Exercise video library -->
   <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Exercise Form Videos</div>
   <div class="card" style="margin-bottom:14px">
@@ -608,6 +615,9 @@ if('serviceWorker' in navigator){
         <input type="checkbox" id="sport-track-route" style="width:16px;height:16px;accent-color:var(--lime)">
         Map my route (outdoor activities · beta)
       </label>
+      <button onclick="connectBluetoothHR()" style="width:100%;margin-top:10px;background:#16161F;border:1px solid var(--border);border-radius:11px;padding:12px;font-size:13px;font-weight:700;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:8px">
+        📡 Connect HR strap (Wahoo) <span style="font-size:10px;background:var(--soft);border:1px solid var(--border);border-radius:5px;padding:2px 6px">soon</span>
+      </button>
     </div>
 
     <!-- RUNNING controls — big Pause at top, Finish & Cancel at bottom -->
@@ -7422,6 +7432,28 @@ function renderProfile(){
       </div>
     </div>`;
   renderVideoSettings();
+  renderConnectedServices();
+}
+
+function renderConnectedServices(){
+  const el = document.getElementById('connected-services');
+  if(!el) return;
+  const services = [
+    {key:'bluetooth', name:'Bluetooth HR Strap', icon:'📡', desc:'Live heart rate (e.g. Wahoo TICKR) during sessions'},
+    {key:'apple', name:'Apple Health', icon:'❤️', desc:'Heart rate, steps, workouts, sleep'},
+    {key:'whoop', name:'Whoop', icon:'🟥', desc:'Strain, recovery, HRV, sleep'},
+    {key:'withings', name:'Withings', icon:'⚖️', desc:'Weight, body composition, BP'},
+  ];
+  el.innerHTML = services.map(s=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:11px;margin-bottom:8px;opacity:.65">
+      <div style="font-size:22px">${s.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:800">${s.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${s.desc}</div>
+      </div>
+      <div style="font-size:10px;font-weight:800;color:var(--muted);background:var(--soft);border:1px solid var(--border);border-radius:6px;padding:5px 9px;white-space:nowrap">Coming with the app</div>
+    </div>`).join('') +
+    `<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px">These switch on once the native app is built. Bluetooth straps give live HR; on Android this can work in the browser too. Whoop &amp; Withings connect to their own accounts; Apple Health is a one-tap permission.<br><br>📡 <b>Wahoo TICKR X for motocross:</b> it stores your ride in its own memory with no phone needed — sync to the Wahoo app afterwards and it flows in via Apple Health.</div>`;
 }
 
 function renderVideoSettings(){
@@ -8768,6 +8800,16 @@ function startSportSession(id){
   document.getElementById('sport-pick-view').style.display = 'none';
   document.getElementById('sport-active-view').style.display = 'block';
   updateSportZonesDisplay();
+}
+
+function connectBluetoothHR(){
+  // Placeholder for now. Real Web Bluetooth HR connection is wired in at the
+  // native stage (and works on Android/Chrome). Wahoo TICKR straps broadcast the
+  // standard Heart Rate Service so they pair directly once enabled.
+  const supported = ('bluetooth' in navigator);
+  toast(supported
+    ? '📡 HR strap pairing comes with the next update — your Wahoo will connect for live BPM.'
+    : '📡 Live HR strap pairing comes with the native app (this browser can\u2019t pair Bluetooth).');
 }
 
 function beginSportSession(){
