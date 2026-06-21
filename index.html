@@ -340,10 +340,6 @@ if('serviceWorker' in navigator){
     <!-- Water tracking -->
     <div style="font-size:16px;font-weight:800;margin:16px 0 10px">Hydration</div>
     <div id="water-card"></div>
-
-    <!-- Suggestions -->
-    <div style="font-size:16px;font-weight:800;margin:16px 0 10px">Suggested for You</div>
-    <div id="meal-suggestions"></div>
   </div>
 
   <!-- SAVED MEALS TAB -->
@@ -994,6 +990,19 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- Share routine modal end -->
+
+<!-- Share meal modal -->
+<div class="modal-overlay" id="modal-share-meal">
+<div class="modal" style="max-width:380px">
+  <div style="font-size:19px;font-weight:800;margin-bottom:4px">↗ Share meal</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px" id="share-meal-name">Pick who to share with.</div>
+  <div id="share-meal-people" style="margin-bottom:16px"></div>
+  <button onclick="confirmShareMeal()" style="width:100%;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:12px;padding:14px;font-size:15px;font-weight:800;margin-bottom:8px">Share</button>
+  <button class="btn-secondary" onclick="closeModal('modal-share-meal')">Cancel</button>
+</div>
+</div>
+<!-- Share meal modal end -->
+
 <div class="modal-overlay" id="modal-menu-advisor">
 <div class="modal" style="max-height:92vh">
   <div style="font-size:20px;font-weight:800;margin-bottom:4px">🍽️ Eating Out Advisor</div>
@@ -1312,8 +1321,15 @@ if('serviceWorker' in navigator){
 <div class="modal-overlay" id="modal-assign-meal">
 <div class="modal">
   <div style="font-size:20px;font-weight:800;margin-bottom:6px">Add to Meal Plan</div>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:14px" id="assign-meal-label">Choose a day and meal slot</div>
-  <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">DAY</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:14px" id="assign-meal-label">Choose days and a meal slot</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-size:12px;color:var(--muted);font-weight:700">DAYS (tick one or more)</div>
+    <div style="display:flex;gap:5px">
+      <button onclick="assignQuickDays('all')" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--soft);color:var(--lime)">All 7</button>
+      <button onclick="assignQuickDays('weekdays')" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--soft);color:var(--lime)">Mon–Fri</button>
+      <button onclick="assignQuickDays('none')" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--soft);color:var(--muted)">Clear</button>
+    </div>
+  </div>
   <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px" id="assign-day-btns"></div>
   <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">MEAL SLOT</div>
   <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px" id="assign-slot-btns">
@@ -1321,8 +1337,7 @@ if('serviceWorker' in navigator){
     <button onclick="setAssignSlot('lunch')" class="aslot" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">☀️ Lunch</button>
     <button onclick="setAssignSlot('dinner')" class="aslot" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">🌙 Dinner</button>
     <button onclick="setAssignSlot('snack')" class="aslot" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">🍎 Snack</button>
-    <button onclick="setAssignSlot('preworkout')" class="aslot" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">⚡ Pre-workout</button>
-    <button onclick="setAssignSlot('postworkout')" class="aslot" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">💪 Post-workout</button>
+    <button onclick="setAssignSlot('eveningsnack')" class="aslot" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">🌜 Evening snack</button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
     <button class="btn-secondary" onclick="closeModal('modal-assign-meal')">Cancel</button>
@@ -1415,6 +1430,9 @@ if('serviceWorker' in navigator){
     <button onclick="setNutGoal('maintain')" class="ns-goal" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">⚖️ Maintain</button>
     <button onclick="setNutGoal('build')" class="ns-goal" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">💪 Build</button>
   </div>
+  <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">EATING STYLE / DIET</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px">The app uses this to flag and advise on meals — it's general guidance, not a dietitian.</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="ns-diet-btns"></div>
   <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
     <button class="btn-secondary" onclick="closeModal('modal-nut-settings')">Cancel</button>
     <button class="btn-primary" onclick="saveNutSettings()">Save</button>
@@ -1523,6 +1541,60 @@ if('serviceWorker' in navigator){
     <button class="btn-secondary" onclick="closeMealModal()">Cancel</button>
     <button class="btn-primary" onclick="saveMeal()">Log Meal</button>
   </div>
+</div>
+</div>
+
+<!-- ══ INGREDIENT-BASED MEAL BUILDER ══ -->
+<div class="modal-overlay" id="modal-meal-builder">
+<div class="modal" style="max-height:88vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:20px;font-weight:800" id="mb-title">Build a Meal</div>
+    <button onclick="closeMealBuilder()" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Add each ingredient, set how much, and the totals update automatically.</div>
+
+  <!-- Allowance guide -->
+  <div id="mb-allowance" style="background:var(--soft);border:1px solid var(--border);border-radius:11px;padding:10px 12px;margin-bottom:12px;font-size:12px"></div>
+
+  <!-- Add-ingredient bar -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+    <button onclick="mbStartBarcode()" style="background:#16161F;border:1px solid var(--border);border-radius:11px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer">
+      <span style="font-size:20px">🔖</span><span style="font-size:10px;font-weight:800;color:var(--lime)">Scan</span>
+    </button>
+    <button onclick="mbStartPhoto()" style="background:#16161F;border:1px solid var(--border);border-radius:11px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer">
+      <span style="font-size:20px">📷</span><span style="font-size:10px;font-weight:800;color:var(--michelle)">Snap</span>
+    </button>
+    <button onclick="mbFocusSearch()" style="background:#16161F;border:1px solid var(--border);border-radius:11px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer">
+      <span style="font-size:20px">🔍</span><span style="font-size:10px;font-weight:800;color:var(--babyblue)">Search</span>
+    </button>
+  </div>
+  <input class="inp" id="mb-search" placeholder="Search a food to add e.g. eggs, beans…" oninput="mbSearch(this.value)" style="margin-bottom:6px">
+  <div id="mb-search-loading" style="display:none;text-align:center;color:var(--muted);font-size:12px;margin-bottom:6px">Searching…</div>
+  <div id="mb-search-results" style="margin-bottom:6px;max-height:150px;overflow-y:auto"></div>
+  <button onclick="mbAddManual()" style="width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:9px;padding:8px;font-size:12px;font-weight:700;margin-bottom:14px">+ Add ingredient by hand</button>
+
+  <!-- Ingredient list -->
+  <div style="font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.5px;margin-bottom:8px">INGREDIENTS</div>
+  <div id="mb-ingredients" style="margin-bottom:14px"></div>
+
+  <!-- Running total -->
+  <div id="mb-totals" style="background:var(--soft);border:1px solid var(--lime);border-radius:12px;padding:12px;margin-bottom:10px"></div>
+
+  <!-- Diet advice -->
+  <div id="mb-diet-advice" style="margin-bottom:14px"></div>
+
+  <!-- Meal name + slot -->
+  <input class="inp" id="mb-name" placeholder="Meal name e.g. Big Breakfast" style="margin-bottom:8px">
+  <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Meal type</div>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:14px">
+    <div style="display:flex;gap:6px;width:max-content" id="mb-slot-btns"></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+    <button class="btn-secondary" onclick="mbSaveToLibrary()" style="font-size:13px">⭐ Save to my meals</button>
+    <button class="btn-primary" onclick="mbLogMeal()" style="font-size:13px">Log this meal</button>
+  </div>
+  <div style="font-size:10px;color:var(--muted);text-align:center">Saving keeps it in your library to re-log or share with the family.</div>
 </div>
 </div>
 
@@ -5786,11 +5858,11 @@ function saveBodyStats2(user, data){
 function getDefaultNutSettings(user){
   const u = USERS[user||activeUser];
   const defaults = {
-    Mike:    {cal:2200,protein:180,carbs:180,fat:65,goal:'lean',height:178,age:45,activity:'moderate'},
-    Michelle:{cal:1800,protein:140,carbs:160,fat:60,goal:'maintain',height:165,age:42,activity:'active'},
-    Amy:     {cal:2000,protein:155,carbs:200,fat:65,goal:'build',height:162,age:20,activity:'active'},
+    Mike:    {cal:2200,protein:180,carbs:180,fat:65,goal:'lean',height:178,age:45,activity:'moderate',diet:'lowcarb'},
+    Michelle:{cal:1800,protein:140,carbs:160,fat:60,goal:'maintain',height:165,age:42,activity:'active',diet:'slimmingworld'},
+    Amy:     {cal:2000,protein:155,carbs:200,fat:65,goal:'build',height:162,age:20,activity:'active',diet:'vegan'},
   };
-  return defaults[user||activeUser] || {cal:2000,protein:150,carbs:200,fat:65,goal:'maintain',height:170,age:30,activity:'moderate'};
+  return defaults[user||activeUser] || {cal:2000,protein:150,carbs:200,fat:65,goal:'maintain',height:170,age:30,activity:'moderate',diet:'none'};
 }
 function getNutSettings(){
   return loadNutSettings(activeUser) || getDefaultNutSettings(activeUser);
@@ -6148,7 +6220,7 @@ function renderNutrition(){
     <div class="card-sm" style="margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${slotMeals.length?'8px':'0'}">
         <div style="font-size:14px;font-weight:800">${slot.icon} ${slot.label} ${slotCals?`<span style="font-size:12px;color:var(--muted);font-weight:600">· ${slotCals} kcal</span>`:''}</div>
-        <button onclick="openAddMeal('${slot.key}')" style="background:rgba(57,255,20,.18);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Add</button>
+        <button onclick="openMealBuilder('${slot.key==='snacks'?'snack':slot.key}')" style="background:rgba(57,255,20,.18);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Add</button>
       </div>
       ${slotMeals.map(x=>`
         <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border)">
@@ -6163,40 +6235,6 @@ function renderNutrition(){
         </div>`).join('')}
     </div>`;
   }).join('');
-
-  // ── Suggestions ──
-  const settings2 = getNutSettings();
-  const goal = settings2.goal;
-  const leanSuggestions = [
-    {name:'Grilled chicken breast 200g',cals:220,protein:42,carbs:0,fat:5,fibre:0,timing:'Lunch or dinner'},
-    {name:'Greek yoghurt 200g',cals:130,protein:18,carbs:8,fat:3,fibre:0,timing:'Snack or breakfast'},
-    {name:'Egg white omelette (4 whites)',cals:70,protein:14,carbs:1,fat:0,fibre:0,timing:'Breakfast or post workout'},
-    {name:'Smoked salmon 100g',cals:140,protein:20,carbs:0,fat:7,fibre:0,timing:'Lunch'},
-    {name:'Cottage cheese 150g',cals:105,protein:18,carbs:4,fat:2,fibre:0,timing:'Pre-bed protein'},
-    {name:'Steamed broccoli 200g',cals:68,protein:5,carbs:10,fat:1,fibre:6,timing:'Any meal — fill your plate'},
-  ];
-  const buildSuggestions = [
-    {name:'Chicken & rice bowl',cals:620,protein:52,carbs:68,fat:10,fibre:3,timing:'Post workout'},
-    {name:'Beef stir fry & noodles',cals:680,protein:45,carbs:72,fat:18,fibre:4,timing:'Dinner'},
-    {name:'Porridge with protein powder',cals:380,protein:32,carbs:48,fat:6,fibre:5,timing:'Breakfast'},
-    {name:'Whole milk & banana shake',cals:420,protein:24,carbs:62,fat:12,fibre:2,timing:'Post workout'},
-  ];
-  const maintainSuggestions = [
-    {name:'Salmon with sweet potato',cals:520,protein:40,carbs:48,fat:14,fibre:6,timing:'Dinner'},
-    {name:'Turkey & avocado wrap',cals:450,protein:35,carbs:38,fat:16,fibre:5,timing:'Lunch'},
-    {name:'Mixed nuts & fruit',cals:280,protein:8,carbs:22,fat:18,fibre:4,timing:'Snack'},
-  ];
-  const sugg = goal==='lean'?leanSuggestions:goal==='build'?buildSuggestions:maintainSuggestions;
-  document.getElementById('meal-suggestions').innerHTML = sugg.map(s=>`
-    <div class="card-sm" style="margin-bottom:8px;border-left:3px solid ${uColor}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;margin-bottom:2px">${s.name}</div>
-          <div style="font-size:11px;color:var(--muted)">${s.timing} · ${s.cals} kcal · P:${s.protein}g C:${s.carbs}g F:${s.fat}g</div>
-        </div>
-        <button onclick="quickAddMeal(${JSON.stringify(s).replace(/"/g,"'")})" style="background:rgba(${uColor==='#39FF14'?'57,255,20':'108,99,255'},0.15);color:${uColor};border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;border:1px solid ${uColor}44;flex-shrink:0;margin-left:8px">Add</button>
-      </div>
-    </div>`).join('');
 
   // ── Hydration card ──
   renderWater();
@@ -6363,8 +6401,8 @@ function saveMealPlan(user, data){
   try{ localStorage.setItem('fgym_mealplan_'+(user||activeUser), JSON.stringify(data)); }catch(e){}
 }
 
-const CAT_ICONS = {breakfast:'🌅',lunch:'☀️',dinner:'🌙',snack:'🍎',preworkout:'⚡',postworkout:'💪'};
-const CAT_LABELS = {breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',snack:'Snack',preworkout:'Pre-workout',postworkout:'Post-workout'};
+const CAT_ICONS = {breakfast:'🌅',lunch:'☀️',dinner:'🌙',snack:'🍎',eveningsnack:'🌜',preworkout:'⚡',postworkout:'💪'};
+const CAT_LABELS = {breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',snack:'Snack',eveningsnack:'Evening snack',preworkout:'Pre-workout',postworkout:'Post-workout'};
 const DAYS7 = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
 // ── Render Saved Meals tab ──
@@ -6376,7 +6414,7 @@ function renderSavedMeals(){
 
   // Filter bar
   let activeMealCat = window._activeMealCat || 'all';
-  const cats = ['all','breakfast','lunch','dinner','snack','preworkout','postworkout'];
+  const cats = ['all','breakfast','lunch','dinner','snack','eveningsnack'];
   const filterBar = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:12px">
     <div style="display:flex;gap:6px;width:max-content">
       ${cats.map(c=>`<button onclick="window._activeMealCat='${c}';renderSavedMeals()" style="padding:5px 11px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;border:1px solid ${activeMealCat===c?uColor:'var(--border)'};background:${activeMealCat===c?uColor+'22':'var(--soft)'};color:${activeMealCat===c?uColor:'var(--muted)'}">${c==='all'?'All':CAT_ICONS[c]+' '+CAT_LABELS[c]}</button>`).join('')}
@@ -6390,11 +6428,14 @@ function renderSavedMeals(){
       <div style="display:flex;align-items:flex-start;gap:10px">
         <div style="font-size:24px;flex-shrink:0">${CAT_ICONS[m.cat]||'🍽️'}</div>
         <div style="flex:1">
-          <div style="font-size:15px;font-weight:800;margin-bottom:3px">${m.name}</div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${m.cals} kcal · P:${m.protein||0}g C:${m.carbs||0}g F:${m.fat||0}g${m.fibre?' · Fibre:'+m.fibre+'g':''}</div>
+          <div style="font-size:15px;font-weight:800;margin-bottom:3px">${m.name}${m.sharedFrom?` <span style="font-size:10px;font-weight:700;color:var(--muted);background:var(--soft);border:1px solid var(--border);border-radius:6px;padding:1px 6px">from ${m.sharedFrom}</span>`:''}</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${m.cals} kcal · P:${m.protein||0}g C:${m.carbs||0}g F:${m.fat||0}g${m.fibre?' · Fibre:'+m.fibre+'g':''}</div>
+          ${m.ingredients&&m.ingredients.length?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px">${m.ingredients.length} ingredient${m.ingredients.length>1?'s':''}: ${m.ingredients.map(x=>escapeHtml(x.name)).slice(0,4).join(', ')}${m.ingredients.length>4?'…':''}</div>`:''}
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button onclick="logSavedMealToday(${i})" style="background:transparent;color:${uColor};border:1px solid ${uColor};border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Log Today</button>
-            <button onclick="openAssignMeal(${i})" style="background:var(--soft);color:var(--text);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;border:1px solid var(--border)">📅 Add to Plan</button>
+            ${m.ingredients&&m.ingredients.length?`<button onclick="mbEditSaved(${i})" style="background:var(--soft);color:var(--text);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid var(--border)">✎ Edit</button>`:''}
+            <button onclick="openShareMeal(${i})" style="background:rgba(57,255,20,.12);color:var(--lime);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid rgba(57,255,20,.3)">↗ Share</button>
+            <button onclick="openAssignMeal(${i})" style="background:var(--soft);color:var(--text);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid var(--border)">📅 Plan</button>
             <button onclick="deleteSavedMeal(${i})" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;border:1px solid rgba(255,77,77,.2)">✕</button>
           </div>
         </div>
@@ -6409,7 +6450,10 @@ function renderSavedMeals(){
   el.innerHTML = filterBar + `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:16px;font-weight:800">Saved Meals (${meals.length})</div>
-      <button onclick="openModal('modal-add-saved-meal')" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
+      <div style="display:flex;gap:6px">
+        <button onclick="openMealBuilder('${activeMealCat==='all'?'breakfast':activeMealCat}')" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">🍳 Build Meal</button>
+        <button onclick="openModal('modal-add-saved-meal')" style="background:var(--soft);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700">+ Quick</button>
+      </div>
     </div>` + mealCards;
 }
 
@@ -6495,7 +6539,7 @@ function saveNewSavedMeal(){
 
 // ══════════════════ MEAL PLAN (WEEKLY) ══════════════════
 let _assignMealIdx = null;
-let _assignDay = 'Monday';
+let _assignDays = [];
 let _assignSlot = 'breakfast';
 
 function openAssignMeal(mealIdx){
@@ -6503,33 +6547,88 @@ function openAssignMeal(mealIdx){
   const meals = loadSavedMeals(activeUser);
   const m = meals[mealIdx];
   if(!m) return;
-  document.getElementById('assign-meal-label').textContent = 'Adding: ' + m.name;
-  _assignDay = 'Monday';
-  _assignSlot = m.cat || 'breakfast';
-  // Render day buttons
-  document.getElementById('assign-day-btns').innerHTML = DAYS7.map(d=>
-    `<button onclick="setAssignDay('${d}')" class="aday" style="padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">${d.slice(0,3)}</button>`
-  ).join('');
-  updateCatBtns('aday', _assignDay);
+  document.getElementById('assign-meal-label').textContent = 'Adding: ' + m.name + ' — tick the days you want it on';
+  // default: today's day ticked
+  const todayName = DAYS7[(new Date().getDay()+6)%7];
+  _assignDays = [todayName];
+  _assignSlot = (m.cat && m.cat!=='snacks') ? m.cat : 'breakfast';
+  renderAssignDays();
   updateCatBtns('aslot', _assignSlot);
   openModal('modal-assign-meal');
 }
-function setAssignDay(d){ _assignDay=d; updateCatBtns('aday',d); }
+function renderAssignDays(){
+  document.getElementById('assign-day-btns').innerHTML = DAYS7.map(d=>{
+    const on = _assignDays.includes(d);
+    return `<button onclick="toggleAssignDay('${d}')" style="padding:6px 11px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${on?'✓ ':''}${d.slice(0,3)}</button>`;
+  }).join('');
+}
+function toggleAssignDay(d){
+  if(_assignDays.includes(d)) _assignDays = _assignDays.filter(x=>x!==d);
+  else _assignDays.push(d);
+  renderAssignDays();
+}
+function assignQuickDays(which){
+  if(which==='all') _assignDays = [...DAYS7];
+  else if(which==='weekdays') _assignDays = DAYS7.slice(0,5);
+  else _assignDays = [];
+  renderAssignDays();
+}
 function setAssignSlot(s){ _assignSlot=s; updateCatBtns('aslot',s); }
 function confirmAssignMeal(){
   if(_assignMealIdx===null) return;
+  if(!_assignDays.length){ toast('Tick at least one day'); return; }
   const meals = loadSavedMeals(activeUser);
   const m = meals[_assignMealIdx];
   if(!m) return;
   const plan = loadMealPlan(activeUser);
-  if(!plan[_assignDay]) plan[_assignDay]={};
-  if(!plan[_assignDay][_assignSlot]) plan[_assignDay][_assignSlot]=[];
-  plan[_assignDay][_assignSlot].push({...m});
+  _assignDays.forEach(day=>{
+    if(!plan[day]) plan[day]={};
+    if(!plan[day][_assignSlot]) plan[day][_assignSlot]=[];
+    plan[day][_assignSlot].push({...m});
+  });
   saveMealPlan(activeUser, plan);
   closeModal('modal-assign-meal');
   renderMealPlan();
   setNutTab('week');
-  toast(m.name + ' added to ' + _assignDay + ' ' + CAT_LABELS[_assignSlot]);
+  toast(m.name + ' added to ' + _assignDays.length + ' day' + (_assignDays.length>1?'s':'') + ' · ' + CAT_LABELS[_assignSlot]);
+}
+
+// ── Named weekly plans ──
+function loadNamedPlans(user){
+  try{ return JSON.parse(localStorage.getItem('fgym_namedplans_'+(user||activeUser))||'[]'); }catch(e){ return []; }
+}
+function saveNamedPlans(user, data){
+  try{ localStorage.setItem('fgym_namedplans_'+(user||activeUser), JSON.stringify(data)); }catch(e){}
+}
+function saveCurrentPlanAs(){
+  const plan = loadMealPlan(activeUser);
+  if(!Object.keys(plan).length){ toast('Nothing planned to save yet'); return; }
+  const name = prompt('Name this weekly plan (e.g. "Low-Carb Week"):');
+  if(!name) return;
+  const plans = loadNamedPlans(activeUser);
+  const existing = plans.findIndex(p=>p.name.toLowerCase()===name.trim().toLowerCase());
+  const entry = { name:name.trim(), plan: JSON.parse(JSON.stringify(plan)), saved: Date.now() };
+  if(existing>=0) plans[existing]=entry; else plans.unshift(entry);
+  saveNamedPlans(activeUser, plans);
+  renderMealPlan();
+  toast('Saved plan "'+name.trim()+'" ⭐');
+}
+function loadNamedPlan(idx){
+  const plans = loadNamedPlans(activeUser);
+  const p = plans[idx]; if(!p) return;
+  if(!confirm('Load "'+p.name+'"? This replaces your current week plan.')) return;
+  saveMealPlan(activeUser, JSON.parse(JSON.stringify(p.plan)));
+  renderMealPlan();
+  toast('Loaded "'+p.name+'"');
+}
+function deleteNamedPlan(idx){
+  const plans = loadNamedPlans(activeUser);
+  if(!plans[idx]) return;
+  if(!confirm('Delete saved plan "'+plans[idx].name+'"?')) return;
+  plans.splice(idx,1);
+  saveNamedPlans(activeUser, plans);
+  renderMealPlan();
+  toast('Plan deleted');
 }
 
 function renderMealPlan(){
@@ -6538,16 +6637,55 @@ function renderMealPlan(){
   const plan = loadMealPlan(activeUser);
   const settings = getNutSettings();
   const uColor = USERS[activeUser].color;
-  const slots = ['breakfast','lunch','dinner','snack','preworkout','postworkout'];
+  const slots = ['breakfast','lunch','dinner','snack','eveningsnack'];
   const today = new Date();
   const dayOfWeek = today.getDay();
   const mondayOffset = dayOfWeek===0?-6:1-dayOfWeek;
   const monday = new Date(today); monday.setDate(today.getDate()+mondayOffset);
 
+  // Week totals
+  let weekCals=0, daysWithFood=0;
+  DAYS7.forEach(day=>{
+    const dp = plan[day]||{};
+    const dc = slots.flatMap(s=>(dp[s]||[])).reduce((a,m)=>a+(m.cals||0),0);
+    weekCals += dc; if(dc>0) daysWithFood++;
+  });
+  const avgPerDay = daysWithFood ? Math.round(weekCals/daysWithFood) : 0;
+
+  // Saved named plans bar
+  const named = loadNamedPlans(activeUser);
+  const namedBar = named.length ? `
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">SAVED PLANS</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${named.map((p,i)=>`<div style="display:flex;align-items:center;gap:4px;background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:4px 4px 4px 10px">
+          <button onclick="loadNamedPlan(${i})" style="background:none;border:none;color:var(--text);font-size:12px;font-weight:700">${escapeHtml(p.name)}</button>
+          <button onclick="deleteNamedPlan(${i})" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:6px;padding:2px 6px;font-size:10px;border:1px solid rgba(255,77,77,.2)">✕</button>
+        </div>`).join('')}
+      </div>
+    </div>` : '';
+
   el.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="font-size:16px;font-weight:800">This Week's Meal Plan</div>
-      <button onclick="clearMealPlan()" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;border:1px solid rgba(255,77,77,.2)">Clear week</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:16px;font-weight:800">Weekly Meal Plan</div>
+      <div style="display:flex;gap:6px">
+        <button onclick="saveCurrentPlanAs()" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:800">⭐ Save plan</button>
+        <button onclick="clearMealPlan()" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;border:1px solid rgba(255,77,77,.2)">Clear</button>
+      </div>
+    </div>
+    ${namedBar}
+    <div class="card" style="margin-bottom:12px;background:${uColor}11;border:1px solid ${uColor}44">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:12px;color:var(--muted);font-weight:700">WEEK TOTAL</div>
+          <div style="font-size:22px;font-weight:900;color:${uColor}">${weekCals.toLocaleString()} kcal</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;color:var(--muted)">Avg/planned day</div>
+          <div style="font-size:16px;font-weight:800">${avgPerDay} kcal</div>
+          <div style="font-size:10px;color:var(--muted)">daily goal ${settings.cal}</div>
+        </div>
+      </div>
     </div>` +
     DAYS7.map((day,di)=>{
       const date = new Date(monday); date.setDate(monday.getDate()+di);
@@ -6556,6 +6694,7 @@ function renderMealPlan(){
       const dayMeals = slots.flatMap(s=>(dayPlan[s]||[]).map(m=>({...m,slot:s})));
       const dayCals = dayMeals.reduce((a,m)=>a+m.cals,0);
       const dayProtein = dayMeals.reduce((a,m)=>a+(m.protein||0),0);
+      const over = dayCals > settings.cal;
       return `<div class="card" style="margin-bottom:10px;${isToday?'border-color:'+uColor+';border-width:1.5px':''}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${dayMeals.length?'10px':'0'}">
           <div>
@@ -6563,7 +6702,7 @@ function renderMealPlan(){
             <div style="font-size:11px;color:var(--muted)">${date.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
           </div>
           ${dayCals?`<div style="text-align:right">
-            <div style="font-size:13px;font-weight:800;color:${uColor}">${dayCals} kcal</div>
+            <div style="font-size:13px;font-weight:800;color:${over?'var(--michelle)':uColor}">${dayCals} kcal</div>
             <div style="font-size:10px;color:var(--muted)">P:${dayProtein}g · target ${settings.cal}</div>
           </div>`:''}
         </div>
@@ -6644,6 +6783,65 @@ function initDefaultSavedMeals(){
   if(meals.length) saveSavedMeals(activeUser, meals);
 }
 
+// ── Diet / eating-style profiles ──
+// Each defines how meals are flagged & advised. General guidance, not a dietitian.
+const DIET_TYPES = {
+  none:        { label:'No specific diet', icon:'🍽️', note:'No special flagging.' },
+  lowcarb:     { label:'Low carb', icon:'🥑', note:'Flags high-carb meals; aims for lower carbs, higher protein & fat.', maxCarbPctMeal:0.25 },
+  mediterranean:{ label:'Mediterranean', icon:'🫒', note:'Favours veg, fish, olive oil, whole grains; flags heavy processed/red-meat meals.' },
+  keto:        { label:'Keto', icon:'🥓', note:'Very low carb; flags meals over ~10g carbs.', maxCarbGMeal:10 },
+  vegan:       { label:'Vegan', icon:'🌱', note:'Flags likely animal-product ingredients.', avoid:/chicken|beef|pork|lamb|fish|salmon|tuna|egg|milk|cheese|butter|yoghurt|yogurt|honey|gelatin|whey|bacon|sausage|ham|turkey|prawn|shrimp|cream/i },
+  vegetarian:  { label:'Vegetarian', icon:'🥦', note:'Flags meat & fish ingredients.', avoid:/chicken|beef|pork|lamb|fish|salmon|tuna|bacon|sausage|ham|turkey|prawn|shrimp|gelatin/i },
+  slimmingworld:{ label:'Slimming World', icon:'⭐', note:'Rough SW framing: lean protein, veg & fruit are "free-ish"; flags high fat/sugar as likely "syns". Approximate only.' },
+  highprotein: { label:'High protein', icon:'💪', note:'Nudges for protein; flags low-protein meals.', minProteinGPer100kcal:7 },
+};
+let currentDietType = 'none';
+
+function renderDietBtns(){
+  const wrap = document.getElementById('ns-diet-btns');
+  if(!wrap) return;
+  wrap.innerHTML = Object.keys(DIET_TYPES).map(k=>{
+    const d = DIET_TYPES[k]; const on = currentDietType===k;
+    return `<button onclick="setDietType('${k}')" style="padding:7px 11px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${d.icon} ${d.label}</button>`;
+  }).join('');
+}
+function setDietType(k){ currentDietType=k; renderDietBtns(); }
+
+// Advice engine: given a meal's totals + ingredient names, return flags for the active diet.
+function dietAdviceForMeal(totals, ingredientNames, dietKey){
+  const d = DIET_TYPES[dietKey||'none']; if(!d || dietKey==='none') return [];
+  const flags = [];
+  const cal = totals.cal||0, carb=totals.carb||0, pro=totals.pro||0, fat=totals.fat||0, sugar=totals.sugar||0;
+  const names = (ingredientNames||[]).join(' ');
+  if(d.avoid && d.avoid.test(names)){
+    const hits = (ingredientNames||[]).filter(n=>d.avoid.test(n));
+    flags.push({ type:'bad', msg:`Not ${d.label.toLowerCase()}-friendly: ${hits.join(', ')}` });
+  }
+  if(d.maxCarbGMeal!=null && carb>d.maxCarbGMeal){
+    flags.push({ type:'warn', msg:`${Math.round(carb)}g carbs — over the ~${d.maxCarbGMeal}g ${d.label} target` });
+  }
+  if(d.maxCarbPctMeal!=null && cal>0){
+    const carbPct = (carb*4)/cal;
+    if(carbPct>d.maxCarbPctMeal) flags.push({ type:'warn', msg:`Carb-heavy for low-carb (${Math.round(carbPct*100)}% of calories from carbs)` });
+  }
+  if(d.minProteinGPer100kcal!=null && cal>0){
+    const ppk = pro/(cal/100);
+    if(ppk<d.minProteinGPer100kcal) flags.push({ type:'warn', msg:`Lower protein for a high-protein style (${Math.round(pro)}g)` });
+  }
+  if(dietKey==='slimmingworld'){
+    if(fat> (cal*0.4)/9) flags.push({ type:'warn', msg:`Higher fat — likely some "syns" in Slimming World terms (approx)` });
+    if(sugar>20) flags.push({ type:'warn', msg:`${Math.round(sugar)}g sugar — watch syns (approx)` });
+    if(!flags.length) flags.push({ type:'good', msg:`Looks lean — likely low-syn (approx)` });
+  }
+  if(dietKey==='mediterranean'){
+    if(/sausage|bacon|burger|fried|processed|salami|pepperoni/i.test(names)) flags.push({ type:'warn', msg:`Processed/red meat — Mediterranean leans to fish, veg & olive oil` });
+  }
+  if(!flags.length && (dietKey==='vegan'||dietKey==='vegetarian'||dietKey==='lowcarb'||dietKey==='keto'||dietKey==='highprotein')){
+    flags.push({ type:'good', msg:`Looks fine for ${d.label.toLowerCase()} 👍` });
+  }
+  return flags;
+}
+
 function openNutSettings(){
   const s = getNutSettings();
   document.getElementById('ns-cal-goal').value = s.cal||'';
@@ -6651,7 +6849,9 @@ function openNutSettings(){
   document.getElementById('ns-carbs').value = s.carbs||'';
   document.getElementById('ns-fat').value = s.fat||'';
   currentNutGoal = s.goal||'lean';
+  currentDietType = s.diet||'none';
   setNutGoal(currentNutGoal);
+  renderDietBtns();
   openModal('modal-nut-settings');
 }
 function setNutGoal(goal){
@@ -6670,6 +6870,7 @@ function saveNutSettings(){
     carbs: parseInt(document.getElementById('ns-carbs').value)||200,
     fat: parseInt(document.getElementById('ns-fat').value)||65,
     goal: currentNutGoal,
+    diet: currentDietType,
   };
   const existing = getNutSettings();
   saveNutSettings2(activeUser, {...existing,...s});
@@ -7054,12 +7255,25 @@ function renderPhotoFoods(foods){
   out.innerHTML = foods.map((f,i)=>{
     const name=(f.name||f.displayName||f.shortName||'Food').replace(/'/g,'');
     const cal=Math.round(f.cal||f.calories||0), pro=Math.round(f.protein||0), carb=Math.round(f.carbs||f.carbohydrates||0), fat=Math.round(f.fat||0);
+    const useFn = (typeof _mbCaptureMode!=='undefined' && _mbCaptureMode)
+      ? `mbAcceptFromCapture('${name}',${cal},${pro},${carb},${fat})`
+      : `fillMealForm('${name}',${cal},${pro},${carb},${fat})`;
     return `<div style="background:var(--soft);border-radius:10px;padding:10px 12px;margin-bottom:6px;border:1px solid var(--michelle)44">
       <div style="font-size:14px;font-weight:800">${name}</div>
       <div style="font-size:11px;color:var(--muted);margin:4px 0 8px">${cal} kcal · P ${pro}g · C ${carb}g · F ${fat}g</div>
-      <button onclick="fillMealForm('${name}',${cal},${pro},${carb},${fat})" style="background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:9px;padding:8px;font-size:13px;font-weight:800;width:100%">Use this</button>
+      <button onclick="${useFn}" style="background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:9px;padding:8px;font-size:13px;font-weight:800;width:100%">Use this</button>
     </div>`;
   }).join('') + `<div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">AI estimate — adjust the numbers if needed</div>`;
+}
+
+// When barcode/photo was launched from the builder, add the food as an ingredient.
+function mbAcceptFromCapture(name, cal, pro, carb, fat){
+  _mbCaptureMode = false;
+  stopBarcodeScan();
+  closeModal('modal-barcode');
+  const fp = document.getElementById('food-photo-area'); if(fp){ fp.style.display='none'; fp.innerHTML=''; }
+  foodPhotoData=null;
+  mbAddFood({ name, cal, pro, carb, fat });
 }
 
 // Fill meal form from food data (used after barcode lookup)
@@ -7073,6 +7287,367 @@ function fillMealForm(name, cals, protein, carbs, fat){
   document.getElementById('meal-search-input').value = '';
   closeModal('modal-barcode');
   toast('Food data loaded — adjust serving size if needed');
+}
+
+// ══════════════════ INGREDIENT-BASED MEAL BUILDER ══════════════════
+// Each ingredient stores macros PER 100g (cal/pro/carb/fat/fibre/sugar/sodium),
+// plus a chosen unit + amount. Totals scale live. Foods know their natural unit.
+
+// Built-in unit knowledge: how common foods are traditionally measured.
+// gramsPerUnit lets us offer "6 eggs" etc.; otherwise we fall back to grams.
+const FOOD_UNITS = [
+  { match:/\begg\b|\beggs\b/i,            unit:'egg',    plural:'eggs',    g:50  },
+  { match:/bread|toast|slice/i,           unit:'slice',  plural:'slices',  g:38  },
+  { match:/banana/i,                      unit:'banana', plural:'bananas', g:118 },
+  { match:/apple/i,                       unit:'apple',  plural:'apples',  g:182 },
+  { match:/orange/i,                      unit:'orange', plural:'oranges', g:131 },
+  { match:/sausage/i,                     unit:'sausage',plural:'sausages',g:57  },
+  { match:/bacon|rasher/i,                unit:'rasher', plural:'rashers', g:25  },
+  { match:/biscuit|cookie|cracker/i,      unit:'biscuit',plural:'biscuits',g:13  },
+  { match:/tomato/i,                      unit:'tomato', plural:'tomatoes',g:123 },
+  { match:/potato/i,                      unit:'potato', plural:'potatoes',g:170 },
+];
+// Liquids → ml (approx 1g/ml for water/milk-like)
+const LIQUID_RE = /milk|juice|water|drink|smoothie|coffee|tea|oil|sauce|soup|yoghurt|yogurt|cream/i;
+
+// Decide the unit options a food should offer.
+function unitsForFood(name){
+  const opts = [{ id:'g', label:'g', g:1 }];
+  const u = FOOD_UNITS.find(x=>x.match.test(name||''));
+  if(u){ opts.unshift({ id:'unit', label:u.unit, plural:u.plural, g:u.g }); }
+  else if(LIQUID_RE.test(name||'')){ opts.push({ id:'ml', label:'ml', g:1 }); }
+  return opts;
+}
+function defaultUnitFor(name){
+  const u = FOOD_UNITS.find(x=>x.match.test(name||''));
+  if(u) return { id:'unit', amount:1, g:u.g };
+  return { id:'g', amount:100, g:1 };
+}
+
+// State: the meal being built
+let mbItems = [];          // {name, per100:{cal,pro,carb,fat,fibre,sugar,sodium}, unitId, amount}
+let mbSlot = 'breakfast';
+let mbSearchTimer = null;
+let mbCache = [];
+let mbEditingSavedIdx = null; // if editing an existing saved meal
+
+function openMealBuilder(slot){
+  mbItems = [];
+  mbSlot = slot || 'breakfast';
+  mbEditingSavedIdx = null;
+  document.getElementById('mb-title').textContent = 'Build a Meal';
+  document.getElementById('mb-name').value = '';
+  document.getElementById('mb-search').value = '';
+  document.getElementById('mb-search-results').innerHTML = '';
+  renderMbSlots();
+  renderMbIngredients();
+  renderMbTotals();
+  renderMbAllowance();
+  renderMbDietAdvice();
+  openModal('modal-meal-builder');
+}
+function closeMealBuilder(){
+  stopBarcodeScan();
+  closeModal('modal-meal-builder');
+}
+
+function renderMbSlots(){
+  const slots = ['breakfast','lunch','dinner','snack','eveningsnack'];
+  document.getElementById('mb-slot-btns').innerHTML = slots.map(s=>{
+    const on = mbSlot===s;
+    return `<button onclick="mbSetSlot('${s}')" style="padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${CAT_ICONS[s]} ${CAT_LABELS[s]}</button>`;
+  }).join('');
+}
+function mbSetSlot(s){ mbSlot=s; renderMbSlots(); renderMbAllowance(); }
+
+// Scale an ingredient's macros for its current amount.
+function mbScale(it){
+  const grams = mbGrams(it);
+  const f = grams/100;
+  return {
+    cal: it.per100.cal*f, pro: it.per100.pro*f, carb: it.per100.carb*f,
+    fat: it.per100.fat*f, fibre:(it.per100.fibre||0)*f, sugar:(it.per100.sugar||0)*f,
+    sodium:(it.per100.sodium||0)*f, grams
+  };
+}
+function mbGrams(it){
+  const opts = unitsForFood(it.name);
+  const opt = opts.find(o=>o.id===it.unitId) || opts[0];
+  return (it.amount||0) * (opt.g||1);
+}
+
+function renderMbIngredients(){
+  const el = document.getElementById('mb-ingredients');
+  if(!mbItems.length){
+    el.innerHTML = `<div style="text-align:center;padding:18px;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:12px">No ingredients yet — search, scan or snap a food to start.</div>`;
+    return;
+  }
+  el.innerHTML = mbItems.map((it,i)=>{
+    const opts = unitsForFood(it.name);
+    const s = mbScale(it);
+    const unitBtns = opts.map(o=>{
+      const on = (it.unitId||opts[0].id)===o.id;
+      const lbl = o.id==='unit' ? (it.amount===1?o.label:(o.plural||o.label)) : o.label;
+      return `<button onclick="mbSetUnit(${i},'${o.id}')" style="padding:4px 9px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${lbl}</button>`;
+    }).join('');
+    const measuredBy = it.unitId==='g' ? `${it.amount||0} g`
+      : it.unitId==='ml' ? `${it.amount||0} ml`
+      : `${it.amount||0} × ${(opts.find(o=>o.id==='unit')||{}).label||'unit'} (≈${Math.round(s.grams)} g)`;
+    return `<div style="background:var(--soft);border:1px solid var(--border);border-radius:11px;padding:11px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px">
+        <div style="font-size:14px;font-weight:800;color:var(--babyblue);flex:1">${escapeHtml(it.name)}</div>
+        <button onclick="mbRemove(${i})" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:7px;padding:3px 8px;font-size:13px;border:1px solid rgba(255,77,77,.2)">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <button onclick="mbStep(${i},-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:18px;font-weight:800">−</button>
+        <input type="number" inputmode="decimal" value="${it.amount}" onchange="mbSetAmount(${i},this.value)" style="width:64px;text-align:center;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:14px;font-weight:800">
+        <button onclick="mbStep(${i},1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:18px;font-weight:800">+</button>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">${unitBtns}</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">Measured by: ${measuredBy} → <strong style="color:var(--text)">${Math.round(s.cal)} kcal</strong> · P:${s.pro.toFixed(1)}g C:${s.carb.toFixed(1)}g F:${s.fat.toFixed(1)}g</div>
+    </div>`;
+  }).join('');
+}
+
+function mbTotals(){
+  return mbItems.reduce((a,it)=>{
+    const s = mbScale(it);
+    return { cal:a.cal+s.cal, pro:a.pro+s.pro, carb:a.carb+s.carb, fat:a.fat+s.fat, fibre:a.fibre+s.fibre, sugar:a.sugar+s.sugar, sodium:a.sodium+s.sodium };
+  }, {cal:0,pro:0,carb:0,fat:0,fibre:0,sugar:0,sodium:0});
+}
+function renderMbTotals(){
+  const t = mbTotals();
+  document.getElementById('mb-totals').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-size:13px;font-weight:800;color:var(--lime)">Meal total</div>
+      <div style="font-size:20px;font-weight:900;color:var(--lime)">${Math.round(t.cal)} kcal</div>
+    </div>
+    <div style="font-size:12px;color:var(--muted)">Protein ${t.pro.toFixed(1)}g · Carbs ${t.carb.toFixed(1)}g · Fat ${t.fat.toFixed(1)}g${t.fibre?` · Fibre ${t.fibre.toFixed(1)}g`:''}</div>`;
+}
+
+// Recommended allowance for this meal, based on remaining calories today + slot weighting.
+function renderMbAllowance(){
+  const el = document.getElementById('mb-allowance');
+  const settings = getNutSettings();
+  const goal = settings.cal || 2000;
+  // already eaten today
+  let eaten = 0;
+  try{ eaten = getTodayMeals().reduce((a,m)=>a+(m.cals||0),0); }catch(e){}
+  const remaining = Math.max(0, goal - eaten);
+  // slot share of the day
+  const share = { breakfast:0.25, lunch:0.35, dinner:0.30, snack:0.10, eveningsnack:0.08, preworkout:0.10, postworkout:0.15 }[mbSlot] || 0.25;
+  const suggested = Math.round(goal*share);
+  const now = Math.round(mbTotals().cal);
+  const overSuggest = now > suggested;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+      <div style="font-weight:800;color:var(--text)">${CAT_ICONS[mbSlot]} ${CAT_LABELS[mbSlot]} guide</div>
+      <div style="color:${overSuggest?'var(--michelle)':'var(--lime)'};font-weight:800">${now} / ~${suggested} kcal</div>
+    </div>
+    <div style="color:var(--muted);line-height:1.5">Daily goal ${goal} · eaten ${eaten} · ${remaining} left today. A ${CAT_LABELS[mbSlot].toLowerCase()} is usually ~${Math.round(share*100)}% of the day (≈${suggested} kcal). <em style="font-size:10px">Guide only.</em></div>`;
+}
+
+function refreshMb(){ renderMbIngredients(); renderMbTotals(); renderMbAllowance(); renderMbDietAdvice(); }
+
+function renderMbDietAdvice(){
+  const el = document.getElementById('mb-diet-advice'); if(!el) return;
+  const diet = (getNutSettings().diet)||'none';
+  if(diet==='none' || !mbItems.length){ el.innerHTML=''; return; }
+  const t = mbTotals();
+  const names = mbItems.map(it=>it.name);
+  const flags = dietAdviceForMeal(t, names, diet);
+  if(!flags.length){ el.innerHTML=''; return; }
+  const d = DIET_TYPES[diet];
+  el.innerHTML = `<div style="font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.5px;margin-bottom:6px">${d.icon} ${d.label.toUpperCase()} CHECK</div>` +
+    flags.map(f=>{
+      const col = f.type==='bad'?'var(--red)':f.type==='warn'?'var(--michelle)':'var(--lime)';
+      const bg = f.type==='bad'?'rgba(255,77,77,.1)':f.type==='warn'?'rgba(255,140,66,.1)':'rgba(57,255,20,.1)';
+      const ic = f.type==='bad'?'⛔':f.type==='warn'?'⚠️':'✓';
+      return `<div style="background:${bg};border:1px solid ${col}55;border-radius:9px;padding:8px 11px;margin-bottom:5px;font-size:12px;color:${col};font-weight:600">${ic} ${f.msg}</div>`;
+    }).join('') +
+    `<div style="font-size:10px;color:var(--muted);margin-top:2px">General guidance, not a dietitian.</div>`;
+}
+
+function mbSetUnit(i,unitId){
+  const it = mbItems[i]; if(!it) return;
+  // when switching to a unit, default amount to 1; to grams, default to a sensible 100
+  if(it.unitId!==unitId){
+    if(unitId==='g'||unitId==='ml') it.amount = it.unitId==='unit' ? Math.round(mbGrams(it)) : (it.amount||100);
+    else it.amount = 1;
+  }
+  it.unitId = unitId;
+  refreshMb();
+}
+function mbSetAmount(i,v){ const it=mbItems[i]; if(!it)return; it.amount=Math.max(0,parseFloat(v)||0); refreshMb(); }
+function mbStep(i,d){
+  const it=mbItems[i]; if(!it)return;
+  const step = (it.unitId==='g'||it.unitId==='ml') ? 10 : 1;
+  it.amount = Math.max(0, Math.round(((it.amount||0)+d*step)*10)/10);
+  refreshMb();
+}
+function mbRemove(i){ mbItems.splice(i,1); refreshMb(); }
+
+// Add an ingredient from a normalised food (per-100g shape: cal/pro/carb/fat...)
+function mbAddFood(f){
+  const du = defaultUnitFor(f.name);
+  mbItems.push({
+    name: f.brand ? `${f.name} (${f.brand})` : f.name,
+    per100: { cal:f.cal||0, pro:f.pro||0, carb:f.carb||0, fat:f.fat||0, fibre:f.fibre||0, sugar:f.sugar||0, sodium:f.sodium||0 },
+    unitId: du.id, amount: du.amount
+  });
+  document.getElementById('mb-search').value='';
+  document.getElementById('mb-search-results').innerHTML='';
+  refreshMb();
+  toast(f.name+' added');
+}
+
+// Search within the builder
+function mbFocusSearch(){ const el=document.getElementById('mb-search'); el.focus(); el.scrollIntoView({block:'nearest'}); }
+function mbSearch(q){
+  clearTimeout(mbSearchTimer);
+  const el = document.getElementById('mb-search-results');
+  if(!q || q.trim().length<2){ el.innerHTML=''; return; }
+  document.getElementById('mb-search-loading').style.display='block';
+  mbSearchTimer = setTimeout(async ()=>{
+    try{
+      const raw = await fetchFoods(q.trim());
+      mbCache = raw.map(normaliseFood).filter(Boolean).slice(0,8);
+      document.getElementById('mb-search-loading').style.display='none';
+      if(!mbCache.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">No matches — try another term or add by hand.</div>'; return; }
+      el.innerHTML = mbCache.map((f,idx)=>`
+        <div onclick="mbPick(${idx})" style="padding:9px 10px;border-radius:9px;margin-bottom:5px;background:var(--soft);cursor:pointer;border:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:700;margin-bottom:2px">${escapeHtml(f.name)}${f.brand?` <span style="color:var(--muted);font-weight:500">· ${escapeHtml(f.brand)}</span>`:''}</div>
+          <div style="font-size:11px;color:var(--muted)">${f.cal} kcal · P:${f.pro}g C:${f.carb}g F:${f.fat}g <span style="color:var(--lime);font-size:10px">per 100g — tap to add</span></div>
+        </div>`).join('');
+    }catch(e){
+      document.getElementById('mb-search-loading').style.display='none';
+      el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">Search unavailable — add by hand.</div>';
+    }
+  }, 450);
+}
+function mbPick(idx){ const f=mbCache[idx]; if(f) mbAddFood(f); }
+
+// Manual ingredient: minimal prompt-based add (per 100g)
+function mbAddManual(){
+  const name = prompt('Ingredient name:'); if(!name) return;
+  const cal = parseFloat(prompt('Calories per 100g:','0'))||0;
+  const pro = parseFloat(prompt('Protein per 100g (g):','0'))||0;
+  const carb = parseFloat(prompt('Carbs per 100g (g):','0'))||0;
+  const fat = parseFloat(prompt('Fat per 100g (g):','0'))||0;
+  mbAddFood({ name, cal, pro, carb, fat });
+}
+
+// Barcode / photo into the builder: reuse existing engines, route result here.
+let _mbCaptureMode = false;
+function mbStartBarcode(){ _mbCaptureMode=true; startBarcodeScan(); }
+function mbStartPhoto(){ _mbCaptureMode=true; startFoodPhoto(); }
+
+// Save the built meal to the personal library (with ingredients) — can also share later.
+function mbBuildMealObject(){
+  const name = document.getElementById('mb-name').value.trim();
+  const t = mbTotals();
+  return {
+    name: name || (mbItems[0] ? mbItems[0].name : 'My meal'),
+    cat: mbSlot,
+    cals: Math.round(t.cal), protein: Math.round(t.pro), carbs: Math.round(t.carb),
+    fat: Math.round(t.fat), fibre: Math.round(t.fibre), sugar: Math.round(t.sugar),
+    ingredients: mbItems.map(it=>({ name:it.name, per100:it.per100, unitId:it.unitId, amount:it.amount })),
+    owner: activeUser, sharedWith: []
+  };
+}
+function mbSaveToLibrary(){
+  if(!mbItems.length){ toast('Add at least one ingredient'); return; }
+  if(!document.getElementById('mb-name').value.trim()){ toast('Give the meal a name first'); return; }
+  const meal = mbBuildMealObject();
+  const saved = loadSavedMeals(activeUser);
+  saved.unshift(meal);
+  saveSavedMeals(activeUser, saved);
+  toast('Saved "'+meal.name+'" to your meals ⭐');
+  if(typeof renderSavedMeals==='function') renderSavedMeals();
+}
+function mbLogMeal(){
+  if(!mbItems.length){ toast('Add at least one ingredient'); return; }
+  const meal = mbBuildMealObject();
+  const meals = getTodayMeals();
+  const now = new Date();
+  const todaySlot = mbSlot==='snack' ? 'snacks' : (['breakfast','lunch','dinner'].includes(mbSlot) ? mbSlot : 'snacks');
+  meals.push({ name:meal.name, cals:meal.cals, protein:meal.protein, carbs:meal.carbs, fat:meal.fat,
+    fibre:meal.fibre, sugar:meal.sugar, sodium:0, meal:todaySlot, ingredients:meal.ingredients,
+    time: now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes() });
+  saveTodayMeals(meals);
+  closeMealBuilder();
+  if(typeof setNutTab==='function') setNutTab('today');
+  if(typeof renderNutrition==='function') renderNutrition();
+  toast(meal.name+' logged! ('+meal.cals+' kcal)');
+}
+
+// Edit a saved meal back in the builder (rehydrate ingredients)
+function mbEditSaved(idx){
+  const saved = loadSavedMeals(activeUser);
+  const m = saved[idx];
+  if(!m){ toast('Meal not found'); return; }
+  mbItems = (m.ingredients||[]).map(it=>({ name:it.name, per100:it.per100, unitId:it.unitId, amount:it.amount }));
+  mbSlot = m.cat || 'breakfast';
+  mbEditingSavedIdx = idx;
+  document.getElementById('mb-title').textContent = 'Edit Meal';
+  document.getElementById('mb-name').value = m.name||'';
+  document.getElementById('mb-search').value='';
+  document.getElementById('mb-search-results').innerHTML='';
+  renderMbSlots(); refreshMb();
+  if(!(m.ingredients&&m.ingredients.length)){
+    toast('This older meal has no ingredient breakdown — add ingredients to rebuild it.');
+  }
+  openModal('modal-meal-builder');
+}
+
+// ── Share a saved meal across the family ──
+// Saved meals are per-user, so sharing copies the meal into the recipient's library.
+let _shareMealIdx = null;
+let _shareMealSel = [];
+function openShareMeal(idx){
+  const saved = loadSavedMeals(activeUser);
+  const m = saved[idx];
+  if(!m){ toast('Meal not found'); return; }
+  _shareMealIdx = idx;
+  _shareMealSel = [];
+  document.getElementById('share-meal-name').textContent = 'Send "'+m.name+'" to:';
+  renderShareMealPeople();
+  openModal('modal-share-meal');
+}
+function renderShareMealPeople(){
+  const others = ['Mike','Michelle','Amy'].filter(u=>u!==activeUser);
+  const colors = {Mike:'#39FF14',Michelle:'#FF8C42',Amy:'#6C63FF'};
+  document.getElementById('share-meal-people').innerHTML = others.map(u=>{
+    const on = _shareMealSel.includes(u);
+    return `<div onclick="toggleShareMealUser('${u}')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:8px;border-radius:11px;cursor:pointer;border:1px solid ${on?colors[u]:'var(--border)'};background:${on?colors[u]+'1A':'#16161F'}">
+      <div class="avatar" style="width:38px;height:38px;font-size:14px;background:${colors[u]}22;color:${colors[u]};border:1.5px solid ${colors[u]}44">${u[0]}</div>
+      <div style="flex:1;font-size:15px;font-weight:700">${u}</div>
+      <div style="width:24px;height:24px;border-radius:7px;border:2px solid ${on?colors[u]:'var(--border)'};background:${on?colors[u]:'transparent'};display:flex;align-items:center;justify-content:center;color:#050508;font-size:14px;font-weight:900">${on?'✓':''}</div>
+    </div>`;
+  }).join('');
+}
+function toggleShareMealUser(u){
+  if(_shareMealSel.includes(u)) _shareMealSel = _shareMealSel.filter(x=>x!==u);
+  else _shareMealSel.push(u);
+  renderShareMealPeople();
+}
+function confirmShareMeal(){
+  if(_shareMealIdx===null) return;
+  const saved = loadSavedMeals(activeUser);
+  const m = saved[_shareMealIdx];
+  if(!m){ closeModal('modal-share-meal'); return; }
+  if(!_shareMealSel.length){ toast('Pick at least one person'); return; }
+  _shareMealSel.forEach(u=>{
+    const theirs = loadSavedMeals(u);
+    // avoid duplicates by name+cals from same owner
+    const dup = theirs.find(x=>x.name===m.name && x.cals===m.cals && x.sharedFrom===activeUser);
+    if(!dup){
+      theirs.unshift({ ...JSON.parse(JSON.stringify(m)), owner:u, sharedFrom:activeUser, sharedWith:[] });
+      saveSavedMeals(u, theirs);
+    }
+  });
+  closeModal('modal-share-meal');
+  toast('Sent to '+_shareMealSel.join(' & ')+' ✓');
 }
 
 // ══════════════════ FOOD SEARCH (shared engine) ══════════════════
@@ -7317,10 +7892,13 @@ async function lookupBarcode(barcode){
 }
 function renderBarcodeResult(resultEl, name, cal, pro, carb, fat){
   const safe = String(name).replace(/'/g,'');
+  const useFn = (typeof _mbCaptureMode!=='undefined' && _mbCaptureMode)
+    ? `mbAcceptFromCapture('${safe}',${cal},${pro},${carb},${fat})`
+    : `fillMealForm('${safe}',${cal},${pro},${carb},${fat});stopBarcodeScan();closeModal('modal-barcode')`;
   resultEl.innerHTML = `<div style="background:var(--soft);border-radius:10px;padding:12px;border:1px solid var(--lime)44">
     <div style="font-size:14px;font-weight:800;margin-bottom:4px">${name}</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${cal} kcal · Protein ${pro}g · Carbs ${carb}g · Fat ${fat}g <em style="font-size:10px">per 100g</em></div>
-    <button onclick="fillMealForm('${safe}',${cal},${pro},${carb},${fat});stopBarcodeScan();closeModal('modal-barcode')" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800;width:100%">Use This Food</button>
+    <button onclick="${useFn}" style="background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800;width:100%">Use This Food</button>
   </div>`;
 }
 
@@ -9199,7 +9777,7 @@ function renderDayDetail(){
 
   // planned ahead
   const datePlan = loadDatePlan();
-  const mealPlan = loadMealPlan();
+  const mealPlan = loadDateMealPlan();
   const pw = datePlan[ddDate];
   const pwRoutine = pw ? routines.find(r=>r.id==pw) : null;
   const meals = mealPlan[ddDate] || [];
@@ -9251,8 +9829,8 @@ function ddPlanMeal(){
     name = prompt('Meal name:'); if(!name) return; name=name.trim();
   }
   if(!name) return;
-  const mp = loadMealPlan(); if(!mp[ddDate]) mp[ddDate]=[];
-  mp[ddDate].push({name, cals, protein}); saveMealPlan(mp);
+  const mp = loadDateMealPlan(); if(!mp[ddDate]) mp[ddDate]=[];
+  mp[ddDate].push({name, cals, protein}); saveDateMealPlan(mp);
   renderDayDetail(); renderPlannerMonth();
   toast('Meal planned 🍽️');
 }
@@ -9267,9 +9845,9 @@ function setPlannerView(v){
   renderPlanner();
 }
 
-// ── Meal plan storage (per user, keyed by date) ──
-function loadMealPlan(){ try{ return JSON.parse(localStorage.getItem('fgym_mealplan_'+activeUser)||'{}'); }catch(e){ return {}; } }
-function saveMealPlan(p){ try{ localStorage.setItem('fgym_mealplan_'+activeUser, JSON.stringify(p)); }catch(e){} }
+// ── Date-keyed meal plan (calendar day planner; distinct from the weekday weekly plan) ──
+function loadDateMealPlan(){ try{ return JSON.parse(localStorage.getItem('fgym_datemealplan_'+activeUser)||'{}'); }catch(e){ return {}; } }
+function saveDateMealPlan(p){ try{ localStorage.setItem('fgym_datemealplan_'+activeUser, JSON.stringify(p)); }catch(e){} }
 
 // ── Planned workouts by date (distinct from weekday plan) ──
 function loadDatePlan(){ try{ return JSON.parse(localStorage.getItem('fgym_dateplan_'+activeUser)||'{}'); }catch(e){ return {}; } }
@@ -9292,7 +9870,7 @@ function renderPlannerMonth(){
   const userColor = USERS[activeUser].color;
   const history = loadHistory();
   const dayLog = getDayLog(activeUser);
-  const mealPlan = loadMealPlan();
+  const mealPlan = loadDateMealPlan();
   const datePlan = loadDatePlan();
 
   // grid: start on Monday
