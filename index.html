@@ -853,8 +853,6 @@ if('serviceWorker' in navigator){
     <button onclick="autofillManual()" style="width:100%;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:10px;font-size:13px;font-weight:800">✨ Fill in exercises</button>
   </div>
 
-  <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;letter-spacing:.5px">MUSCLE GROUPS</div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px" id="nr-muscle-groups"></div>
   <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;letter-spacing:.5px">EXERCISES <span id="nr-ex-count" style="color:var(--lime)">0</span></div>
   <div id="nr-exercises-list" style="margin-bottom:10px"></div>
   <button onclick="openExPicker()" style="width:100%;background:var(--soft);color:var(--text);border:1px dashed var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:700;margin-bottom:14px">+ Add Exercise from Library</button>
@@ -2068,7 +2066,7 @@ function routineCardMine(r){
       </div>
     </div>
     <div style="display:flex;gap:7px;padding-top:10px;border-top:1px solid var(--border)">
-      <button onclick="startWorkout(${r.id})" style="flex:2;background:${r.color};color:#050508;border-radius:9px;padding:8px;font-size:13px;font-weight:800">▶ Start</button>
+      <button onclick="startWorkout(${r.id})" style="flex:2;background:transparent;color:${r.color};border:1px solid ${r.color};border-radius:9px;padding:8px;font-size:13px;font-weight:800">▶ Start</button>
       <button onclick="editRoutine(${r.id})" style="flex:1;background:var(--soft);color:var(--text);border-radius:9px;padding:8px;font-size:13px;font-weight:700;border:1px solid var(--border)">Edit</button>
       <button onclick="duplicateRoutine(${r.id})" style="flex:1;background:var(--soft);color:var(--text);border-radius:9px;padding:8px;font-size:13px;font-weight:700;border:1px solid var(--border)" title="Duplicate">⧉</button>
       <button onclick="deleteRoutine(${r.id})" style="flex:1;background:rgba(255,77,77,.12);color:var(--red);border-radius:9px;padding:8px;font-size:13px;font-weight:700;border:1px solid rgba(255,77,77,.25)">✕</button>
@@ -2109,7 +2107,7 @@ function routineCard(r, isMine){
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
       <div style="font-size:12px;color:var(--muted)">${sharedLabel}</div>
-      <button onclick="event.stopPropagation();startWorkout(${r.id})" style="background:${r.color};color:#050508;border-radius:9px;padding:7px 16px;font-size:13px;font-weight:800">Start</button>
+      <button onclick="event.stopPropagation();startWorkout(${r.id})" style="background:transparent;color:${r.color};border:1px solid ${r.color};border-radius:9px;padding:7px 16px;font-size:13px;font-weight:800">Start</button>
     </div>
   </div>`;
 }
@@ -2312,20 +2310,26 @@ function autofillManual(){
   toast('✨ Filled in '+exs.length+' exercises — edit freely below'+(nrAuto.muscles.includes('Legs')?' · full leg ✓':''));
 }
 
-function renderNRMuscles(){
-  document.getElementById('nr-muscle-groups').innerHTML = MUSCLE_GROUPS.map(m=>{
-    const sel = newRoutineData.muscles.includes(m);
-    return `<button onclick="toggleNRMuscle('${m}')" style="padding:6px 13px;border-radius:8px;font-size:13px;font-weight:700;border:1px solid ${sel?'var(--lime)':'#FFFFFF'};background:var(--bg);color:${sel?'var(--lime)':'#FFFFFF'}">${m}</button>`;
-  }).join('');
-}
-
-function toggleNRMuscle(m){
-  const i = newRoutineData.muscles.indexOf(m);
-  if(i>=0) newRoutineData.muscles.splice(i,1); else newRoutineData.muscles.push(m);
-  renderNRMuscles();
+// Muscle tags are now derived automatically from the exercises in the routine,
+// so there's no separate muscle-group picker to confuse the manual builder.
+function renderNRMuscles(){ /* picker removed — muscles auto-derived from exercises */ }
+function syncNRMuscles(){
+  const set = [...(newRoutineData.muscles||[])];
+  (newRoutineData.exercises||[]).forEach(ex=>{
+    if(ex.muscle && !set.includes(ex.muscle)) set.push(ex.muscle);
+  });
+  // drop any group that no longer has a matching exercise (unless it's the only info we have)
+  if((newRoutineData.exercises||[]).length){
+    const present = new Set(newRoutineData.exercises.map(e=>e.muscle));
+    newRoutineData.muscles = set.filter(m=>present.has(m));
+    if(!newRoutineData.muscles.length) newRoutineData.muscles = [...present];
+  } else {
+    newRoutineData.muscles = set;
+  }
 }
 
 function renderNRExercises(){
+  syncNRMuscles();
   document.getElementById('nr-ex-count').textContent = newRoutineData.exercises.length;
   const list = newRoutineData.exercises;
   const el = document.getElementById('nr-exercises-list');
@@ -4670,7 +4674,7 @@ function renderSavedMeals(){
           <div style="font-size:15px;font-weight:800;margin-bottom:3px">${m.name}</div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${m.cals} kcal · P:${m.protein||0}g C:${m.carbs||0}g F:${m.fat||0}g${m.fibre?' · Fibre:'+m.fibre+'g':''}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button onclick="logSavedMealToday(${i})" style="background:${uColor};color:#050508;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Log Today</button>
+            <button onclick="logSavedMealToday(${i})" style="background:transparent;color:${uColor};border:1px solid ${uColor};border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Log Today</button>
             <button onclick="openAssignMeal(${i})" style="background:var(--soft);color:var(--text);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;border:1px solid var(--border)">📅 Add to Plan</button>
             <button onclick="deleteSavedMeal(${i})" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;border:1px solid rgba(255,77,77,.2)">✕</button>
           </div>
@@ -4853,7 +4857,7 @@ function renderMealPlan(){
                   <div style="font-size:13px;font-weight:700">${m.name}</div>
                   <div style="font-size:10px;color:var(--muted)">${m.cals} kcal · P:${m.protein||0}g</div>
                 </div>
-                ${isToday?`<button onclick="logPlanMealToday('${day}','${s}',${mi})" style="background:${uColor};color:#050508;border-radius:7px;padding:4px 10px;font-size:11px;font-weight:800">Log</button>`:''}
+                ${isToday?`<button onclick="logPlanMealToday('${day}','${s}',${mi})" style="background:transparent;color:${uColor};border:1px solid ${uColor};border-radius:7px;padding:4px 10px;font-size:11px;font-weight:800">Log</button>`:''}
                 <button onclick="removePlanMeal('${day}','${s}',${mi})" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:7px;padding:4px 8px;font-size:11px;border:1px solid rgba(255,77,77,.2)">✕</button>
               </div>`).join('')}
           </div>`).join('')}
@@ -6517,7 +6521,7 @@ function renderPrebuilt(){
             ${r.muscles.map(m=>`<span class="badge" style="background:${r.color}22;color:${r.color};border:1px solid ${r.color}33">${m}</span>`).join('')}
           </div>
         </div>
-        <button onclick="event.stopPropagation();startWorkout(${r.id})" style="background:${r.color};color:#050508;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;flex-shrink:0">GO</button>
+        <button onclick="event.stopPropagation();startWorkout(${r.id})" style="background:transparent;color:${r.color};border:1px solid ${r.color};border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;flex-shrink:0">GO</button>
       </div>
     </div>`).join('');
 }
@@ -6539,7 +6543,7 @@ function renderSportPick(){
           <div style="font-size:17px;font-weight:800">${s.name}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px">${s.desc}</div>
         </div>
-        <div style="background:${s.color};color:#050508;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;flex-shrink:0">GO</div>
+        <div style="background:transparent;color:${s.color};border:1px solid ${s.color};border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;flex-shrink:0">GO</div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:5px">
         ${s.stats.map(st=>`<span class="badge" style="background:${s.color}18;color:${s.color};border:1px solid ${s.color}33">${st}</span>`).join('')}
