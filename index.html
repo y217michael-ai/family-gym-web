@@ -317,19 +317,14 @@ if('serviceWorker' in navigator){
   <div id="nut-today">
     <!-- Calorie summary (now includes all macro + micro stats) -->
     <div id="nut-cal-summary"></div>
+    <!-- Fasting status banner -->
+    <div id="fasting-banner" style="margin-bottom:14px"></div>
     <!-- Water tracking (moved up under the summary) -->
     <div style="font-size:16px;font-weight:800;margin:0 0 10px">Hydration</div>
     <div id="water-card" style="margin-bottom:14px"></div>
     <!-- Meal timing -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:16px;font-weight:800">Today's Meals</div>
-      <button onclick="openMealBuilder('breakfast')" style="background:rgba(57,255,20,.18);color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:7px 16px;font-size:13px;font-weight:800">🍳 Build a Meal</button>
-    </div>
-    <!-- Quick food search -->
-    <div style="position:relative;margin-bottom:12px">
-      <input class="inp" id="today-food-search" placeholder="🔍 Search any food to log..." oninput="todaySearchFood(this.value)" autocomplete="off">
-      <div id="today-food-results" style="margin-top:6px"></div>
-    </div>
+    <div style="font-size:16px;font-weight:800;margin-bottom:10px">Today's Meals</div>
+    <button onclick="openMealBuilder('breakfast')" style="width:100%;background:rgba(57,255,20,.18);color:var(--lime);border:1px solid var(--lime);border-radius:10px;padding:13px;font-size:15px;font-weight:800;margin-bottom:12px">🍳 Build a Meal</button>
     <div id="meal-log"></div>
     <button onclick="openMenuAdvisor()" style="width:100%;background:rgba(255,140,66,.12);color:var(--michelle);border:1px solid var(--michelle);border-radius:10px;padding:11px;font-size:13px;font-weight:800;margin-top:8px">🍽️ Eating Out? Get menu advice</button>
     <button onclick="openSaveMealTemplate()" style="width:100%;background:var(--soft);color:var(--muted);border:1px dashed var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-top:8px">💾 Save all of today's meals as one reusable meal</button>
@@ -1433,6 +1428,31 @@ if('serviceWorker' in navigator){
 </div>
 </div>
 
+<!-- Fasting setup modal -->
+<div class="modal-overlay" id="modal-fasting">
+<div class="modal">
+  <div style="font-size:20px;font-weight:800;margin-bottom:4px">⏳ Fasting today</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Set your eating window. It's a guide — you can still log anytime.</div>
+  <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">PLAN</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="fast-plan-btns"></div>
+  <div id="fast-window-row" style="margin-bottom:14px">
+    <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">EATING WINDOW</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Opens</div><input class="inp" id="fast-start" type="time" value="18:00"></div>
+      <div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Closes</div><input class="inp" id="fast-end" type="time" value="20:00"></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px" id="fast-window-note"></div>
+  </div>
+  <div id="fast-fullfast-note" style="display:none;background:rgba(169,220,245,.1);border:1px solid var(--babyblue)55;border-radius:10px;padding:11px;margin-bottom:14px;font-size:12px;color:var(--babyblue)">
+    💧 Full fast — no food today, focus on hydration. The app will track your fast time and keep water front and centre.
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <button class="btn-secondary" onclick="turnOffFasting()">Turn off</button>
+    <button class="btn-primary" onclick="saveFasting()">Save</button>
+  </div>
+</div>
+</div>
+
 <!-- Log Body Stats Modal -->
 <div class="modal-overlay" id="modal-body-stats">
 <div class="modal">
@@ -1567,7 +1587,23 @@ if('serviceWorker' in navigator){
   <input class="inp" id="mb-search" placeholder="Search a food to add e.g. eggs, beans…" oninput="mbSearch(this.value)" style="margin-bottom:6px">
   <div id="mb-search-loading" style="display:none;text-align:center;color:var(--muted);font-size:12px;margin-bottom:6px">Searching…</div>
   <div id="mb-search-results" style="margin-bottom:6px;max-height:150px;overflow-y:auto"></div>
-  <button onclick="mbAddManual()" style="width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:9px;padding:8px;font-size:12px;font-weight:700;margin-bottom:14px">+ Add ingredient by hand</button>
+  <button onclick="mbToggleManual()" style="width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:9px;padding:8px;font-size:12px;font-weight:700;margin-bottom:10px">+ Add ingredient by hand</button>
+
+  <!-- Inline manual-entry panel -->
+  <div id="mb-manual-panel" style="display:none;background:var(--soft);border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:14px">
+    <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">Add it yourself <span style="font-weight:500">— values per 100g</span></div>
+    <input class="inp" id="mb-man-name" placeholder="Food name e.g. Homemade soup" style="margin-bottom:8px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Calories /100g</div><input class="inp" id="mb-man-cal" type="number" inputmode="decimal" placeholder="0"></div>
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Protein /100g</div><input class="inp" id="mb-man-pro" type="number" inputmode="decimal" placeholder="0"></div>
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Carbs /100g</div><input class="inp" id="mb-man-carb" type="number" inputmode="decimal" placeholder="0"></div>
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Fat /100g</div><input class="inp" id="mb-man-fat" type="number" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="mbToggleManual(false)" class="btn-secondary" style="font-size:12px">Cancel</button>
+      <button onclick="mbAddManual()" class="btn-primary" style="font-size:12px">Add ingredient</button>
+    </div>
+  </div>
 
   <!-- Ingredient list -->
   <div style="font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.5px;margin-bottom:8px">INGREDIENTS</div>
@@ -6119,6 +6155,125 @@ function scheduleWaterReminders(){
   waterReminderTimer = setTimeout(tick, intervalMs);
 }
 
+// ══════════════════ FASTING ══════════════════
+// Per-user, per-day eating window. Guidance only — never blocks logging.
+const FAST_PLANS = {
+  '16:8': { label:'16:8', fast:16, eat:8,  defStart:'12:00', defEnd:'20:00', desc:'16h fast, 8h eating' },
+  '20:4': { label:'20:4', fast:20, eat:4,  defStart:'16:00', defEnd:'20:00', desc:'20h fast, 4h eating' },
+  '22:2': { label:'22:2', fast:22, eat:2,  defStart:'18:00', defEnd:'20:00', desc:'22h fast, 2h eating' },
+  'full': { label:'Full fast', fast:24, eat:0, desc:'No food — hydration focus' },
+};
+function fastingKey(){ return 'fgym_fasting_'+activeUser+'_'+new Date().toDateString(); }
+function loadFasting(){ try{ return JSON.parse(localStorage.getItem(fastingKey())||'null'); }catch(e){ return null; } }
+function saveFastingData(d){ try{ if(d) localStorage.setItem(fastingKey(), JSON.stringify(d)); else localStorage.removeItem(fastingKey()); }catch(e){} }
+
+let _fastPlan = '22:2';
+function openFasting(){
+  const f = loadFasting();
+  _fastPlan = (f && f.plan) || '22:2';
+  renderFastPlanBtns();
+  const p = FAST_PLANS[_fastPlan];
+  document.getElementById('fast-start').value = (f && f.start) || (p.defStart||'18:00');
+  document.getElementById('fast-end').value = (f && f.end) || (p.defEnd||'20:00');
+  updateFastModalUI();
+  openModal('modal-fasting');
+}
+function renderFastPlanBtns(){
+  document.getElementById('fast-plan-btns').innerHTML = Object.keys(FAST_PLANS).map(k=>{
+    const on = _fastPlan===k; const p = FAST_PLANS[k];
+    return `<button onclick="setFastPlan('${k}')" style="padding:8px 13px;border-radius:9px;font-size:13px;font-weight:800;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${p.label}</button>`;
+  }).join('');
+}
+function setFastPlan(k){
+  _fastPlan = k;
+  const p = FAST_PLANS[k];
+  if(p.defStart){ document.getElementById('fast-start').value = p.defStart; document.getElementById('fast-end').value = p.defEnd; }
+  renderFastPlanBtns();
+  updateFastModalUI();
+}
+function updateFastModalUI(){
+  const full = _fastPlan==='full';
+  document.getElementById('fast-window-row').style.display = full ? 'none' : 'block';
+  document.getElementById('fast-fullfast-note').style.display = full ? 'block' : 'none';
+  if(!full){
+    const p = FAST_PLANS[_fastPlan];
+    document.getElementById('fast-window-note').textContent = p.desc + ' — set the hours you eat.';
+  }
+}
+function saveFasting(){
+  const d = { plan:_fastPlan, on:true };
+  if(_fastPlan!=='full'){
+    d.start = document.getElementById('fast-start').value || '18:00';
+    d.end = document.getElementById('fast-end').value || '20:00';
+  }
+  saveFastingData(d);
+  closeModal('modal-fasting');
+  renderNutrition();
+  toast(_fastPlan==='full' ? 'Full fast on — hydration focus 💧' : 'Fasting on — '+FAST_PLANS[_fastPlan].label);
+}
+function turnOffFasting(){
+  saveFastingData(null);
+  closeModal('modal-fasting');
+  renderNutrition();
+  toast('Fasting turned off');
+}
+
+// Build the status banner shown on the Today tab.
+function renderFastingBanner(){
+  const el = document.getElementById('fasting-banner');
+  if(!el) return;
+  const f = loadFasting();
+  if(!f || !f.on){
+    el.innerHTML = `<button onclick="openFasting()" style="width:100%;background:var(--soft);border:1px dashed var(--border);border-radius:11px;padding:10px;font-size:12px;font-weight:700;color:var(--muted)">⏳ Fasting today? Set an eating window</button>`;
+    return;
+  }
+  const now = new Date();
+  const mins = now.getHours()*60 + now.getMinutes();
+  const fmt = (m)=>{ const h=Math.floor(m/60), mm=Math.round(m%60); return (h>0?h+'h ':'')+mm+'m'; };
+
+  if(f.plan==='full'){
+    el.innerHTML = `<div style="background:rgba(169,220,245,.1);border:1px solid var(--babyblue)66;border-radius:12px;padding:13px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:14px;font-weight:800;color:var(--babyblue)">💧 Full fast today</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">No food — keep your hydration up. Water's below.</div>
+        </div>
+        <button onclick="openFasting()" style="background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:11px;font-weight:700;color:var(--text)">Edit</button>
+      </div>
+    </div>`;
+    return;
+  }
+
+  const [sh,sm] = (f.start||'18:00').split(':').map(Number);
+  const [eh,em] = (f.end||'20:00').split(':').map(Number);
+  const startM = sh*60+sm, endM = eh*60+em;
+  const inWindow = mins>=startM && mins<endM;
+  let statusLine, sub, accent;
+  if(inWindow){
+    accent = 'var(--lime)';
+    statusLine = `🍽️ Eating window open · ${fmt(endM-mins)} left`;
+    sub = `Closes ${f.end}. Make it count.`;
+  } else if(mins<startM){
+    accent = 'var(--michelle)';
+    statusLine = `⏳ Fasting · ${fmt(startM-mins)} until your window`;
+    sub = `Window ${f.start}–${f.end}. Keep water up meanwhile.`;
+  } else {
+    const tomorrowStart = (24*60 - mins) + startM;
+    accent = 'var(--michelle)';
+    statusLine = `⏳ Fasting · window closed for today`;
+    sub = `Next window tomorrow ${f.start}. ${fmt(tomorrowStart)} to go.`;
+  }
+  el.innerHTML = `<div style="background:${accent==='var(--lime)'?'rgba(57,255,20,.1)':'rgba(255,140,66,.1)'};border:1px solid ${accent}66;border-radius:12px;padding:13px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:800;color:${accent}">${statusLine}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${FAST_PLANS[f.plan].label} · ${sub}</div>
+      </div>
+      <button onclick="openFasting()" style="background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:11px;font-weight:700;color:var(--text)">Edit</button>
+    </div>
+  </div>`;
+}
+
 function renderNutrition(){
   initDefaultSavedMeals();
   const settings = getNutSettings();
@@ -6227,6 +6382,8 @@ function renderNutrition(){
 
   // ── Hydration card ──
   renderWater();
+  // ── Fasting banner ──
+  renderFastingBanner();
 }
 
 // ════════════════════════════════════════════════
@@ -7331,6 +7488,7 @@ function openMealBuilder(slot){
   document.getElementById('mb-name').value = '';
   document.getElementById('mb-search').value = '';
   document.getElementById('mb-search-results').innerHTML = '';
+  const _mp = document.getElementById('mb-manual-panel'); if(_mp) _mp.style.display='none';
   renderMbSlots();
   renderMbIngredients();
   renderMbTotals();
@@ -7574,27 +7732,48 @@ function mbSearch(q){
       mbCache = raw.map(normaliseFood).filter(Boolean).slice(0,8);
       document.getElementById('mb-search-loading').style.display='none';
       if(!mbCache.length){ el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">No matches — try another term or add by hand.</div>'; return; }
-      el.innerHTML = mbCache.map((f,idx)=>`
-        <div onclick="mbPick(${idx})" style="padding:9px 10px;border-radius:9px;margin-bottom:5px;background:var(--soft);cursor:pointer;border:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:700;margin-bottom:2px">${escapeHtml(f.name)}${f.brand?` <span style="color:var(--muted);font-weight:500">· ${escapeHtml(f.brand)}</span>`:''}</div>
+      el.innerHTML = mbCache.map((f,idx)=>{
+        const tag = f.brand
+          ? `<span style="display:inline-block;background:rgba(169,220,245,.15);color:var(--babyblue);border:1px solid var(--babyblue)55;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:800;margin-left:6px">🏷️ ${escapeHtml(f.brand)}</span>`
+          : `<span style="display:inline-block;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:6px">🌿 Generic</span>`;
+        return `<div onclick="mbPick(${idx})" style="padding:9px 10px;border-radius:9px;margin-bottom:5px;background:var(--soft);cursor:pointer;border:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;flex-wrap:wrap">${escapeHtml(f.name)}${tag}</div>
           <div style="font-size:11px;color:var(--muted)">${f.cal} kcal · P:${f.pro}g C:${f.carb}g F:${f.fat}g <span style="color:var(--lime);font-size:10px">per 100g — tap to add</span></div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }catch(e){
       document.getElementById('mb-search-loading').style.display='none';
       el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">Search unavailable — add by hand.</div>';
     }
-  }, 450);
+  }, 250);
 }
 function mbPick(idx){ const f=mbCache[idx]; if(f) mbAddFood(f); }
 
-// Manual ingredient: minimal prompt-based add (per 100g)
+// Manual ingredient via inline fields (no pop-ups)
+function mbToggleManual(show){
+  const panel = document.getElementById('mb-manual-panel');
+  const willShow = (show===undefined) ? panel.style.display==='none' : show;
+  panel.style.display = willShow ? 'block' : 'none';
+  if(willShow){
+    // prefill name from the search box if they'd started typing
+    const typed = (document.getElementById('mb-search').value||'').trim();
+    document.getElementById('mb-man-name').value = typed;
+    document.getElementById('mb-man-cal').value = '';
+    document.getElementById('mb-man-pro').value = '';
+    document.getElementById('mb-man-carb').value = '';
+    document.getElementById('mb-man-fat').value = '';
+    document.getElementById('mb-man-name').focus();
+  }
+}
 function mbAddManual(){
-  const name = prompt('Ingredient name:'); if(!name) return;
-  const cal = parseFloat(prompt('Calories per 100g:','0'))||0;
-  const pro = parseFloat(prompt('Protein per 100g (g):','0'))||0;
-  const carb = parseFloat(prompt('Carbs per 100g (g):','0'))||0;
-  const fat = parseFloat(prompt('Fat per 100g (g):','0'))||0;
+  const name = (document.getElementById('mb-man-name').value||'').trim();
+  if(!name){ toast('Give the food a name'); return; }
+  const cal = parseFloat(document.getElementById('mb-man-cal').value)||0;
+  const pro = parseFloat(document.getElementById('mb-man-pro').value)||0;
+  const carb = parseFloat(document.getElementById('mb-man-carb').value)||0;
+  const fat = parseFloat(document.getElementById('mb-man-fat').value)||0;
   mbAddFood({ name, cal, pro, carb, fat });
+  mbToggleManual(false);
 }
 
 // Barcode / photo into the builder: reuse existing engines, route result here.
@@ -7879,12 +8058,16 @@ function renderFoodResults(foods, targetEl, pickFnName){
     targetEl.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px">No results — try another term or enter manually</div>';
     return;
   }
-  targetEl.innerHTML = foods.map((f,idx)=>`
-    <div onclick="${pickFnName}(${idx})"
+  targetEl.innerHTML = foods.map((f,idx)=>{
+    const tag = f.brand
+      ? `<span style="display:inline-block;background:rgba(169,220,245,.15);color:var(--babyblue);border:1px solid var(--babyblue)55;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:800;margin-left:6px">🏷️ ${escapeHtml(f.brand)}</span>`
+      : `<span style="display:inline-block;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:6px">🌿 Generic</span>`;
+    return `<div onclick="${pickFnName}(${idx})"
       style="padding:9px 10px;border-radius:9px;margin-bottom:5px;background:var(--soft);cursor:pointer;border:1px solid var(--border)">
-      <div style="font-size:13px;font-weight:700;margin-bottom:2px">${escapeHtml(f.name)}${f.brand?` <span style="color:var(--muted);font-weight:500">· ${escapeHtml(f.brand)}</span>`:''}</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;flex-wrap:wrap">${escapeHtml(f.name)}${tag}</div>
       <div style="font-size:11px;color:var(--muted)">${f.cal} kcal · P:${f.pro}g C:${f.carb}g F:${f.fat}g <span style="color:var(--lime);font-size:10px">per 100g — tap to add</span></div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // --- Search inside the Add-Meal modal ---
@@ -7937,20 +8120,24 @@ function todaySearchFood(q){
       const raw = await fetchFoods(q.trim());
       todayFoodCache = raw.map(normaliseFood).filter(Boolean).slice(0,6);
       if(!todayFoodCache.length){ resultsEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">No results — try the + Add buttons to enter manually</div>'; return; }
-      resultsEl.innerHTML = todayFoodCache.map((f,idx)=>`
-        <div style="padding:9px 10px;border-radius:9px;margin-bottom:5px;background:var(--soft);border:1px solid var(--border)">
+      resultsEl.innerHTML = todayFoodCache.map((f,idx)=>{
+        const tag = f.brand
+          ? `<span style="display:inline-block;background:rgba(169,220,245,.15);color:var(--babyblue);border:1px solid var(--babyblue)55;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:800;margin-left:5px">🏷️ ${escapeHtml(f.brand)}</span>`
+          : `<span style="display:inline-block;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:5px">🌿 Generic</span>`;
+        return `<div style="padding:9px 10px;border-radius:9px;margin-bottom:5px;background:var(--soft);border:1px solid var(--border)">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
             <div style="flex:1;min-width:0">
-              <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(f.name)}${f.brand?` <span style="color:var(--muted);font-weight:500">· ${escapeHtml(f.brand)}</span>`:''}</div>
+              <div style="font-size:13px;font-weight:700;display:flex;align-items:center;flex-wrap:wrap">${escapeHtml(f.name)}${tag}</div>
               <div style="font-size:11px;color:var(--muted)">${f.cal} kcal · P:${f.pro}g C:${f.carb}g F:${f.fat}g <span style="font-size:10px">per 100g</span></div>
             </div>
             <button onclick="pickTodayFood(${idx})" style="flex-shrink:0;background:rgba(57,255,20,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800">Add</button>
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }catch(e){
       resultsEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">Search unavailable right now — use a meal\u2019s + Add button to enter manually</div>';
     }
-  }, 450);
+  }, 250);
 }
 // Tap Add from the Today search -> opens a small slot picker, then logs
 function pickTodayFood(idx){
