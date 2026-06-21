@@ -16,7 +16,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#08080E;--surface:#0F0F18;--card:#68687A;--border:#7E7E90;
-  --lime:#C8F135;--lime-dim:#9BB82A;--purple:#6C63FF;--red:#FF4D4D;
+  --lime:#39FF14;--lime-dim:#2BC40E;--purple:#6C63FF;--red:#FF4D4D;
   --text:#FFFFFF;--muted:#E4E4EE;--soft:#7A7A8C;--michelle:#FF8C42;--babyblue:#A9DCF5;
 }
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;min-height:100vh}
@@ -55,7 +55,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.4}
 .modal{background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:24px 20px 36px}
 /* Workout active */
 .set-row{display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:10px;padding:8px 10px;margin-bottom:7px;border:1px solid transparent;transition:border-color .15s,background .15s}
-.set-row.done{background:rgba(200,241,53,.1);border-color:rgba(200,241,53,.3)}
+.set-row.done{background:rgba(57,255,20,.1);border-color:rgba(57,255,20,.3)}
 .set-check{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .set-check.done{background:var(--lime);border-color:var(--lime);color:#050508}
 /* Bigger set rows for easier tapping */
@@ -207,7 +207,7 @@ if('serviceWorker' in navigator){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-size:16px;font-weight:800">Family Routines</div>
       <div style="display:flex;gap:6px">
-        <button onclick="openWorkoutGenerator()" style="background:rgba(200,241,53,.15);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">✨ Generate</button>
+        <button onclick="openWorkoutGenerator()" style="background:rgba(57,255,20,.15);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800">✨ Generate</button>
         <button onclick="openNewRoutine()" style="background:var(--lime);color:#050508;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:800">+ New</button>
       </div>
     </div>
@@ -422,7 +422,7 @@ if('serviceWorker' in navigator){
       <div style="display:flex;gap:6px;flex-wrap:wrap" id="rest-preset-btns">
         <button onclick="setRestTime(30)" class="rest-preset" data-secs="30" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">30s</button>
         <button onclick="setRestTime(45)" class="rest-preset" data-secs="45" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">45s</button>
-        <button onclick="setRestTime(60)" class="rest-preset" data-secs="60" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--lime);background:rgba(200,241,53,.12);color:var(--lime)">60s ✓</button>
+        <button onclick="setRestTime(60)" class="rest-preset" data-secs="60" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--lime);background:rgba(57,255,20,.12);color:var(--lime)">60s ✓</button>
         <button onclick="setRestTime(90)" class="rest-preset" data-secs="90" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">90s</button>
         <button onclick="setRestTime(120)" class="rest-preset" data-secs="120" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">2min</button>
         <button onclick="setRestTime(180)" class="rest-preset" data-secs="180" style="flex:1;min-width:48px;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">3min</button>
@@ -564,7 +564,7 @@ if('serviceWorker' in navigator){
     <div style="text-align:center;margin:20px 0 16px">
       <div style="font-size:72px;font-weight:800;color:var(--lime);font-variant-numeric:tabular-nums;letter-spacing:-2px" id="sport-timer-display">0:00</div>
       <div style="font-size:13px;color:var(--muted)">session time</div>
-      <button onclick="lockSportScreen()" style="margin-top:8px;background:rgba(200,241,53,.1);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700">🔒 Lock screen — prevent accidental pauses</button>
+      <button onclick="lockSportScreen()" style="margin-top:8px;background:rgba(57,255,20,.1);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700">🔒 Lock screen — prevent accidental pauses</button>
     </div>
 
     <!-- Live stats -->
@@ -617,7 +617,7 @@ if('serviceWorker' in navigator){
       <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Cal/min</div><input class="inp" id="new-sport-cal" type="number" placeholder="8"></div>
       <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Colour</div>
         <select class="inp" id="new-sport-color" style="cursor:pointer">
-          <option value="#C8F135">Lime</option><option value="#FF4D4D">Red</option>
+          <option value="#39FF14">Lime</option><option value="#FF4D4D">Red</option>
           <option value="#6C63FF">Purple</option><option value="#FF8C42">Orange</option>
           <option value="#00BCD4">Teal</option><option value="#4CAF50">Green</option>
           <option value="#E91E63">Pink</option><option value="#FF6B00">Amber</option>
@@ -673,7 +673,7 @@ if('serviceWorker' in navigator){
     <div id="muscle-back-img" style="display:block;flex:1"></div>
   </div>
   <div id="muscle-legend" style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#C8F135"></div><span style="font-size:11px;color:var(--muted)">Primary</span></div>
+    <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#39FF14"></div><span style="font-size:11px;color:var(--muted)">Primary</span></div>
     <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#6C63FF"></div><span style="font-size:11px;color:var(--muted)">Secondary</span></div>
   </div>
   <button onclick="closeModal('modal-muscle-viewer')" class="btn-secondary">Close</button>
@@ -687,7 +687,7 @@ if('serviceWorker' in navigator){
   <div style="font-size:12px;color:var(--muted);margin-bottom:18px" id="photo-picker-sub">Choose how to add a photo for this exercise</div>
   <div style="display:flex;flex-direction:column;gap:10px">
     <button onclick="pickFromCamera()" style="display:flex;align-items:center;gap:14px;background:var(--soft);border:1px solid var(--border);border-radius:14px;padding:16px;width:100%;text-align:left">
-      <div style="width:44px;height:44px;border-radius:12px;background:rgba(200,241,53,.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📷</div>
+      <div style="width:44px;height:44px;border-radius:12px;background:rgba(57,255,20,.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📷</div>
       <div>
         <div style="font-size:15px;font-weight:700">Take a photo</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px">Open camera right now</div>
@@ -838,7 +838,7 @@ if('serviceWorker' in navigator){
   <input class="inp" id="nr-name" placeholder="Routine name e.g. Upper Body Power" style="margin-bottom:12px">
 
   <!-- Smart auto-fill with pairing options -->
-  <div style="background:rgba(200,241,53,.06);border:1px solid rgba(200,241,53,.2);border-radius:11px;padding:12px;margin-bottom:14px">
+  <div style="background:rgba(57,255,20,.06);border:1px solid rgba(57,255,20,.2);border-radius:11px;padding:12px;margin-bottom:14px">
     <div style="font-size:13px;font-weight:800;color:var(--lime);margin-bottom:3px">✨ Auto-fill a starting point</div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Pick a pairing & length and we'll fill in exercises — then edit freely below.</div>
 
@@ -866,7 +866,7 @@ if('serviceWorker' in navigator){
       <input type="checkbox" id="nr-auto-warmup" checked style="width:16px;height:16px;accent-color:var(--lime)">
       Add warm-up & cool-down
     </label>
-    <button onclick="autofillManual()" style="width:100%;background:rgba(200,241,53,.15);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:9px;padding:10px;font-size:13px;font-weight:800">✨ Fill in exercises</button>
+    <button onclick="autofillManual()" style="width:100%;background:rgba(57,255,20,.15);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:9px;padding:10px;font-size:13px;font-weight:800">✨ Fill in exercises</button>
   </div>
 
   <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px;letter-spacing:.5px">MUSCLE GROUPS</div>
@@ -1165,7 +1165,7 @@ if('serviceWorker' in navigator){
 <script>
 // ══════════════════ DATA ══════════════════
 const USERS = {
-  Mike: {color:'#C8F135', initials:'M', devices:['Whoop Band 4.0','Apple Watch Series 9'], hrMin:125, hrMax:155, calorieGoal:2400, weight:85, age:45},
+  Mike: {color:'#39FF14', initials:'M', devices:['Whoop Band 4.0','Apple Watch Series 9'], hrMin:125, hrMax:155, calorieGoal:2400, weight:85, age:45},
   Michelle: {color:'#FF8C42', initials:'Mi', devices:['Whoop Band 4.0','Apple Watch Series 8'], hrMin:120, hrMax:150, calorieGoal:1900, weight:65, age:42},
   Amy: {color:'#6C63FF', initials:'A', devices:['Xiaomi Smart Band 10 (via Apple Health)'], hrMin:130, hrMax:165, calorieGoal:2100, weight:58, age:20}
 };
@@ -1644,7 +1644,7 @@ const EXERCISES = [
 const ROUTINES = []; // demo routines removed — use Generate or + New
 
 const DEFAULT_SPORT_SESSIONS = [
-  {id:'kart', name:'Karting', icon:'🏎️', color:'#C8F135', calPerMin:9,
+  {id:'kart', name:'Karting', icon:'🏎️', color:'#39FF14', calPerMin:9,
    desc:'Sprint karting is genuinely hard — neck, arms, core working constantly under G-forces',
    stats:['Avg HR 150-170bpm','High G-force load','Neck & forearm fatigue','Comparable to cycling sprint']},
   {id:'mx', name:'Motocross', icon:'🏍️', color:'#FF6B00', calPerMin:12,
@@ -2116,7 +2116,7 @@ function openRoutineDetail(id){
       <button onclick="showScreen('home')" style="background:var(--soft);border-radius:10px;padding:8px 12px;font-size:18px;margin-bottom:16px">←</button>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
         <div style="font-size:11px;color:${r.color};font-weight:800;letter-spacing:1.5px;text-transform:uppercase">${(r.muscles||[]).join(' · ')}</div>
-        ${(r.muscles||[]).includes('Legs') ? '<span style="background:rgba(200,241,53,.15);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800">FULL LEG</span>' : ''}
+        ${(r.muscles||[]).includes('Legs') ? '<span style="background:rgba(57,255,20,.15);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800">FULL LEG</span>' : ''}
       </div>
       <div style="font-size:26px;font-weight:800;margin-bottom:10px">${r.name}</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:16px">By ${r.owner||'family'}${(r.sharedWith&&r.sharedWith.length)?' · Shared with '+r.sharedWith.join(', '):''}</div>
@@ -2148,7 +2148,7 @@ function openRoutineDetail(id){
         ${r.owner===activeUser ? `<button onclick="deleteRoutine(${r.id})" style="background:rgba(255,77,77,.15);color:var(--red);border:1px solid rgba(255,77,77,.3);border-radius:13px;padding:12px;font-size:14px;font-weight:700">Delete</button>` : `<div></div>`}
         <button onclick="startWorkout(${r.id})" class="btn-primary" style="padding:12px">Start</button>
       </div>
-      ${((r.warmup&&r.warmup.length)||(r.cooldown&&r.cooldown.length))?`<button onclick="startRunnerFromRoutine(${r.id})" style="width:100%;margin-top:8px;background:var(--soft);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:13px;padding:12px;font-size:14px;font-weight:700">▶ Guided run (with warm-up & cool-down)</button>`:''}
+      ${((r.warmup&&r.warmup.length)||(r.cooldown&&r.cooldown.length))?`<button onclick="startRunnerFromRoutine(${r.id})" style="width:100%;margin-top:8px;background:var(--soft);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:13px;padding:12px;font-size:14px;font-weight:700">▶ Guided run (with warm-up & cool-down)</button>`:''}
       <div style="height:20px"></div>
     </div>`;
   showScreen('routine');
@@ -2185,7 +2185,7 @@ function renderNRPairModes(){
   const modes = [{key:'splits',label:'① Splits'},{key:'antagonist',label:'② Pairs'},{key:'custom',label:'③ Custom'}];
   el.innerHTML = modes.map(m=>{
     const on = nrAuto.pairMode===m.key;
-    return `<button onclick="setNRPairMode('${m.key}')" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(200,241,53,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${m.label}</button>`;
+    return `<button onclick="setNRPairMode('${m.key}')" style="flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${m.label}</button>`;
   }).join('');
   renderNRPairContent();
 }
@@ -2199,7 +2199,7 @@ function renderNRPairContent(){
   const combos = PAIR_COMBOS[nrAuto.pairMode]||[];
   el.innerHTML = combos.map((c,i)=>{
     const on = nrAuto.muscles.slice().sort().join(',')===c.groups.slice().sort().join(',');
-    return `<button onclick="applyNRCombo('${nrAuto.pairMode}',${i})" style="text-align:left;padding:8px 10px;border-radius:8px;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(200,241,53,.12)':'var(--soft)'};margin-bottom:5px;width:100%">
+    return `<button onclick="applyNRCombo('${nrAuto.pairMode}',${i})" style="text-align:left;padding:8px 10px;border-radius:8px;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.12)':'var(--soft)'};margin-bottom:5px;width:100%">
       <div style="font-size:12px;font-weight:800;color:${on?'var(--lime)':'var(--text)'}">${c.label}</div>
       <div style="font-size:10px;color:var(--muted)">${c.note}</div></button>`;
   }).join('');
@@ -2221,8 +2221,8 @@ function renderNRAutoMuscles(){
   el.innerHTML = groups.map(m=>{
     const on = nrAuto.muscles.includes(m);
     const sg = suggested.has(m);
-    const border = on?'var(--lime)':(sg?'rgba(200,241,53,.5)':'var(--border)');
-    const bg = on?'rgba(200,241,53,.15)':(sg?'rgba(200,241,53,.06)':'var(--soft)');
+    const border = on?'var(--lime)':(sg?'rgba(57,255,20,.5)':'var(--border)');
+    const bg = on?'rgba(57,255,20,.15)':(sg?'rgba(57,255,20,.06)':'var(--soft)');
     const col = on?'var(--lime)':(sg?'var(--lime)':'var(--muted)');
     return `<button onclick="toggleNRAutoMuscle('${m}')" style="padding:6px 10px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid ${border};background:${bg};color:${col}">${on?'✓ ':''}${m}${sg?' <span style="font-size:8px;opacity:.8">pairs</span>':''}</button>`;
   }).join('');
@@ -2268,7 +2268,7 @@ function autofillManual(){
 function renderNRMuscles(){
   document.getElementById('nr-muscle-groups').innerHTML = MUSCLE_GROUPS.map(m=>{
     const sel = newRoutineData.muscles.includes(m);
-    return `<button onclick="toggleNRMuscle('${m}')" style="padding:6px 13px;border-radius:8px;font-size:13px;font-weight:700;border:1px solid ${sel?'var(--lime)':'var(--border)'};background:${sel?'rgba(200,241,53,.15)':'var(--soft)'};color:${sel?'var(--lime)':'var(--muted)'}">${m}</button>`;
+    return `<button onclick="toggleNRMuscle('${m}')" style="padding:6px 13px;border-radius:8px;font-size:13px;font-weight:700;border:1px solid ${sel?'var(--lime)':'var(--border)'};background:${sel?'rgba(57,255,20,.15)':'var(--soft)'};color:${sel?'var(--lime)':'var(--muted)'}">${m}</button>`;
   }).join('');
 }
 
@@ -2386,7 +2386,7 @@ function openExPicker(){
 function renderPickerGroups(){
   document.getElementById('picker-groups').innerHTML = ['All',...MUSCLE_GROUPS].map(g=>{
     const sel = pickerGroup===g;
-    return `<button onclick="setPickerGroup('${g}')" style="padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid ${sel?'var(--lime)':'var(--border)'};background:${sel?'rgba(200,241,53,.15)':'var(--soft)'};color:${sel?'var(--lime)':'var(--muted)'}">${g}</button>`;
+    return `<button onclick="setPickerGroup('${g}')" style="padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid ${sel?'var(--lime)':'var(--border)'};background:${sel?'rgba(57,255,20,.15)':'var(--soft)'};color:${sel?'var(--lime)':'var(--muted)'}">${g}</button>`;
   }).join('');
 }
 
@@ -2429,7 +2429,7 @@ function saveNewRoutine(){
     const i = routines.findIndex(r=>r.id===newRoutineData.id);
     if(i>=0){ routines[i]={...routines[i], name, muscles:newRoutineData.muscles, exercises:newRoutineData.exercises, warmup:newRoutineData.warmup||null, cooldown:newRoutineData.cooldown||null}; }
   } else {
-    const colors = {Mike:'#C8F135',Michelle:'#FF8C42',Amy:'#6C63FF'};
+    const colors = {Mike:'#39FF14',Michelle:'#FF8C42',Amy:'#6C63FF'};
     const allUsers = ['Mike','Michelle','Amy'];
     routines.push({id:Date.now(), name, owner:activeUser, sharedWith:allUsers.filter(u=>u!==activeUser), muscles:newRoutineData.muscles, color:colors[activeUser], exercises:newRoutineData.exercises, warmup:newRoutineData.warmup||null, cooldown:newRoutineData.cooldown||null});
   }
@@ -2976,7 +2976,7 @@ function genDrop(wi, to){
 function saveGenToLibrary(wi){
   const w = generatedWorkouts[wi];
   if(!w) return;
-  const colors = {Mike:'#C8F135',Michelle:'#FF8C42',Amy:'#6C63FF'};
+  const colors = {Mike:'#39FF14',Michelle:'#FF8C42',Amy:'#6C63FF'};
   const allUsers = ['Mike','Michelle','Amy'];
   const cfg = DIFFICULTY_CFG[genState.difficulty] || DIFFICULTY_CFG.intermediate;
   const groups = genState.muscles || [genState.muscle];
@@ -2987,7 +2987,7 @@ function saveGenToLibrary(wi){
     owner: activeUser,
     sharedWith: allUsers.filter(u=>u!==activeUser),
     muscles: groups,
-    color: colors[activeUser] || '#C8F135',
+    color: colors[activeUser] || '#39FF14',
     generated: true,
     warmup: w.warmup || null,
     cooldown: w.cooldown || null,
@@ -3154,7 +3154,7 @@ function renderPreview(){
       ${ex.video?`<a href="${ex.video}" target="_blank" style="display:inline-block;color:var(--lime);font-size:12px;text-decoration:underline;margin-bottom:14px">▶ Watch form video</a>`:'<div style="font-size:11px;color:var(--muted);margin-bottom:14px;font-style:italic">Form video will appear here once your animation library is connected</div>'}
     </div>
     <!-- Auto-play toggle -->
-    <button onclick="togglePreviewPlay()" style="width:100%;background:${playing?'rgba(255,77,77,.12)':'rgba(200,241,53,.12)'};color:${playing?'var(--red)':'var(--lime)'};border:1px solid ${playing?'rgba(255,77,77,.3)':'rgba(200,241,53,.3)'};border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-bottom:8px">${playing?'⏸ Pause auto-play':'▶ Auto-play through workout'}</button>
+    <button onclick="togglePreviewPlay()" style="width:100%;background:${playing?'rgba(255,77,77,.12)':'rgba(57,255,20,.12)'};color:${playing?'var(--red)':'var(--lime)'};border:1px solid ${playing?'rgba(255,77,77,.3)':'rgba(57,255,20,.3)'};border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-bottom:8px">${playing?'⏸ Pause auto-play':'▶ Auto-play through workout'}</button>
     <div style="display:flex;gap:8px">
       <button onclick="previewNav(-1)" ${idx===0?'disabled':''} style="flex:1;background:var(--soft);color:${idx===0?'var(--border)':'var(--text)'};border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:700">← Prev</button>
       ${idx<total-1
@@ -3528,7 +3528,7 @@ function renderPairModes(){
   ];
   el.innerHTML = modes.map(m=>{
     const on = genState.pairMode===m.key;
-    return `<button onclick="setPairMode('${m.key}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(200,241,53,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${m.label}</button>`;
+    return `<button onclick="setPairMode('${m.key}')" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.15)':'var(--soft)'};color:${on?'var(--lime)':'var(--muted)'}">${m.label}</button>`;
   }).join('');
   renderPairContent();
 }
@@ -3548,7 +3548,7 @@ function renderPairContent(){
     const sel = genState.muscles.slice().sort().join(',');
     const cg = c.groups.slice().sort().join(',');
     const on = sel===cg;
-    return `<button onclick="applyCombo('${genState.pairMode}',${i})" style="text-align:left;padding:9px 11px;border-radius:9px;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(200,241,53,.12)':'var(--soft)'};margin-bottom:6px;width:100%">
+    return `<button onclick="applyCombo('${genState.pairMode}',${i})" style="text-align:left;padding:9px 11px;border-radius:9px;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,255,20,.12)':'var(--soft)'};margin-bottom:6px;width:100%">
       <div style="font-size:13px;font-weight:800;color:${on?'var(--lime)':'var(--text)'}">${c.label}</div>
       <div style="font-size:11px;color:var(--muted)">${c.note}</div>
     </button>`;
@@ -3577,8 +3577,8 @@ function renderGenMuscles(){
   document.getElementById('gen-muscle-btns').innerHTML = groups.map(m=>{
     const on = genState.muscles.includes(m);
     const isSugg = suggested.has(m);
-    let border = on ? 'var(--lime)' : (isSugg ? 'rgba(200,241,53,.5)' : 'var(--border)');
-    let bg = on ? 'rgba(200,241,53,.15)' : (isSugg ? 'rgba(200,241,53,.06)' : 'var(--soft)');
+    let border = on ? 'var(--lime)' : (isSugg ? 'rgba(57,255,20,.5)' : 'var(--border)');
+    let bg = on ? 'rgba(57,255,20,.15)' : (isSugg ? 'rgba(57,255,20,.06)' : 'var(--soft)');
     let col = on ? 'var(--lime)' : (isSugg ? 'var(--lime)' : 'var(--muted)');
     return `<button onclick="toggleGenMuscle('${m}')" class="gen-musc" data-m="${m}"
       style="padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${border};background:${bg};color:${col};position:relative">
@@ -3617,7 +3617,7 @@ function renderGenControls(){
   ['beginner','intermediate','advanced'].forEach(d=>{
     const b=document.getElementById('gendiff-'+d);
     if(b){ const on=genState.difficulty===d;
-      b.style.background=on?'rgba(200,241,53,.15)':'var(--soft)';
+      b.style.background=on?'rgba(57,255,20,.15)':'var(--soft)';
       b.style.color=on?'var(--lime)':'var(--muted)';
       b.style.borderColor=on?'var(--lime)':'var(--border)'; }
   });
@@ -3625,7 +3625,7 @@ function renderGenControls(){
   [20,40,60,90].forEach(m=>{
     const b=document.getElementById('genmin-'+m);
     if(b){ const on=genState.minutes===m;
-      b.style.background=on?'rgba(200,241,53,.15)':'var(--soft)';
+      b.style.background=on?'rgba(57,255,20,.15)':'var(--soft)';
       b.style.color=on?'var(--lime)':'var(--muted)';
       b.style.borderColor=on?'var(--lime)':'var(--border)'; }
   });
@@ -3703,10 +3703,10 @@ function renderWorkoutExercises(){
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
           <button onclick="removeSet(${ei})" style="width:28px;height:28px;border-radius:7px;background:rgba(255,77,77,.12);color:var(--red);border:1px solid rgba(255,77,77,.25);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1">−</button>
           <div style="font-size:12px;color:var(--muted);min-width:40px;text-align:center">${ex.loggedSets.filter(s=>s.done).length}/${ex.loggedSets.length}</div>
-          <button onclick="addSet(${ei})" style="width:28px;height:28px;border-radius:7px;background:rgba(200,241,53,.12);color:var(--lime);border:1px solid rgba(200,241,53,.25);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1">+</button>
+          <button onclick="addSet(${ei})" style="width:28px;height:28px;border-radius:7px;background:rgba(57,255,20,.12);color:var(--lime);border:1px solid rgba(57,255,20,.25);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1">+</button>
         </div>
       </div>
-      ${ex.notes ? `<div style="font-size:12px;color:var(--lime);margin-bottom:8px;padding:5px 8px;background:rgba(200,241,53,.08);border-radius:7px;border-left:2px solid var(--lime)">📋 ${ex.notes}</div>` : ''}
+      ${ex.notes ? `<div style="font-size:12px;color:var(--lime);margin-bottom:8px;padding:5px 8px;background:rgba(57,255,20,.08);border-radius:7px;border-left:2px solid var(--lime)">📋 ${ex.notes}</div>` : ''}
       ${ex.loggedSets.map((s,si)=>`
         <div class="set-row ${s.done?'done':''}">
           <div style="font-size:12px;color:var(--muted);width:18px;flex-shrink:0">S${si+1}</div>
@@ -3727,7 +3727,7 @@ function renderWorkoutExercises(){
         <textarea
           placeholder="Add a note... (e.g. felt strong, increase weight next time)"
           oninput="updateExNote(${ei}, this.value)"
-          style="width:100%;background:var(--soft);border:1px solid ${ex.sessionNote?'rgba(200,241,53,.3)':'var(--border)'};border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;resize:none;min-height:52px;line-height:1.4;font-family:inherit"
+          style="width:100%;background:var(--soft);border:1px solid ${ex.sessionNote?'rgba(57,255,20,.3)':'var(--border)'};border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;resize:none;min-height:52px;line-height:1.4;font-family:inherit"
         >${ex.sessionNote||''}</textarea>
       </div>
     </div>`;
@@ -3908,7 +3908,7 @@ function renderLibrary(){
   if(!bar) return;
   bar.innerHTML = ['All',...MUSCLE_GROUPS].map(g=>{
     const sel = activeLibGroup===g;
-    return `<button id="libg-${g}" onclick="setLibGroup('${g}')" style="padding:5px 13px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid ${sel?'var(--lime)':'var(--border)'};background:${sel?'rgba(200,241,53,.15)':'var(--soft)'};color:${sel?'var(--lime)':'var(--muted)'}">${g}</button>`;
+    return `<button id="libg-${g}" onclick="setLibGroup('${g}')" style="padding:5px 13px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid ${sel?'var(--lime)':'var(--border)'};background:${sel?'rgba(57,255,20,.15)':'var(--soft)'};color:${sel?'var(--lime)':'var(--muted)'}">${g}</button>`;
   }).join('');
   filterLibrary();
 }
@@ -4010,11 +4010,11 @@ const EXERCISE_ICONS = {
 
 const MUSCLE_COLORS = {
   'Chest':'#FF6B6B','Back':'#4ECDC4','Legs':'#45B7D1','Shoulders':'#96CEB4','Arms':'#FFEAA7',
-  'Core':'#DDA0DD','Cardio':'#FF8C42','Full Body':'#C8F135','Barbell':'#E0E0E0',
+  'Core':'#DDA0DD','Cardio':'#FF8C42','Full Body':'#39FF14','Barbell':'#E0E0E0',
   'Free Weights':'#B0C4DE','Kettlebell':'#CD853F','Calisthenics':'#98FB98','Functional':'#FFD700',
   'Mobility':'#87CEEB','Yoga':'#DEB887','Pilates':'#FFB6C1','Boxing':'#FF6347','HIIT':'#FF4500',
   'Technogym':'#00BCD4','Farmer Carries':'#FF6F00','Medicine Ball':'#E91E63','Dumbbell':'#7B1FA2',
-  'Old School':'#795548','Swimming':'#00BCD4','Walking':'#4CAF50','Karting':'#C8F135',
+  'Old School':'#795548','Swimming':'#00BCD4','Walking':'#4CAF50','Karting':'#39FF14',
   'Motocross':'#FF6B00','Mountain Bike':'#6C63FF',
   'Glutes':'#E91E63','Traps':'#607D8B','Forearms':'#8D6E63',
 };
@@ -4488,7 +4488,7 @@ function renderNutrition(){
     <div class="card-sm" style="margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${slotMeals.length?'8px':'0'}">
         <div style="font-size:14px;font-weight:800">${slot.icon} ${slot.label} ${slotCals?`<span style="font-size:12px;color:var(--muted);font-weight:600">· ${slotCals} kcal</span>`:''}</div>
-        <button onclick="openAddMeal('${slot.key}')" style="background:rgba(200,241,53,.12);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Add</button>
+        <button onclick="openAddMeal('${slot.key}')" style="background:rgba(57,255,20,.12);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Add</button>
       </div>
       ${slotMeals.map(x=>`
         <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border)">
@@ -4534,7 +4534,7 @@ function renderNutrition(){
           <div style="font-size:13px;font-weight:700;margin-bottom:2px">${s.name}</div>
           <div style="font-size:11px;color:var(--muted)">${s.timing} · ${s.cals} kcal · P:${s.protein}g C:${s.carbs}g F:${s.fat}g</div>
         </div>
-        <button onclick="quickAddMeal(${JSON.stringify(s).replace(/"/g,"'")})" style="background:rgba(${uColor==='#C8F135'?'200,241,53':'108,99,255'},0.15);color:${uColor};border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;border:1px solid ${uColor}44;flex-shrink:0;margin-left:8px">Add</button>
+        <button onclick="quickAddMeal(${JSON.stringify(s).replace(/"/g,"'")})" style="background:rgba(${uColor==='#39FF14'?'57,255,20':'108,99,255'},0.15);color:${uColor};border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;border:1px solid ${uColor}44;flex-shrink:0;margin-left:8px">Add</button>
       </div>
     </div>`).join('');
 
@@ -4668,7 +4668,7 @@ function updateCatBtns(cls, cat){
   document.querySelectorAll('.'+cls).forEach(b=>{
     const bCat = b.getAttribute('onclick').match(/'([^']+)'/)[1];
     const isActive = bCat===cat;
-    b.style.background = isActive ? 'rgba(200,241,53,.15)' : 'var(--soft)';
+    b.style.background = isActive ? 'rgba(57,255,20,.15)' : 'var(--soft)';
     b.style.color = isActive ? 'var(--lime)' : 'var(--muted)';
     b.style.border = isActive ? '1px solid var(--lime)' : '1px solid var(--border)';
   });
@@ -4877,7 +4877,7 @@ function setNutGoal(goal){
   currentNutGoal = goal;
   document.querySelectorAll('.ns-goal').forEach(b=>{
     const isActive = b.onclick.toString().includes("'"+goal+"'");
-    b.style.background = isActive ? 'rgba(200,241,53,.15)' : 'var(--soft)';
+    b.style.background = isActive ? 'rgba(57,255,20,.15)' : 'var(--soft)';
     b.style.color = isActive ? 'var(--lime)' : 'var(--muted)';
     b.style.border = isActive ? '1px solid var(--lime)' : '1px solid var(--border)';
   });
@@ -5085,7 +5085,7 @@ function renderNutTrends(){
         </div>`).join('')}
     </div>`:''}
 
-    <div class="card" style="background:rgba(200,241,53,.06);border-color:rgba(200,241,53,.2)">
+    <div class="card" style="background:rgba(57,255,20,.06);border-color:rgba(57,255,20,.2)">
       <div style="font-size:13px;font-weight:800;color:var(--lime);margin-bottom:8px">💡 Lean Insight</div>
       <div style="font-size:12px;color:var(--muted);line-height:1.6">
         ${avgCal>settings.cal
@@ -5373,7 +5373,7 @@ function renderAdminPanel(){
   if(activeUser !== ADMIN_USER) return '';
   const users = ['Michelle','Amy'];
   return `
-    <div class="card" style="margin-top:16px;border-color:rgba(200,241,53,.3)">
+    <div class="card" style="margin-top:16px;border-color:rgba(57,255,20,.3)">
       <div style="font-size:16px;font-weight:800;margin-bottom:4px">👑 Admin — Family Overview</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:12px">As admin you can see all family data regardless of privacy settings.</div>
       ${users.map(u => {
@@ -5776,7 +5776,7 @@ const MUSCLE_SVG_HIGHLIGHTS = {
 
 function buildMuscleSVG(highlights, side){
   // Body silhouette SVG with muscle group paths
-  const LIM = '#C8F135'; // lime primary
+  const LIM = '#39FF14'; // lime primary
   const PUR = '#6C63FF'; // purple secondary
   const DIM = '#1C1C2A'; // dark fill
   const OUT = '#2A2A3A'; // outline
@@ -6246,7 +6246,7 @@ function setRestTime(secs){
   document.querySelectorAll('.rest-preset').forEach(btn=>{
     const isActive = parseInt(btn.dataset.secs) === secs;
     btn.style.border = isActive ? '1px solid var(--lime)' : '1px solid var(--border)';
-    btn.style.background = isActive ? 'rgba(200,241,53,.12)' : 'var(--soft)';
+    btn.style.background = isActive ? 'rgba(57,255,20,.12)' : 'var(--soft)';
     btn.style.color = isActive ? 'var(--lime)' : 'var(--muted)';
     btn.textContent = btn.dataset.secs + 's' + (isActive ? ' ✓' : '');
     if(btn.dataset.secs === '120') btn.textContent = isActive ? '2min ✓' : '2min';
@@ -6451,7 +6451,7 @@ function renderPrebuilt(){
       <div style="display:flex;align-items:center;gap:10px">
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
-            <span style="background:rgba(200,241,53,.15);color:var(--lime);border:1px solid rgba(200,241,53,.3);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800">⚡ PREBUILT</span>
+            <span style="background:rgba(57,255,20,.15);color:var(--lime);border:1px solid rgba(57,255,20,.3);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800">⚡ PREBUILT</span>
             <span style="font-size:11px;color:var(--muted)">${r.estMins} min</span>
           </div>
           <div style="font-size:15px;font-weight:800;margin-bottom:4px">${r.name.replace('1hr — ','')}</div>
@@ -6523,7 +6523,7 @@ function addCustomSport(){
   const name = document.getElementById('new-sport-name').value.trim();
   const icon = document.getElementById('new-sport-icon').value.trim() || '🏅';
   const cal = parseInt(document.getElementById('new-sport-cal').value)||7;
-  const color = document.getElementById('new-sport-color').value||'#C8F135';
+  const color = document.getElementById('new-sport-color').value||'#39FF14';
   if(!name){ toast('Enter a sport name'); return; }
   const sports = getSportSessions();
   const newSport = {
@@ -6589,7 +6589,7 @@ function renderSportWatchFace(){
   const face = document.getElementById('sport-watch-face');
   if(!face || !sportState) return;
   const sp = sportState.sport;
-  const col = sp.color || '#C8F135';
+  const col = sp.color || '#39FF14';
   const m = Math.floor(sportState.elapsed/60);
   const s = sportState.elapsed%60;
   const hr = sportState.hr || 0;
