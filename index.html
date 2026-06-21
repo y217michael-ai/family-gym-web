@@ -2170,11 +2170,11 @@ function renderHome(){
   const uColor2 = USERS[activeUser].color;
   const tabsEl = document.getElementById('routine-view-tabs');
   if(tabsEl){
-    tabsEl.innerHTML = `
-      <button onclick="setRoutineView('family')" style="flex:1;padding:8px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:${activeRoutineView==='family'?'var(--card)':'transparent'};color:${activeRoutineView==='family'?'var(--text)':'var(--muted)'}">📋 Routine Options</button>
-      <button onclick="setRoutineView('mine')" style="flex:1;padding:8px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:${activeRoutineView==='mine'?'var(--card)':'transparent'};color:${activeRoutineView==='mine'?uColor2:'var(--muted)'}">👤 ${activeUser}</button>`;
-    document.getElementById('routine-view-family').style.display = activeRoutineView==='family' ? 'block' : 'none';
-    document.getElementById('routine-view-mine').style.display = activeRoutineView==='mine' ? 'block' : 'none';
+    // Single combined view — no tabs needed
+    tabsEl.style.display = 'none';
+    activeRoutineView = 'family';
+    document.getElementById('routine-view-family').style.display = 'block';
+    document.getElementById('routine-view-mine').style.display = 'none';
   }
 
   // ── Personal routines tab ──
