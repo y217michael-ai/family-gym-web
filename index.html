@@ -204,6 +204,16 @@ if('serviceWorker' in navigator){
 
   <!-- FAMILY VIEW — all shared routines + prebuilts -->
   <div id="routine-view-family">
+    <!-- Equipment picker — one button opens the equipment browser -->
+    <button onclick="openEquipmentPicker()" id="equipment-btn" style="width:100%;display:flex;align-items:center;gap:12px;background:#16161F;border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:14px;cursor:pointer;text-align:left">
+      <div id="equip-btn-icon" style="font-size:24px">🏋️</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:800" id="equip-btn-label">Workout by Equipment Available</div>
+        <div style="font-size:11px;color:var(--muted)" id="equip-btn-sub">Showing all — tap to pick your kit</div>
+      </div>
+      <div style="font-size:16px;color:var(--muted)">›</div>
+    </button>
+
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-size:16px;font-weight:800">Routine Options</div>
       <div style="display:flex;gap:6px">
@@ -899,7 +909,17 @@ if('serviceWorker' in navigator){
 </div>
 </div>
 
-<!-- Workout/session history detail modal -->
+<!-- Equipment picker modal -->
+<div class="modal-overlay" id="modal-equipment">
+<div class="modal" style="max-height:90vh">
+  <div style="font-size:20px;font-weight:800;margin-bottom:2px">🏋️ Workout by Equipment</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Pick what you've got — routines filter to match. Tap 📷 to add a photo of your own kit.</div>
+  <div id="equipment-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
+  <button class="btn-secondary" onclick="closeModal('modal-equipment')">Done</button>
+</div>
+</div>
+
+<!-- Equipment picker end -->
 <div class="modal-overlay" id="modal-history-detail">
 <div class="modal" style="max-height:90vh">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -2032,6 +2052,22 @@ let planPickDay = null;
 let ddDate = null;
 let newRoutineData = {name:'',muscles:[],exercises:[],structure:'straight'};
 let activeRoutineFilter = 'All';
+let activeEquipment = 'All';
+const EDB_CACHE = {}; // ExerciseDB lookups cached here (GIF + equipment tag)
+// Starter equipment list. 'match' = equipment keywords to look for in exercises.
+// Technogym & Wahoo are your own tags. Photos are added by the user (own pics).
+const EQUIPMENT_LIST = [
+  {key:'All',       label:'All',          icon:'🏋️', match:null},
+  {key:'Technogym', label:'Technogym',    icon:'⚙️',  match:['technogym','machine','cable','leverage','smith']},
+  {key:'FreeWeights',label:'Free Weights',icon:'🏋️', match:['dumbbell','barbell','kettlebell','ez barbell','weighted','olympic']},
+  {key:'Cable',     label:'Cable',        icon:'🔗',  match:['cable']},
+  {key:'Machine',   label:'Machine',      icon:'🛠️',  match:['machine','leverage','sled','smith']},
+  {key:'Bodyweight',label:'Bodyweight',   icon:'🤸',  match:['body weight','bodyweight','assisted','none']},
+  {key:'Cardio',    label:'Cardio (Wahoo)',icon:'🚴', match:['cardio','treadmill','bike','elliptical','rower','wahoo','running']},
+  {key:'Pool',      label:'Pool',         icon:'🏊',  match:['pool','swim','water']},
+];
+function loadEquipPhotos(){ try{ return JSON.parse(localStorage.getItem('fgym_equip_photos')||'{}'); }catch(e){ return {}; } }
+function saveEquipPhotos(p){ try{ localStorage.setItem('fgym_equip_photos', JSON.stringify(p)); }catch(e){} }
 let activeRoutineView = 'family'; // 'family' or 'mine'
 let pickerGroup = 'Chest';
 let hipFilterOn = false;
@@ -2256,6 +2292,7 @@ function renderHome(){
       return `<button onclick="setRoutineFilter('${f.key}')" style="padding:5px 11px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;border:1px solid ${active?uCol:'var(--border)'};background:${active?uCol+'22':'var(--soft)'};color:${active?uCol:'var(--muted)'};transition:all .15s;line-height:1.4">${f.icon?f.icon+' ':''}${f.label}</button>`;
     }).join('');
   }
+  updateEquipmentButton();
 
   // Filter logic
   function matchesFilter(r, filter){
@@ -2296,8 +2333,8 @@ function renderHome(){
     return true;
   }
 
-  const filteredMine = mine.filter(r=>matchesFilter(r, activeRoutineFilter));
-  const filteredShared = shared.filter(r=>matchesFilter(r, activeRoutineFilter));
+  const filteredMine = mine.filter(r=>matchesFilter(r, activeRoutineFilter) && matchesEquipment(r, activeEquipment));
+  const filteredShared = shared.filter(r=>matchesFilter(r, activeRoutineFilter) && matchesEquipment(r, activeEquipment));
 
   // My routines
   const myList = document.getElementById('my-routines-list');
@@ -2341,6 +2378,95 @@ function setRoutineView(view){
 function setRoutineFilter(key){
   activeRoutineFilter = key;
   renderHome();
+}
+
+// ── Equipment selector (button + picker modal) ──
+function updateEquipmentButton(){
+  const eq = EQUIPMENT_LIST.find(e=>e.key===activeEquipment) || EQUIPMENT_LIST[0];
+  const photos = loadEquipPhotos();
+  const iconEl = document.getElementById('equip-btn-icon');
+  const subEl = document.getElementById('equip-btn-sub');
+  if(!iconEl) return;
+  const photo = photos[eq.key];
+  iconEl.innerHTML = photo
+    ? `<img src="${photo}" style="width:30px;height:30px;object-fit:cover;border-radius:6px">`
+    : eq.icon;
+  subEl.textContent = activeEquipment==='All' ? 'Showing all — tap to pick your kit' : ('Filtering: '+eq.label+' — tap to change');
+}
+function openEquipmentPicker(){
+  renderEquipmentGrid();
+  openModal('modal-equipment');
+}
+function renderEquipmentGrid(){
+  const grid = document.getElementById('equipment-grid');
+  if(!grid) return;
+  const photos = loadEquipPhotos();
+  const uCol = USERS[activeUser].color;
+  grid.innerHTML = EQUIPMENT_LIST.map(e=>{
+    const active = activeEquipment === e.key;
+    const photo = photos[e.key];
+    const visual = photo
+      ? `<img src="${photo}" style="width:100%;height:64px;object-fit:cover;border-radius:8px">`
+      : `<div style="width:100%;height:64px;display:flex;align-items:center;justify-content:center;font-size:30px;background:#0F0F18;border-radius:8px">${e.icon}</div>`;
+    return `<div style="border-radius:12px;border:2px solid ${active?uCol:'var(--border)'};background:${active?uCol+'14':'#16161F'};padding:8px;position:relative">
+      <div onclick="setEquipment('${e.key}')" style="cursor:pointer">
+        ${visual}
+        <div style="font-size:12px;font-weight:700;margin-top:6px;text-align:center;color:${active?uCol:'var(--text)'}">${e.label} ${active?'✓':''}</div>
+      </div>
+      ${e.key!=='All'?`<button onclick="addEquipPhoto('${e.key}')" title="Add photo" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:7px;background:rgba(0,0,0,.5);border:1px solid var(--border);color:#fff;font-size:12px;line-height:1;padding:0">📷</button>`:''}
+    </div>`;
+  }).join('');
+}
+function setEquipment(key){
+  activeEquipment = key;
+  renderEquipmentGrid();
+  updateEquipmentButton();
+  renderHome();
+}
+function addEquipPhoto(key){
+  const inp = document.createElement('input');
+  inp.type='file'; inp.accept='image/*';
+  inp.onchange = (ev)=>{
+    const file = ev.target.files && ev.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const c = document.createElement('canvas');
+        const w = 200, h = Math.round(200*img.height/img.width);
+        c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        const photos = loadEquipPhotos();
+        photos[key] = c.toDataURL('image/jpeg',0.8);
+        saveEquipPhotos(photos);
+        renderEquipmentGrid();
+        updateEquipmentButton();
+        toast('Photo added');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+// Equipment filter — matches against exercise names/muscles using the keyword list
+function matchesEquipment(r, key){
+  if(key==='All') return true;
+  const eq = EQUIPMENT_LIST.find(e=>e.key===key);
+  if(!eq || !eq.match) return true;
+  // Build a haystack from: routine muscles, exercise names/muscles, the local
+  // EXERCISES library equipment, AND any ExerciseDB equipment tag we've cached.
+  const parts = [(r.muscles||[]).join(' ')];
+  (r.exercises||[]).forEach(e=>{
+    const lib = EXERCISES.find(x=>x.name===e.name);
+    parts.push(e.name, e.muscle||'', lib?.equipment||'');
+    // ExerciseDB cached record carries the real equipment field
+    const edb = (typeof EDB_CACHE!=='undefined') ? EDB_CACHE[e.name] : null;
+    if(edb && edb.equipment) parts.push(edb.equipment);
+  });
+  const hay = parts.join(' ').toLowerCase();
+  return eq.match.some(m=>hay.includes(m));
 }
 
 // Personal routine card — with prominent edit/delete controls
@@ -7459,8 +7585,6 @@ function buildMuscleSVG(highlights, side){
 }
 
 const RAPIDAPI_KEY = '1113141c40msh43616bc18297c59p151a8ajsn985621b2de87';
-const EDB_CACHE = {}; // Cache GIFs so we don't re-fetch
-
 async function fetchExerciseGif(exName){
   if(EDB_CACHE[exName]) return EDB_CACHE[exName];
   try {
