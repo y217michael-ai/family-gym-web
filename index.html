@@ -215,11 +215,6 @@ if('serviceWorker' in navigator){
     <div id="my-routines-list"></div>
     <div style="font-size:16px;font-weight:800;margin:14px 0 10px">Shared With Me</div>
     <div id="shared-routines-list"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px">
-      <div style="font-size:16px;font-weight:800">Quick Start — 1 Hour</div>
-      <span style="font-size:11px;color:var(--muted)">Ready to go</span>
-    </div>
-    <div id="prebuilt-list"></div>
   </div>
 
   <!-- MY OWN VIEW — personal routines only -->
@@ -756,7 +751,7 @@ if('serviceWorker' in navigator){
   <div style="font-size:18px;font-weight:800;margin-bottom:4px">Run-through</div>
   <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Step through to understand the workout before you start</div>
   <div id="preview-body"></div>
-  <button class="btn-secondary" onclick="closeModal('modal-preview')" style="margin-top:12px">Close</button>
+  <button class="btn-secondary" onclick="closePreview()" style="margin-top:12px">Close</button>
 </div>
 </div>
 
@@ -1603,302 +1598,7 @@ const EXERCISES = [
 ];
 
 
-const ROUTINES = [
-  {id:1, name:'Upper Body Power', owner:'Mike', sharedWith:['Michelle','Amy'], muscles:['Chest','Back','Shoulders'], color:'#C8F135',
-   exercises:[
-    {name:'Bench Press',sets:4,reps:8,weight:80,notes:'Pause at bottom'},
-    {name:'Pull Up',sets:4,reps:8,weight:0,notes:'Full ROM'},
-    {name:'Overhead Press',sets:3,reps:10,weight:50,notes:''},
-    {name:'Lateral Raise',sets:4,reps:15,weight:10,notes:''},
-   ]},
-  {id:2, name:'Mike Hip-Friendly Legs', owner:'Mike', sharedWith:['Michelle'], muscles:['Legs','Core'], color:'#FF8C42',
-   exercises:[
-    {name:'Seated Leg Press (shallow)',sets:4,reps:12,weight:100,notes:'Limit depth'},
-    {name:'Romanian Deadlift',sets:3,reps:12,weight:60,notes:'Keep neutral spine'},
-    {name:'Leg Curl',sets:3,reps:12,weight:40,notes:''},
-    {name:'Plank',sets:3,reps:60,weight:0,notes:'seconds'},
-   ]},
-  {id:3, name:'Michelle Running Plan', owner:'Michelle', sharedWith:['Mike','Amy'], muscles:['Cardio'], color:'#FF8C42',
-   exercises:[
-    {name:'Treadmill Run',sets:1,reps:30,weight:0,notes:'Easy pace — Zone 2'},
-    {name:'Bike Intervals',sets:8,reps:1,weight:0,notes:'30s on / 30s off'},
-   ]},
-  {id:4, name:"Amy's Full Body", owner:'Amy', sharedWith:['Mike','Michelle'], muscles:['Full Body','Core'], color:'#6C63FF',
-   exercises:[
-    {name:'Battle Ropes',sets:5,reps:30,weight:0,notes:'30s intervals'},
-    {name:'Farmer Carry',sets:4,reps:40,weight:24,notes:'40 metres each'},
-    {name:'Ab Rollout',sets:3,reps:10,weight:0,notes:''},
-    {name:'Russian Twist',sets:3,reps:20,weight:10,notes:''},
-   ]},
-  {id:5, name:'Cardio Blast', owner:'Mike', sharedWith:['Michelle','Amy'], muscles:['Cardio'], color:'#FF4D4D',
-   exercises:[
-    {name:'Cross Trainer',sets:1,reps:10,weight:0,notes:'Warm up 10 mins easy'},
-    {name:'Bike Intervals',sets:8,reps:1,weight:0,notes:'30s max / 30s rest'},
-    {name:'Rowing Machine',sets:1,reps:10,weight:0,notes:'Steady pace 10 mins'},
-    {name:'Treadmill Run',sets:1,reps:15,weight:0,notes:'Zone 2 — conversational pace'},
-   ]},
-  {id:6, name:'Kart Fitness — Pre Race', owner:'Mike', sharedWith:['Michelle','Amy'], muscles:['Karting'], color:'#C8F135',
-   exercises:[
-    {name:'Neck Iso Hold',sets:4,reps:30,weight:0,notes:'Front, back, each side'},
-    {name:'Steering Grip Squeeze',sets:4,reps:20,weight:0,notes:'Use grip trainer'},
-    {name:'Seated Core Brace',sets:4,reps:45,weight:0,notes:'Match kart seating position'},
-    {name:'Dead Hang',sets:3,reps:45,weight:0,notes:'Build up gradually'},
-    {name:'Wrist Roller',sets:3,reps:12,weight:5,notes:'Both directions'},
-    {name:'Kart Reaction Drill',sets:5,reps:10,weight:0,notes:'Phone reaction app'},
-   ]},
-  {id:7, name:'MX Conditioning', owner:'Mike', sharedWith:['Michelle','Amy'], muscles:['Motocross'], color:'#FF8C42',
-   exercises:[
-    {name:'Hip-Safe Box Step Up',sets:4,reps:12,weight:15,notes:'Drive through heel'},
-    {name:'Pull Up — Wide Grip',sets:4,reps:8,weight:0,notes:'Full ROM'},
-    {name:'Motocross Plank',sets:4,reps:60,weight:0,notes:'Stay tight throughout'},
-    {name:'Grip Endurance Hold',sets:3,reps:60,weight:20,notes:'Dumbbells at sides'},
-    {name:'MX Conditioning Run',sets:1,reps:20,weight:0,notes:'1min hard / 1min easy'},
-    {name:'Single Leg RDL',sets:3,reps:10,weight:15,notes:'Control the descent'},
-   ]},
-  {id:8, name:'MTB Strength & Endurance', owner:'Amy', sharedWith:['Mike','Michelle'], muscles:['Mountain Bike'], color:'#6C63FF',
-   exercises:[
-    {name:'MTB Zone 2 Ride',sets:1,reps:45,weight:0,notes:'Keep HR in Zone 2'},
-    {name:'Goblet Squat (shallow)',sets:3,reps:12,weight:20,notes:'Limited depth for Mike'},
-    {name:'Push Up — Wide',sets:3,reps:15,weight:0,notes:'Descending position'},
-    {name:'Copenhagen Plank',sets:3,reps:30,weight:0,notes:'Each side'},
-    {name:'Calf Raise — Single Leg',sets:4,reps:20,weight:0,notes:'Slow and controlled'},
-    {name:'MTB Interval Ride',sets:6,reps:3,weight:0,notes:'3 min hard / 2 min easy'},
-   ]},
-  // ── PREBUILT 1-HOUR ROUTINES ──
-  {id:101, name:'1hr — Push Day (Chest & Shoulders)', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Chest','Shoulders','Arms'], color:'#C8F135', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Bench Press',sets:4,reps:8,weight:80,notes:'Warm up first — 2 light sets',superset:null},
-    {name:'Incline Press',sets:4,reps:10,weight:60,notes:'Superset with lateral raise',superset:'Lateral Raise'},
-    {name:'Lateral Raise',sets:4,reps:15,weight:10,notes:'No rest between — superset',superset:'Incline Press'},
-    {name:'Cable Fly',sets:3,reps:12,weight:20,notes:'Squeeze at centre',superset:null},
-    {name:'Overhead Press',sets:3,reps:10,weight:50,notes:'Superset with front raise',superset:'Front Raise'},
-    {name:'Front Raise',sets:3,reps:12,weight:10,notes:'No rest — superset',superset:'Overhead Press'},
-    {name:'Tricep Pushdown',sets:3,reps:15,weight:25,notes:'Drop set on last set',superset:null},
-   ]},
-  {id:102, name:'1hr — Pull Day (Back & Biceps)', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Back','Arms'], color:'#6C63FF', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Pull Up',sets:4,reps:8,weight:0,notes:'Full ROM — dead hang at bottom',superset:null},
-    {name:'Seated Row',sets:4,reps:12,weight:55,notes:'Superset with face pull',superset:'Face Pull'},
-    {name:'Face Pull',sets:4,reps:15,weight:25,notes:'No rest — superset',superset:'Seated Row'},
-    {name:'Lat Pulldown',sets:3,reps:12,weight:60,notes:'Wide grip',superset:null},
-    {name:'Single Arm Row',sets:3,reps:12,weight:35,notes:'Each side',superset:null},
-    {name:'Barbell Curl',sets:3,reps:12,weight:30,notes:'Superset with hammer curl',superset:'Hammer Curl'},
-    {name:'Hammer Curl',sets:3,reps:12,weight:14,notes:'No rest — superset',superset:'Barbell Curl'},
-   ]},
-  {id:103, name:'1hr — Hip-Friendly Leg Day (Mike)', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Legs','Core'], color:'#FF8C42', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Seated Leg Press (shallow)',sets:4,reps:12,weight:100,notes:'Limit depth — hip safe',superset:null},
-    {name:'Romanian Deadlift',sets:4,reps:12,weight:60,notes:'Superset with leg curl',superset:'Leg Curl'},
-    {name:'Leg Curl',sets:4,reps:12,weight:40,notes:'No rest — superset',superset:'Romanian Deadlift'},
-    {name:'Leg Extension',sets:3,reps:15,weight:45,notes:'Superset with calf raise',superset:'Calf Raise'},
-    {name:'Calf Raise',sets:3,reps:20,weight:60,notes:'No rest — superset',superset:'Leg Extension'},
-    {name:'Plank',sets:3,reps:60,weight:0,notes:'Rest 60s between sets',superset:null},
-    {name:'Ab Rollout',sets:3,reps:10,weight:0,notes:'Slow and controlled',superset:null},
-   ]},
-  {id:104, name:'1hr — Full Body Power', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Full Body'], color:'#FF4D4D', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Bench Press',sets:4,reps:8,weight:75,notes:'Compound opener',superset:null},
-    {name:'Pull Up',sets:4,reps:8,weight:0,notes:'Superset with bench',superset:'Bench Press'},
-    {name:'Seated Leg Press (shallow)',sets:4,reps:12,weight:100,notes:'Hip safe depth',superset:null},
-    {name:'Overhead Press',sets:3,reps:10,weight:50,notes:'Superset with seated row',superset:'Seated Row'},
-    {name:'Seated Row',sets:3,reps:12,weight:55,notes:'No rest — superset',superset:'Overhead Press'},
-    {name:'Farmer Carry',sets:3,reps:40,weight:28,notes:'40 metres — heavy',superset:null},
-    {name:'Plank',sets:3,reps:60,weight:0,notes:'Finish strong',superset:null},
-   ]},
-  {id:105, name:'1hr — Cardio & Core Burn', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Cardio','Core'], color:'#FF8C42', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Cross Trainer',sets:1,reps:10,weight:0,notes:'10 min warm up — Zone 2',superset:null},
-    {name:'Bike Intervals',sets:8,reps:1,weight:0,notes:'30s max / 90s rest',superset:null},
-    {name:'Rowing Machine',sets:1,reps:10,weight:0,notes:'Steady 10 mins',superset:null},
-    {name:'Plank',sets:3,reps:60,weight:0,notes:'Superset with leg raise',superset:'Leg Raise'},
-    {name:'Leg Raise',sets:3,reps:15,weight:0,notes:'No rest — superset',superset:'Plank'},
-    {name:'Russian Twist',sets:3,reps:20,weight:10,notes:'Superset with cable crunch',superset:'Cable Crunch'},
-    {name:'Cable Crunch',sets:3,reps:15,weight:30,notes:'No rest — superset',superset:'Russian Twist'},
-   ]},
-  {id:106, name:'1hr — Michelle Run & Strength', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Cardio','Legs','Core'], color:'#FF8C42', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Treadmill Run',sets:1,reps:20,weight:0,notes:'20 min Zone 2 run — easy pace',superset:null},
-    {name:'Romanian Deadlift',sets:4,reps:12,weight:50,notes:'Post run leg work',superset:null},
-    {name:'Leg Curl',sets:3,reps:12,weight:35,notes:'Superset with calf raise',superset:'Calf Raise'},
-    {name:'Calf Raise',sets:3,reps:20,weight:0,notes:'No rest — superset',superset:'Leg Curl'},
-    {name:'Plank',sets:3,reps:60,weight:0,notes:'Superset with Russian twist',superset:'Russian Twist'},
-    {name:'Russian Twist',sets:3,reps:20,weight:8,notes:'No rest — superset',superset:'Plank'},
-   ]},
-  {id:107, name:"1hr — Amy's Strength Builder", owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Full Body','Core'], color:'#6C63FF', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Pull Up',sets:4,reps:8,weight:0,notes:'Full ROM',superset:null},
-    {name:'Bench Press',sets:4,reps:10,weight:55,notes:'Superset with pull up',superset:'Pull Up'},
-    {name:'Battle Ropes',sets:5,reps:30,weight:0,notes:'30s hard — 60s rest',superset:null},
-    {name:'Farmer Carry',sets:4,reps:40,weight:20,notes:'Heavy — 40 metres',superset:null},
-    {name:'Ab Rollout',sets:3,reps:12,weight:0,notes:'Superset with leg raise',superset:'Leg Raise'},
-    {name:'Leg Raise',sets:3,reps:15,weight:0,notes:'No rest — superset',superset:'Ab Rollout'},
-    {name:'Copenhagen Plank',sets:3,reps:30,weight:0,notes:'Each side',superset:null},
-   ]},
-  {id:108, name:'1hr — Pool Swim Session', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Swimming'], color:'#00BCD4', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Freestyle Swim',sets:1,reps:10,weight:0,notes:'Easy warm up — 10 mins steady',superset:null},
-    {name:'Swim Intervals',sets:8,reps:1,weight:0,notes:'50m hard / 30s rest — push it',superset:null},
-    {name:'Pull Buoy Drill',sets:4,reps:50,weight:0,notes:'Arms only — focus on catch',superset:null},
-    {name:'Kick Board Drill',sets:4,reps:50,weight:0,notes:'Legs only — flutter kick',superset:null},
-    {name:'Backstroke',sets:1,reps:10,weight:0,notes:'Cool down — easy 10 mins',superset:null},
-   ]},
-  {id:109, name:'1hr — Walk & Treadmill Mix', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Walking','Cardio'], color:'#4CAF50', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Outdoor Walk',sets:1,reps:15,weight:0,notes:'Brisk warm up walk — 15 mins',superset:null},
-    {name:'Treadmill Intervals',sets:8,reps:1,weight:0,notes:'1 min run / 1 min walk',superset:null},
-    {name:'Incline Treadmill Walk',sets:1,reps:15,weight:0,notes:'12% incline — steady pace',superset:null},
-    {name:'Power Walk',sets:1,reps:10,weight:0,notes:'Arms pumping — fast finish',superset:null},
-   ]},
-  {id:110, name:'Active Recovery — Dog Walk & Swim', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Walking','Swimming'], color:'#8BC34A', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Dog Walk',sets:1,reps:30,weight:0,notes:'Easy pace — Zone 1 recovery',superset:null},
-    {name:'Freestyle Swim',sets:1,reps:20,weight:0,notes:'Gentle swim — stay in Zone 2',superset:null},
-    {name:'Breaststroke',sets:1,reps:10,weight:0,notes:'Cool down — very easy',superset:null},
-   ]},
-  {id:111, name:'1hr — Farmers Carry Strength', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Farmer Carries','Core'], color:'#FF6F00', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Farmer Carry',sets:4,reps:40,weight:32,notes:'Warm up — build weight each set',superset:null},
-    {name:'Single Arm Farmer Carry',sets:4,reps:40,weight:24,notes:'Superset with suitcase carry — swap hands',superset:'Suitcase Carry'},
-    {name:'Suitcase Carry',sets:4,reps:40,weight:28,notes:'No rest — superset',superset:'Single Arm Farmer Carry'},
-    {name:'Overhead Carry',sets:3,reps:30,weight:20,notes:'Strict lockout overhead — do not lean',superset:null},
-    {name:'Trap Bar Carry',sets:3,reps:50,weight:80,notes:'Go as heavy as you dare',superset:null},
-    {name:'Carry Medley',sets:1,reps:5,weight:0,notes:'Finisher — 5 full rounds to finish',superset:null},
-   ]},
-  {id:112, name:'1hr — Medicine Ball Power', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Medicine Ball','Core'], color:'#E91E63', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Med Ball Slam',sets:4,reps:12,weight:10,notes:'Max height overhead — slam as hard as possible',superset:null},
-    {name:'Med Ball Chest Pass',sets:3,reps:15,weight:8,notes:'Superset with rotational throw',superset:'Med Ball Rotational Throw'},
-    {name:'Med Ball Rotational Throw',sets:3,reps:12,weight:8,notes:'No rest — alternate sides each set',superset:'Med Ball Chest Pass'},
-    {name:'Med Ball Dead Ball Carry',sets:4,reps:40,weight:15,notes:'Bear hug — go heavy',superset:null},
-    {name:'Med Ball Russian Twist',sets:3,reps:20,weight:8,notes:'Superset with med ball crunch',superset:'Med Ball Crunch'},
-    {name:'Med Ball Crunch',sets:3,reps:20,weight:8,notes:'No rest — straight into it',superset:'Med Ball Russian Twist'},
-    {name:'Med Ball Burpee Slam',sets:4,reps:8,weight:8,notes:'Finisher — all out effort',superset:null},
-   ]},
-  {id:113, name:'1hr — Dumbbell Only', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Dumbbell'], color:'#7B1FA2', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Dumbbell Complex',sets:4,reps:6,weight:20,notes:'6 reps each movement — do not put dumbbells down',superset:null},
-    {name:'Dumbbell Floor Press',sets:4,reps:12,weight:30,notes:'Superset with renegade row',superset:'Dumbbell Renegade Row'},
-    {name:'Dumbbell Renegade Row',sets:4,reps:10,weight:20,notes:'No rest — keep hips square',superset:'Dumbbell Floor Press'},
-    {name:'Dumbbell Romanian Deadlift',sets:4,reps:12,weight:25,notes:'Hip hinge — feel the hamstring stretch',superset:null},
-    {name:'Dumbbell Arnold Press',sets:3,reps:12,weight:18,notes:'Superset with lateral raise 21s',superset:'Dumbbell Lateral Raise 21s'},
-    {name:'Dumbbell Lateral Raise 21s',sets:3,reps:21,weight:8,notes:'No rest — burn them out',superset:'Dumbbell Arnold Press'},
-    {name:'Dumbbell Farmers Walk',sets:4,reps:40,weight:28,notes:'Finisher — go as heavy as possible',superset:null},
-   ]},
-  {id:114, name:'1hr — Old School Iron', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Old School','Full Body'], color:'#5D4037', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Barbell Complex',sets:4,reps:6,weight:40,notes:'Row, clean, press, squat — bar never touches floor',superset:null},
-    {name:'Battle Rope Waves',sets:5,reps:30,weight:0,notes:'Superset with bear crawl',superset:'Bear Crawl'},
-    {name:'Bear Crawl',sets:5,reps:20,weight:0,notes:'No rest — 20 metres down and back',superset:'Battle Rope Waves'},
-    {name:'Prowler Push',sets:6,reps:20,weight:60,notes:'Heavy — 20 metres each set',superset:null},
-    {name:'Sandbag Shouldering',sets:4,reps:10,weight:30,notes:'Superset with good morning',superset:'Good Morning'},
-    {name:'Good Morning',sets:4,reps:12,weight:40,notes:'No rest — hinge slow and controlled',superset:'Sandbag Shouldering'},
-    {name:'Barbell Rollout',sets:3,reps:10,weight:20,notes:'Finisher — slow and brutal',superset:null},
-   ]},
-  {id:115, name:'1hr — Strongman Medley', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Farmer Carries','Old School','Medicine Ball'], color:'#BF360C', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Farmer Carry',sets:4,reps:40,weight:32,notes:'Start heavy — sets of 40 metres',superset:null},
-    {name:'Med Ball Slam',sets:4,reps:10,weight:10,notes:'Superset with sandbag carry',superset:'Sandbag Carry'},
-    {name:'Sandbag Carry',sets:4,reps:40,weight:30,notes:'No rest — bear hug 40 metres',superset:'Med Ball Slam'},
-    {name:'Prowler Push',sets:4,reps:20,weight:60,notes:'Heavy sled 20 metres',superset:null},
-    {name:'Med Ball Rotational Throw',sets:3,reps:12,weight:8,notes:'Superset with overhead carry',superset:'Overhead Carry'},
-    {name:'Overhead Carry',sets:3,reps:30,weight:20,notes:'No rest — strict lockout',superset:'Med Ball Rotational Throw'},
-    {name:'Carry Medley',sets:1,reps:3,weight:0,notes:'3 full rounds to finish — empty the tank',superset:null},
-   ]},
-  {id:119, name:'1hr — Barbell Strength', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Barbell'], color:'#C8F135', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Barbell Bench Press',sets:4,reps:8,weight:80,notes:'Warm up first with 2 light sets',superset:null},
-    {name:'Barbell Bent Over Row',sets:4,reps:8,weight:70,notes:'Superset with bench press',superset:'Barbell Bench Press'},
-    {name:'Barbell Overhead Press',sets:3,reps:8,weight:50,notes:'Strict form — brace core',superset:null},
-    {name:'Barbell Romanian Deadlift',sets:4,reps:10,weight:80,notes:'Hip hinge — feel the hamstring',superset:null},
-    {name:'Barbell Hip Thrust',sets:4,reps:12,weight:80,notes:'Superset with RDL',superset:'Barbell Romanian Deadlift'},
-    {name:'Barbell Curl',sets:3,reps:12,weight:35,notes:'Superset with skull crusher',superset:'Barbell Skull Crusher'},
-    {name:'Barbell Skull Crusher',sets:3,reps:12,weight:30,notes:'No rest — superset',superset:'Barbell Curl'},
-   ]},
-  {id:120, name:'1hr — Kettlebell Full Body', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Kettlebell'], color:'#FF6F00', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'KB Goblet Squat',sets:4,reps:12,weight:20,notes:'Warm up — controlled depth',superset:null},
-    {name:'KB Swing — Two Hand',sets:4,reps:15,weight:20,notes:'Explosive — drive hips forward',superset:null},
-    {name:'KB Clean & Press',sets:4,reps:8,weight:16,notes:'Superset with KB row',superset:'KB Row'},
-    {name:'KB Row',sets:4,reps:12,weight:20,notes:'No rest — superset',superset:'KB Clean & Press'},
-    {name:'KB Turkish Get Up',sets:3,reps:5,weight:16,notes:'Each side — slow and controlled',superset:null},
-    {name:'KB Farmer Carry',sets:4,reps:40,weight:24,notes:'Heavy — 40 metres each set',superset:null},
-    {name:'KB Circuit',sets:3,reps:1,weight:20,notes:'Finisher — 5 exercises, no rest between',superset:null},
-   ]},
-  {id:121, name:'1hr — Core Destroyer', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Core'], color:'#E91E63', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Plank',sets:4,reps:60,weight:0,notes:'Superset with dead bug',superset:'Dead Bug'},
-    {name:'Dead Bug',sets:4,reps:10,weight:0,notes:'No rest — slow and controlled',superset:'Plank'},
-    {name:'Hanging Leg Raise',sets:3,reps:15,weight:0,notes:'Full hang — legs straight',superset:null},
-    {name:'Ab Rollout',sets:3,reps:12,weight:0,notes:'Superset with cable crunch',superset:'Cable Crunch'},
-    {name:'Cable Crunch',sets:3,reps:15,weight:35,notes:'No rest — superset',superset:'Ab Rollout'},
-    {name:'Pallof Press',sets:3,reps:12,weight:20,notes:'Each side — anti-rotation',superset:null},
-    {name:'Dragon Flag',sets:3,reps:8,weight:0,notes:'Finisher — slow lower, controlled',superset:null},
-   ]},
-  {id:122, name:'1hr — Calisthenics Strength', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Calisthenics'], color:'#00BCD4', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Pull Up',sets:5,reps:8,weight:0,notes:'Dead hang — full ROM each rep',superset:null},
-    {name:'Dip',sets:5,reps:12,weight:0,notes:'Superset with pull up',superset:'Pull Up'},
-    {name:'Pike Push Up',sets:4,reps:12,weight:0,notes:'Shoulder strength — slow down',superset:null},
-    {name:'L-Sit',sets:4,reps:20,weight:0,notes:'Superset with toes to bar',superset:'Toes to Bar'},
-    {name:'Toes to Bar',sets:4,reps:12,weight:0,notes:'No rest — control the swing',superset:'L-Sit'},
-    {name:'Muscle Up',sets:3,reps:4,weight:0,notes:'Advanced — explosive pull into press',superset:null},
-    {name:'Handstand Hold',sets:4,reps:30,weight:0,notes:'Finisher — wall supported',superset:null},
-   ]},
-  {id:123, name:'1hr — Boxing Conditioning', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Boxing'], color:'#FF4D4D', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Skipping Rounds',sets:3,reps:3,weight:0,notes:'3 x 3 min rounds — warm up',superset:null},
-    {name:'Shadow Boxing',sets:3,reps:3,weight:0,notes:'3 min rounds — focus on footwork',superset:null},
-    {name:'Heavy Bag Rounds',sets:5,reps:3,weight:0,notes:'3 min rounds — power combinations',superset:null},
-    {name:'Speed Bag',sets:3,reps:2,weight:0,notes:'2 min rounds — rhythm and timing',superset:null},
-    {name:'Pad Work',sets:3,reps:2,weight:0,notes:'2 min rounds with partner',superset:null},
-    {name:'Boxing Circuit',sets:2,reps:1,weight:0,notes:'2 full circuits — finish strong',superset:null},
-   ]},
-  {id:124, name:'1hr — HIIT Burn', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['HIIT','Cardio'], color:'#FF9800', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Dynamic Warm Up',sets:1,reps:10,weight:0,notes:'10 min activation — get loose',superset:null},
-    {name:'Tabata — Bodyweight',sets:8,reps:1,weight:0,notes:'20s on / 10s off — 8 rounds',superset:null},
-    {name:'Assault Bike Intervals',sets:8,reps:1,weight:0,notes:'30s max / 90s rest',superset:null},
-    {name:'Sprint Intervals',sets:8,reps:1,weight:0,notes:'30m sprint — walk back recovery',superset:null},
-    {name:'Jump Rope Intervals',sets:6,reps:1,weight:0,notes:'1 min skip / 30s rest',superset:null},
-    {name:'Box Step HIIT',sets:5,reps:3,weight:0,notes:'Finisher — step at max pace',superset:null},
-   ]},
-  {id:125, name:'1hr — Mobility & Recovery', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Mobility','Yoga'], color:'#8BC34A', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Foam Rolling Session',sets:1,reps:15,weight:0,notes:'15 min — focus on legs and back',superset:null},
-    {name:'Dynamic Warm Up',sets:1,reps:10,weight:0,notes:'Joint circles and activation',superset:null},
-    {name:'Hip Flexor Stretches',sets:3,reps:60,weight:0,notes:'Key for Mike — 60s each side',superset:null},
-    {name:'Shoulder Mobility Drill',sets:2,reps:10,weight:0,notes:'Band dislocations and wall slides',superset:null},
-    {name:'Thoracic Spine Mobility',sets:2,reps:10,weight:0,notes:'Foam roller T-spine extension',superset:null},
-    {name:'Morning Yoga Flow',sets:1,reps:20,weight:0,notes:'20 min yoga to finish',superset:null},
-   ]},
-  {id:116, name:'1hr — Technogym Cardio Circuit', name:'1hr — Technogym Cardio Circuit', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Technogym','Cardio'], color:'#00BCD4', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Technogym Bike Personal — Steady',sets:1,reps:10,weight:0,notes:'10 min warm up — Zone 2, easy pace',superset:null},
-    {name:'Technogym Skillmill — Sprint',sets:6,reps:1,weight:0,notes:'30s max effort / 90s walk recovery',superset:null},
-    {name:'Technogym Artis Synchro — Cross Train',sets:1,reps:10,weight:0,notes:'10 min active recovery — low impact',superset:null},
-    {name:'Technogym Rowing — Intervals',sets:6,reps:1,weight:0,notes:'500m hard / 90s rest',superset:null},
-    {name:'Technogym Bike Personal — Intervals',sets:6,reps:1,weight:0,notes:'Burn Out program — finish strong',superset:null},
-   ]},
-  {id:117, name:'1hr — Technogym Strength Circuit', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Technogym'], color:'#7B1FA2', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Technogym Chest Press',sets:4,reps:10,weight:70,notes:'Superset with lat pulldown',superset:'Technogym Lat Pulldown'},
-    {name:'Technogym Lat Pulldown',sets:4,reps:12,weight:60,notes:'No rest — superset',superset:'Technogym Chest Press'},
-    {name:'Technogym Shoulder Press',sets:3,reps:10,weight:50,notes:'Superset with seated row',superset:'Technogym Seated Row'},
-    {name:'Technogym Seated Row',sets:3,reps:12,weight:55,notes:'No rest — superset',superset:'Technogym Shoulder Press'},
-    {name:'Technogym Leg Press — Shallow',sets:4,reps:12,weight:100,notes:'Hip safe depth — Mike set the stops',superset:null},
-    {name:'Technogym Leg Curl',sets:3,reps:12,weight:45,notes:'Superset with leg extension',superset:'Technogym Leg Extension'},
-    {name:'Technogym Leg Extension',sets:3,reps:15,weight:50,notes:'No rest — superset',superset:'Technogym Leg Curl'},
-   ]},
-  {id:118, name:'1hr — Technogym Hip-Friendly (Mike)', owner:'PREBUILT', sharedWith:['Mike','Michelle','Amy'], muscles:['Technogym','Legs'], color:'#C8F135', prebuilt:true, estMins:60,
-   exercises:[
-    {name:'Technogym Recumbent Bike',sets:1,reps:10,weight:0,notes:'10 min warm up — comfortable seated position',superset:null},
-    {name:'Technogym Leg Press — Shallow',sets:4,reps:12,weight:100,notes:'Stops set to limit hip depth',superset:null},
-    {name:'Technogym Leg Curl',sets:3,reps:12,weight:45,notes:'Superset with leg extension',superset:'Technogym Leg Extension'},
-    {name:'Technogym Leg Extension',sets:3,reps:15,weight:50,notes:'No rest — superset',superset:'Technogym Leg Curl'},
-    {name:'Technogym Abductor Machine',sets:3,reps:15,weight:40,notes:'Outer hip — very comfortable',superset:null},
-    {name:'Technogym Rowing Machine',sets:1,reps:15,weight:0,notes:'15 min cool down row — hip safe',superset:null},
-   ]},
-];
+const ROUTINES = []; // demo routines removed — use Generate or + New
 
 const DEFAULT_SPORT_SESSIONS = [
   {id:'kart', name:'Karting', icon:'🏎️', color:'#C8F135', calPerMin:9,
@@ -2023,6 +1723,26 @@ function getWeekCount(user){
 }
 
 let routines = loadRoutines();
+// One-time cleanup: remove the old pre-seeded demo/prebuilt routines that may be cached
+// on existing devices. Matches only the original seed signature (specific id + name pair),
+// so it never touches anything the user created or generated themselves.
+(function cleanupDemoRoutines(){
+  if(localStorage.getItem('fgym_demos_cleared_v2')==='1') return;
+  // exact (id,name) pairs from the original demo seed
+  const seedPairs = {
+    1:'Upper Body Power', 2:'Mike Hip-Friendly Legs', 3:'Michelle Running Plan',
+    4:"Amy's Full Body", 5:'Cardio Blast', 6:'Kart Fitness — Pre Race',
+    7:'MX Conditioning', 8:'MTB Strength & Endurance'
+  };
+  const before = routines.length;
+  routines = routines.filter(r=>{
+    if(r.prebuilt) return false;                          // drop prebuilt (ids 101-112)
+    if(seedPairs[r.id] && seedPairs[r.id]===r.name) return false; // drop only untouched seeds
+    return true;
+  });
+  if(routines.length!==before) saveRoutines();
+  localStorage.setItem('fgym_demos_cleared_v2','1');
+})();
 
 // ══════════════════ INIT ══════════════════
 document.addEventListener('DOMContentLoaded', () => {
@@ -2319,9 +2039,10 @@ function duplicateRoutine(id){
 }
 
 function routineCard(r, isMine){
-  const totalSets = r.exercises.reduce((a,e)=>a+e.sets,0);
-  const estMin = Math.round(r.exercises.reduce((a,e)=>a+e.sets*2.5,0));
-  const sharedNames = isMine ? r.sharedWith.join(', ') : r.owner;
+  const exercises = r.exercises || [];
+  const totalSets = exercises.reduce((a,e)=>a+(e.sets||0),0);
+  const estMin = Math.round(exercises.reduce((a,e)=>a+(e.sets||0)*2.5,0));
+  const sharedNames = isMine ? ((r.sharedWith||[]).join(', ') || 'just you') : (r.owner||'family');
   const sharedLabel = isMine ? 'Shared with '+sharedNames : 'From '+sharedNames;
   return `<div class="card" style="margin-bottom:12px;border-left:3px solid ${r.color};cursor:pointer" onclick="openRoutineDetail(${r.id})">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
@@ -2561,6 +2282,12 @@ let genState = { muscles:['Shoulders'], difficulty:'intermediate', minutes:60, h
 
 // Rest rail values (seconds) for the "set all to" control
 const REST_RAIL = [15,30,45,60,90,100,120,140,160,180];
+
+// Format a rest time cleanly: whole minutes as "Xmin", otherwise seconds.
+function fmtRest(secs){
+  if(secs >= 60 && secs % 60 === 0) return (secs/60) + 'min';
+  return secs + 's';
+}
 
 // Pairing combos by mode. Each combo => one tap selects all its groups.
 const PAIR_COMBOS = {
@@ -2839,7 +2566,7 @@ function renderGeneratedWorkouts(){
         <span style="font-size:10px;color:var(--muted)">nudge all ±15s</span>
         <select onchange="setAllRest(${wi},this.value);this.selectedIndex=0" style="margin-left:auto;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:5px 6px">
           <option value="">set all to…</option>
-          ${REST_RAIL.map(s=>`<option value="${s}">${s>=60?(s/60+'').replace(/\\.0$/,'')+'min':s+'s'}</option>`).join('')}
+          ${REST_RAIL.map(s=>`<option value="${s}">${fmtRest(s)}</option>`).join('')}
         </select>
       </div>
       <div style="border-top:1px solid var(--border);padding-top:8px" id="gen-exlist-${wi}">
@@ -2851,7 +2578,7 @@ function renderGeneratedWorkouts(){
             <span style="color:var(--muted);font-size:11px;width:14px">${i+1}</span>
             <div style="flex:1;min-width:0">
               <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ex.name}</div>
-              <div style="font-size:10px;color:var(--muted)">${subMuscle(ex)}${isCompound(ex)?' · compound':''} · <span onclick="nudgeOneRest(${wi},${i},-15)" style="cursor:pointer;color:var(--muted)">◂</span> rest <span style="color:#4FC3F7;font-weight:700">${ex.restSec>=60?(ex.restSec/60+'').replace(/\.0$/,'')+'min':ex.restSec+'s'}</span> <span onclick="nudgeOneRest(${wi},${i},15)" style="cursor:pointer;color:var(--muted)">▸</span></div>
+              <div style="font-size:10px;color:var(--muted)">${subMuscle(ex)}${isCompound(ex)?' · compound':''} · <span onclick="nudgeOneRest(${wi},${i},-15)" style="cursor:pointer;color:var(--muted)">◂</span> rest <span style="color:#4FC3F7;font-weight:700">${fmtRest(ex.restSec)}</span> <span onclick="nudgeOneRest(${wi},${i},15)" style="cursor:pointer;color:var(--muted)">▸</span></div>
             </div>
             <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
               <button onclick="editGenSets(${wi},${i},-1)" style="width:22px;height:22px;border-radius:5px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:800">−</button>
@@ -3022,16 +2749,17 @@ let previewState = null;
 function previewRunThrough(wi){
   const w = generatedWorkouts[wi];
   if(!w) return;
-  previewState = { workout:w, idx:0 };
+  previewState = { workout:w, idx:0, playing:false };
   renderPreview();
   openModal('modal-preview');
 }
+let previewTimer = null;
 function renderPreview(){
   if(!previewState) return;
-  const { workout, idx } = previewState;
+  const { workout, idx, playing } = previewState;
   const ex = workout.exercises[idx];
   const total = workout.exercises.length;
-  const restLabel = ex.restSec>=60 ? ((ex.restSec/60+'').replace(/\.0$/,'')+' min') : ex.restSec+'s';
+  const restLabel = fmtRest(ex.restSec);
   document.getElementById('preview-body').innerHTML = `
     <div style="text-align:center">
       <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Exercise ${idx+1} of ${total}</div>
@@ -3052,18 +2780,56 @@ function renderPreview(){
         </div>
       </div>
       ${ex.desc?`<div style="font-size:13px;color:var(--muted);background:var(--soft);border-radius:10px;padding:10px;margin-bottom:14px">${ex.desc}</div>`:''}
-      ${ex.video?`<a href="${ex.video}" target="_blank" style="display:inline-block;color:var(--lime);font-size:12px;text-decoration:underline;margin-bottom:14px">▶ Watch form video</a>`:''}
+      ${ex.video?`<a href="${ex.video}" target="_blank" style="display:inline-block;color:var(--lime);font-size:12px;text-decoration:underline;margin-bottom:14px">▶ Watch form video</a>`:'<div style="font-size:11px;color:var(--muted);margin-bottom:14px;font-style:italic">Form video will appear here once your animation library is connected</div>'}
     </div>
-    <div style="display:flex;gap:8px;margin-top:8px">
+    <!-- Auto-play toggle -->
+    <button onclick="togglePreviewPlay()" style="width:100%;background:${playing?'rgba(255,77,77,.12)':'rgba(200,241,53,.12)'};color:${playing?'var(--red)':'var(--lime)'};border:1px solid ${playing?'rgba(255,77,77,.3)':'rgba(200,241,53,.3)'};border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-bottom:8px">${playing?'⏸ Pause auto-play':'▶ Auto-play through workout'}</button>
+    <div style="display:flex;gap:8px">
       <button onclick="previewNav(-1)" ${idx===0?'disabled':''} style="flex:1;background:var(--soft);color:${idx===0?'var(--border)':'var(--text)'};border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:700">← Prev</button>
       ${idx<total-1
-        ? `<button onclick="previewNav(1)" style="flex:2;background:var(--lime);color:#050508;border-radius:10px;padding:12px;font-size:14px;font-weight:800">Next →</button>`
-        : `<button onclick="closeModal('modal-preview')" style="flex:2;background:var(--lime);color:#050508;border-radius:10px;padding:12px;font-size:14px;font-weight:800">Got it ✓</button>`}
+        ? `<button onclick="previewNav(1)" style="flex:2;background:var(--lime);color:#050508;border-radius:10px;padding:12px;font-size:14px;font-weight:800">Skip → Next</button>`
+        : `<button onclick="closePreview()" style="flex:2;background:var(--lime);color:#050508;border-radius:10px;padding:12px;font-size:14px;font-weight:800">Got it ✓</button>`}
     </div>
     <!-- progress dots -->
     <div style="display:flex;gap:4px;justify-content:center;margin-top:12px">
-      ${workout.exercises.map((_,i)=>`<div style="width:7px;height:7px;border-radius:50%;background:${i===idx?'var(--lime)':'var(--border)'}"></div>`).join('')}
+      ${workout.exercises.map((_,i)=>`<div onclick="previewGoto(${i})" style="width:9px;height:9px;border-radius:50%;background:${i===idx?'var(--lime)':'var(--border)'};cursor:pointer"></div>`).join('')}
     </div>`;
+}
+function togglePreviewPlay(){
+  if(!previewState) return;
+  previewState.playing = !previewState.playing;
+  if(previewState.playing){
+    renderPreview();
+    schedulePreviewAdvance();
+  } else {
+    if(previewTimer){ clearTimeout(previewTimer); previewTimer=null; }
+    renderPreview();
+  }
+}
+function schedulePreviewAdvance(){
+  if(previewTimer){ clearTimeout(previewTimer); }
+  previewTimer = setTimeout(()=>{
+    if(!previewState || !previewState.playing) return;
+    if(previewState.idx < previewState.workout.exercises.length - 1){
+      previewState.idx++;
+      renderPreview();
+      schedulePreviewAdvance();
+    } else {
+      previewState.playing = false; // reached the end
+      renderPreview();
+    }
+  }, 4000); // 4s per exercise (will sync to video length once videos exist)
+}
+function previewGoto(i){
+  if(!previewState) return;
+  previewState.idx = i;
+  renderPreview();
+  if(previewState.playing) schedulePreviewAdvance();
+}
+function closePreview(){
+  if(previewTimer){ clearTimeout(previewTimer); previewTimer=null; }
+  if(previewState) previewState.playing = false;
+  closeModal('modal-preview');
 }
 function previewNav(dir){
   if(!previewState) return;
@@ -3071,6 +2837,7 @@ function previewNav(dir){
   if(n<0 || n>=previewState.workout.exercises.length) return;
   previewState.idx = n;
   renderPreview();
+  if(previewState.playing) schedulePreviewAdvance(); // reset timer after manual skip
 }
 
 // ══════════════════ GUIDED FULL-SCREEN RUNNER ══════════════════
