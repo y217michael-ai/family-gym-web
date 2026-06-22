@@ -219,8 +219,9 @@ if('serviceWorker' in navigator){
       </div>
     </div>
     <div id="my-routines-list"></div>
-    <div style="font-size:16px;font-weight:800;margin:14px 0 10px">Shared With Me</div>
-    <div id="shared-routines-list"></div>
+    <div style="font-size:16px;font-weight:800;margin:14px 0 10px">🔗 DM Shared Workouts</div>
+    <div id="shared-workouts-list"></div>
+    <div id="shared-routines-list" style="display:none"></div>
   </div>
 
   <!-- MY OWN VIEW — personal routines only -->
@@ -829,6 +830,45 @@ if('serviceWorker' in navigator){
 <!-- ══════════════════ MODALS ══════════════════ -->
 
 <!-- Planner Pick Routine Modal -->
+<!-- Planner: add a meal to a day -->
+<div class="modal-overlay" id="modal-plan-addmeal">
+<div class="modal" style="max-height:90vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:18px;font-weight:800">🍽️ Add a meal <span id="pam-day" style="font-size:13px;color:var(--muted);font-weight:600"></span></div>
+    <button onclick="closeModal('modal-plan-addmeal')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="display:flex;gap:6px;margin:10px 0">
+    <button onclick="pamSource='mine';renderPamList()" id="pam-s-mine" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--lime);background:rgba(57,191,91,.12);color:var(--lime)">My Meals</button>
+    <button onclick="pamSource='shared';renderPamList()" id="pam-s-shared" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">DM Shared</button>
+    <button onclick="pamSource='ai';openPamAi()" id="pam-s-ai" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">✨ AI</button>
+  </div>
+  <input class="inp" id="pam-search" placeholder="Search meals…" oninput="renderPamList()" style="margin-bottom:8px">
+  <div id="pam-list" style="max-height:50vh;overflow-y:auto"></div>
+</div>
+</div>
+
+<!-- Planner: copy a day to other days -->
+<div class="modal-overlay" id="modal-copy-day">
+<div class="modal" style="max-width:400px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:18px;font-weight:800">⧉ Copy <span id="cpd-from" style="color:var(--lime)">day</span> to…</div>
+    <button onclick="closeModal('modal-copy-day')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin:6px 0 12px">Copies the workout and all meals from this day onto the days you tick. Overwrites those days.</div>
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <button onclick="cpdQuick('weekdays')" style="flex:1;font-size:11px;font-weight:700;padding:6px;border-radius:7px;border:1px solid var(--border);background:var(--soft);color:var(--lime)">Mon–Fri</button>
+    <button onclick="cpdQuick('all')" style="flex:1;font-size:11px;font-weight:700;padding:6px;border-radius:7px;border:1px solid var(--border);background:var(--soft);color:var(--lime)">All 7</button>
+    <button onclick="cpdQuick('none')" style="flex:1;font-size:11px;font-weight:700;padding:6px;border-radius:7px;border:1px solid var(--border);background:var(--soft);color:var(--muted)">Clear</button>
+  </div>
+  <div id="cpd-days" style="margin-bottom:12px"></div>
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+    <button class="btn-secondary" onclick="closeModal('modal-copy-day')">Cancel</button>
+    <button class="btn-primary" onclick="confirmCopyDay()">Copy to selected</button>
+  </div>
+</div>
+</div>
+
+<!-- Planner: add a meal to a day -->
 <div class="modal-overlay" id="modal-plan-pick">
 <div class="modal">
   <div style="font-size:20px;font-weight:800;margin-bottom:6px">Assign Workout</div>
@@ -3007,10 +3047,14 @@ function renderHome(){
       <div style="color:var(--muted);font-size:14px">No routines match this filter</div>
     </div>`;
 
-  // Shared routines
+  // Shared routines (legacy per-person — hidden)
   const sharedList = document.getElementById('shared-routines-list');
   sharedList.innerHTML = filteredShared.length ? filteredShared.map(r=>routineCard(r,false)).join('') :
     `<div style="color:var(--muted);font-size:14px;padding:12px 0">${shared.length ? 'None match this filter' : 'Nothing shared with you yet.'}</div>`;
+
+  // DM Shared workouts pool
+  const sharedWorkoutsEl = document.getElementById('shared-workouts-list');
+  if(sharedWorkoutsEl) sharedWorkoutsEl.innerHTML = renderSharedWorkouts();
 
   // Prebuilt routines
   renderPrebuilt();
@@ -3307,7 +3351,7 @@ function routineCardMine(r){
     </div>
     <div style="display:flex;gap:7px;padding-top:10px;border-top:1px solid var(--border)">
       <button onclick="startWorkout(${r.id})" style="flex:2;background:transparent;color:${r.color};border:1px solid ${r.color};border-radius:9px;padding:8px;font-size:13px;font-weight:800">▶ Start</button>
-      <button onclick="openShareRoutine(${r.id})" style="flex:1;background:rgba(108,99,255,.15);color:var(--purple);border:1px solid rgba(108,99,255,.35);border-radius:9px;padding:8px;font-size:13px;font-weight:700" title="Share">↗ Share</button>
+      <button onclick="pushWorkoutToShared(${r.id})" style="flex:1;background:rgba(57,191,91,.12);color:var(--lime);border:1px solid rgba(57,191,91,.3);border-radius:9px;padding:8px;font-size:13px;font-weight:700" title="Add to DM Shared">🔗</button>
       <button onclick="editRoutine(${r.id})" style="flex:1;background:var(--soft);color:var(--text);border-radius:9px;padding:8px;font-size:13px;font-weight:700;border:1px solid var(--border)">Edit</button>
       <button onclick="deleteRoutine(${r.id})" style="flex:1;background:rgba(255,77,77,.12);color:var(--red);border-radius:9px;padding:8px;font-size:13px;font-weight:700;border:1px solid rgba(255,77,77,.25)">✕</button>
     </div>
@@ -3364,6 +3408,76 @@ function duplicateRoutine(id){
   saveRoutines();
   renderHome();
   toast('Routine duplicated!');
+}
+
+// ── Workout sharing to DM Shared pool (mirrors meals) ──
+function pushWorkoutToShared(id){
+  const r = routines.find(x=>x.id===id); if(!r) return;
+  if(familyPool('workouts').some(x=>x.name===r.name && x.addedBy===activeUser)){ toast('Already in DM Shared'); return; }
+  // store a clean copy of the routine
+  const clean = { name:r.name, muscles:[...(r.muscles||[])], color:r.color, structure:r.structure||'straight',
+    exercises:(r.exercises||[]).map(e=>({...e})), warmup:r.warmup||null, cooldown:r.cooldown||null, equipment:[...(r.equipment||[])] };
+  pushToFamily('workouts', clean);
+  toast('Added to DM Shared 🔗');
+  renderHome();
+}
+function saveSharedWorkoutToMine(i){
+  const w = familyPool('workouts')[i]; if(!w) return;
+  const copy = JSON.parse(JSON.stringify(w));
+  delete copy.familyId; delete copy.addedAt;
+  const colors = {Mike:'#39BF5B',Michelle:'#FF8C42',Amy:'#6C63FF'};
+  routines.push({ ...copy, id:Date.now(), owner:activeUser, sharedWith:[], color:colors[activeUser]||copy.color, sharedFrom:w.addedBy });
+  saveRoutines();
+  toast('Saved to your routines ⭐');
+  renderHome();
+}
+function startSharedWorkout(i){
+  const w = familyPool('workouts')[i]; if(!w) return;
+  // launch directly without saving — build a transient routine
+  const colors = {Mike:'#39BF5B',Michelle:'#FF8C42',Amy:'#6C63FF'};
+  const temp = { ...JSON.parse(JSON.stringify(w)), id:'shared_'+Date.now(), owner:w.addedBy, color:colors[activeUser]||w.color };
+  routines.push(temp);
+  saveRoutines();
+  startWorkout(temp.id);
+}
+function deleteSharedWorkout(i){
+  const w = familyPool('workouts')[i]; if(!w) return;
+  if(w.addedBy!==activeUser){ toast('Only the person who shared it can remove it'); return; }
+  if(!confirm('Remove "'+w.name+'" from DM Shared for everyone?')) return;
+  removeFromFamily('workouts', w.familyId);
+  renderHome();
+  toast('Removed from DM Shared');
+}
+function renderSharedWorkouts(){
+  const pool = familyPool('workouts');
+  if(!pool.length){
+    return `<div style="text-align:center;padding:24px 16px;color:var(--muted)">
+      <div style="font-size:32px;margin-bottom:8px">🔗</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">No shared workouts yet</div>
+      <div style="font-size:12px">Tap 🔗 on any of your routines to share it here for everyone.</div>
+    </div>`;
+  }
+  return pool.map((w,i)=>{
+    const totalSets = (w.exercises||[]).reduce((a,e)=>a+(e.sets||0),0);
+    const estMin = Math.round((w.exercises||[]).reduce((a,e)=>a+(e.sets||0)*2.5,0));
+    const col = w.color || 'var(--lime)';
+    return `<div class="card" style="margin-bottom:12px;border-left:3px solid ${col}">
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:800;margin-bottom:4px">${escapeHtml(w.name)} <span style="font-size:10px;font-weight:700;color:var(--lime);background:rgba(57,191,91,.1);border:1px solid rgba(57,191,91,.3);border-radius:6px;padding:1px 6px">added by ${w.addedBy||'DM'}</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
+            ${(w.muscles||[]).map(m=>`<span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}33">${m}</span>`).join('')}
+          </div>
+          <div style="font-size:12px;color:var(--muted)">${(w.exercises||[]).length} exercises · ${totalSets} sets · ~${estMin}min</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:7px;padding-top:10px;border-top:1px solid var(--border)">
+        <button onclick="startSharedWorkout(${i})" style="flex:2;background:transparent;color:${col};border:1px solid ${col};border-radius:9px;padding:8px;font-size:13px;font-weight:800">▶ Start</button>
+        <button onclick="saveSharedWorkoutToMine(${i})" style="flex:1;background:var(--soft);color:var(--text);border-radius:9px;padding:8px;font-size:12px;font-weight:700;border:1px solid var(--border)">⭐ Save</button>
+        ${w.addedBy===activeUser?`<button onclick="deleteSharedWorkout(${i})" style="flex:1;background:rgba(255,77,77,.12);color:var(--red);border-radius:9px;padding:8px;font-size:13px;font-weight:700;border:1px solid rgba(255,77,77,.25)">✕</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function routineCard(r, isMine){
@@ -11445,6 +11559,64 @@ function loadPlan(){
 function savePlan(plan){
   try{ localStorage.setItem('fgym_plan_'+activeUser, JSON.stringify(plan)); }catch(e){}
 }
+// Unified per-day accessors. A day entry can be a legacy routineId (number/string)
+// or a { workout:id, meals:[...] } object. These normalise both.
+function planDayWorkout(plan, day){
+  const v = plan[day];
+  if(v && typeof v==='object') return v.workout || null;
+  return v || null; // legacy: bare id
+}
+function planDayMeals(plan, day){
+  const v = plan[day];
+  if(v && typeof v==='object' && Array.isArray(v.meals)) return v.meals;
+  return [];
+}
+function planSetWorkout(day, workoutId){
+  const plan = loadPlan();
+  const meals = planDayMeals(plan, day);
+  if(workoutId) plan[day] = { workout:workoutId, meals };
+  else if(meals.length) plan[day] = { workout:null, meals };
+  else delete plan[day];
+  savePlan(plan);
+}
+function planAddMeal(day, meal){
+  const plan = loadPlan();
+  const wk = planDayWorkout(plan, day);
+  const meals = planDayMeals(plan, day).slice();
+  meals.push({ name:meal.name, cals:Math.round(meal.cals||0), protein:Math.round(meal.protein||0),
+    carbs:Math.round(meal.carbs||0), fat:Math.round(meal.fat||0), cat:meal.cat||'meal' });
+  plan[day] = { workout:wk, meals };
+  savePlan(plan);
+}
+function planRemoveMeal(day, idx){
+  const plan = loadPlan();
+  const wk = planDayWorkout(plan, day);
+  const meals = planDayMeals(plan, day).slice();
+  meals.splice(idx,1);
+  if(wk || meals.length) plan[day] = { workout:wk, meals };
+  else delete plan[day];
+  savePlan(plan);
+}
+function planDayMacros(plan, day){
+  const meals = planDayMeals(plan, day);
+  return meals.reduce((a,m)=>({ cals:a.cals+(m.cals||0), protein:a.protein+(m.protein||0), carbs:a.carbs+(m.carbs||0), fat:a.fat+(m.fat||0) }), {cals:0,protein:0,carbs:0,fat:0});
+}
+// Copy a whole day (workout + meals) to other days
+function planCopyDay(fromDay, toDays){
+  const plan = loadPlan();
+  const wk = planDayWorkout(plan, fromDay);
+  const meals = planDayMeals(plan, fromDay);
+  toDays.forEach(d=>{
+    if(d===fromDay) return;
+    plan[d] = { workout:wk, meals: JSON.parse(JSON.stringify(meals)) };
+  });
+  savePlan(plan);
+}
+function planClearDay(day){
+  const plan = loadPlan();
+  delete plan[day];
+  savePlan(plan);
+}
 
 function openDayDetail(ds){
   ddDate = ds;
@@ -11663,6 +11835,7 @@ function renderPlanner(){
   const plan = loadPlan();
   const history = loadHistory();
   const userColor = USERS[activeUser].color;
+  const calGoal = (typeof getNutSettings==='function' ? (getNutSettings().cal||0) : 0);
 
   document.getElementById('planner-days').innerHTML = DAYS.map((day, di) => {
     const date = new Date(monday);
@@ -11670,38 +11843,41 @@ function renderPlanner(){
     const dateStr = date.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
     const isToday = date.toDateString() === today.toDateString();
     const isPast = date < today && !isToday;
-    const assignedId = plan[day];
+    const assignedId = planDayWorkout(plan, day);
     const assigned = assignedId ? routines.find(r=>r.id==assignedId) : null;
+    const meals = planDayMeals(plan, day);
+    const macros = planDayMacros(plan, day);
 
     // Check if done today from history
     const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
     const dayEnd = new Date(date); dayEnd.setHours(23,59,59,999);
     const doneSessions = history.filter(w=>w.user===activeUser && w.date>=dayStart.getTime() && w.date<=dayEnd.getTime());
     const isDone = doneSessions.length > 0;
-    // Also get day log entries
     const dayLog = getDayLog(activeUser);
     const logEntries = dayLog[date.toDateString()] || [];
+    const hasContent = assigned || meals.length;
 
     return `<div class="card" style="margin-bottom:10px;${isToday?'border-color:'+userColor+';border-width:1.5px':''}">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${assigned?'10px':'0'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${hasContent?'10px':'0'}">
         <div>
           <div style="font-size:15px;font-weight:800;${isToday?'color:'+userColor:''}">${day}</div>
           <div style="font-size:11px;color:var(--muted)">${dateStr}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          ${macros.cals>0 ? `<span style="font-size:11px;font-weight:700;color:${userColor};background:${userColor}18;border:1px solid ${userColor}33;padding:3px 9px;border-radius:6px">${macros.cals} kcal</span>` : ''}
           ${isDone || logEntries.length ? `<span style="font-size:11px;font-weight:700;color:#4CAF50;background:rgba(76,175,80,.15);border:1px solid rgba(76,175,80,.3);padding:3px 9px;border-radius:6px">Done ✓</span>` : ''}
-          ${isToday && assigned && !isDone ? '<span style="font-size:11px;font-weight:700;color:'+userColor+';background:'+userColor+'22;border:1px solid '+userColor+'44;padding:3px 9px;border-radius:6px">Today</span>' : ''}
+          ${hasContent ? `<button onclick="openCopyDay('${day}')" title="Copy this day to others" style="background:var(--soft);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:13px;padding:3px 8px">⧉</button>` : ''}
         </div>
       </div>
       ${logEntries.length ? `
-        <div style="margin-top:${assigned?'8px':'2px'};display:flex;flex-wrap:wrap;gap:5px">
+        <div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:5px">
           ${logEntries.map(e=>`<span style="background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.25);border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;color:#4CAF50">${e.icon} ${e.name} · ${e.time}</span>`).join('')}
         </div>` : ''}
       ${assigned ? `
-        <div style="background:var(--soft);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px">
+        <div style="background:var(--soft);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:8px">
           <div style="width:4px;height:36px;border-radius:2px;background:${assigned.color};flex-shrink:0"></div>
           <div style="flex:1">
-            <div style="font-size:13px;font-weight:800">${assigned.name}</div>
+            <div style="font-size:13px;font-weight:800">💪 ${assigned.name}</div>
             <div style="font-size:11px;color:var(--muted)">${assigned.exercises.length} exercises · ~${Math.round(assigned.exercises.reduce((a,e)=>a+e.sets*2.5,0))}min</div>
           </div>
           <div style="display:flex;gap:6px">
@@ -11709,9 +11885,20 @@ function renderPlanner(){
             <button onclick="openPlanPick('${day}')" style="background:var(--border);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700">✕</button>
           </div>
         </div>` : `
-        <button onclick="openPlanPick('${day}')" style="width:100%;background:var(--soft);color:var(--muted);border:1px dashed var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:600;margin-top:2px">
+        <button onclick="openPlanPick('${day}')" style="width:100%;background:var(--soft);color:var(--muted);border:1px dashed var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:600;margin-bottom:8px">
           + Assign a workout
         </button>`}
+      ${meals.map((m,mi)=>`
+        <div style="background:var(--soft);border-radius:9px;padding:8px 11px;display:flex;align-items:center;gap:9px;margin-bottom:6px">
+          <div style="font-size:16px">🍽️</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(m.name)}</div>
+            <div style="font-size:10px;color:var(--muted)">${m.cals} kcal · P${m.protein} C${m.carbs} F${m.fat}</div>
+          </div>
+          <button onclick="removePlanMealDay('${day}',${mi})" style="background:transparent;border:none;color:var(--muted);font-size:14px">✕</button>
+        </div>`).join('')}
+      <button onclick="openAddPlanMeal('${day}')" style="width:100%;background:rgba(57,191,91,.1);color:var(--lime);border:1px dashed rgba(57,191,91,.35);border-radius:10px;padding:9px;font-size:12px;font-weight:700">+ Add a meal</button>
+      ${macros.cals>0 ? `<div style="font-size:10px;color:var(--muted);text-align:center;margin-top:6px">Day total: ${macros.cals} kcal · P${macros.protein} C${macros.carbs} F${macros.fat}${calGoal?` · goal ${calGoal}`:''}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -11739,11 +11926,112 @@ function openPlanPick(day){
 }
 
 function assignDay(day, routineId){
-  const plan = loadPlan();
-  if(routineId===null){ delete plan[day]; } else { plan[day] = routineId; }
-  savePlan(plan);
+  if(routineId===null){
+    // keep meals, just clear the workout
+    planSetWorkout(day, null);
+  } else {
+    planSetWorkout(day, routineId);
+  }
   closeModal('modal-plan-pick');
   renderPlanner();
+}
+
+// ── Planner: add a meal to a day ──
+let pamDay = null, pamSource = 'mine';
+function openAddPlanMeal(day){
+  pamDay = day; pamSource = 'mine';
+  document.getElementById('pam-day').textContent = '· ' + day;
+  document.getElementById('pam-search').value = '';
+  pamSetSourceBtns();
+  renderPamList();
+  openModal('modal-plan-addmeal');
+}
+function pamSetSourceBtns(){
+  ['mine','shared','ai'].forEach(s=>{
+    const b=document.getElementById('pam-s-'+s); if(!b) return;
+    const on = pamSource===s;
+    b.style.border='1px solid '+(on?'var(--lime)':'var(--border)');
+    b.style.background=on?'rgba(57,191,91,.12)':'var(--soft)';
+    b.style.color=on?'var(--lime)':'var(--muted)';
+  });
+}
+function renderPamList(){
+  pamSetSourceBtns();
+  const q = (document.getElementById('pam-search').value||'').toLowerCase();
+  let meals = [];
+  if(pamSource==='mine') meals = loadSavedMeals(activeUser);
+  else if(pamSource==='shared') meals = familyPool('meals');
+  if(q) meals = meals.filter(m=>(m.name||'').toLowerCase().includes(q));
+  const el = document.getElementById('pam-list');
+  if(!meals.length){
+    el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px;font-size:13px">${pamSource==='shared'?'No shared meals yet.':'No saved meals yet. Build some in Nutrition first, or use ✨ AI.'}</div>`;
+    return;
+  }
+  el.innerHTML = meals.map(m=>{
+    const j = JSON.stringify({name:m.name,cals:m.cals,protein:m.protein,carbs:m.carbs,fat:m.fat,cat:m.cat||m.meal||'meal'}).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    return `<div onclick='pamPick(${j})' style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;margin-bottom:6px;background:var(--soft);cursor:pointer">
+      <div style="font-size:18px">🍽️</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700">${escapeHtml(m.name)}${m.addedBy?` <span style="font-size:10px;color:var(--lime)">· ${m.addedBy}</span>`:''}</div>
+        <div style="font-size:11px;color:var(--muted)">${Math.round(m.cals||0)} kcal · P${Math.round(m.protein||0)} C${Math.round(m.carbs||0)} F${Math.round(m.fat||0)}</div>
+      </div>
+      <span style="color:var(--lime);font-size:20px">+</span>
+    </div>`;
+  }).join('');
+}
+function pamPick(meal){
+  if(!pamDay) return;
+  planAddMeal(pamDay, meal);
+  toast(meal.name+' added to '+pamDay);
+  renderPamList();
+  renderPlanner();
+}
+function openPamAi(){
+  // route to the existing AI meal plan generator
+  closeModal('modal-plan-addmeal');
+  if(typeof openAiMealPlan==='function'){ openAiMealPlan(); toast('Generate ideas, then ⭐ save to add them here'); }
+  else { pamSource='mine'; openModal('modal-plan-addmeal'); }
+}
+function removePlanMealDay(day, idx){
+  planRemoveMeal(day, idx);
+  renderPlanner();
+}
+
+// ── Planner: copy a day to others ──
+let cpdFrom = null, cpdSel = [];
+function openCopyDay(day){
+  cpdFrom = day; cpdSel = [];
+  document.getElementById('cpd-from').textContent = day;
+  renderCpdDays();
+  openModal('modal-copy-day');
+}
+function renderCpdDays(){
+  document.getElementById('cpd-days').innerHTML = DAYS.map(d=>{
+    if(d===cpdFrom) return '';
+    const on = cpdSel.includes(d);
+    return `<div onclick="cpdToggle('${d}')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;margin-bottom:6px;border-radius:10px;cursor:pointer;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,191,91,.12)':'#16161F'}">
+      <div style="width:22px;height:22px;border-radius:6px;border:2px solid ${on?'var(--lime)':'var(--border)'};background:${on?'var(--lime)':'transparent'};display:flex;align-items:center;justify-content:center;color:#050508;font-weight:900;font-size:13px">${on?'✓':''}</div>
+      <div style="font-size:14px;font-weight:700">${d}</div>
+    </div>`;
+  }).join('');
+}
+function cpdToggle(d){
+  if(cpdSel.includes(d)) cpdSel = cpdSel.filter(x=>x!==d);
+  else cpdSel.push(d);
+  renderCpdDays();
+}
+function cpdQuick(which){
+  if(which==='none'){ cpdSel=[]; }
+  else if(which==='all'){ cpdSel = DAYS.filter(d=>d!==cpdFrom); }
+  else if(which==='weekdays'){ cpdSel = ['Monday','Tuesday','Wednesday','Thursday','Friday'].filter(d=>d!==cpdFrom); }
+  renderCpdDays();
+}
+function confirmCopyDay(){
+  if(!cpdSel.length){ toast('Pick at least one day to copy to'); return; }
+  planCopyDay(cpdFrom, cpdSel);
+  closeModal('modal-copy-day');
+  renderPlanner();
+  toast('Copied '+cpdFrom+' to '+cpdSel.length+' day'+(cpdSel.length>1?'s':''));
 }
 
 // ══════════════════ TOAST ══════════════════
