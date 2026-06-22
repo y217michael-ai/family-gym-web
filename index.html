@@ -7755,7 +7755,7 @@ function renderMealPlan(){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:16px;font-weight:800">Weekly Meal Plan</div>
       <div style="display:flex;gap:6px">
-        <button onclick="openAiMealPlan()" style="background:rgba(59,116,191,.16);color:var(--dm-blue);border:1px solid var(--dm-blue);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:800">✨ AI Suggest</button>
+        <button onclick="_aimpTargetDay=null;openAiMealPlan()" style="background:rgba(59,116,191,.16);color:var(--dm-blue);border:1px solid var(--dm-blue);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:800">✨ AI Suggest</button>
         <button onclick="saveCurrentPlanAs()" style="background:rgba(57,191,91,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:800">⭐ Save plan</button>
         <button onclick="clearMealPlan()" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;border:1px solid rgba(255,77,77,.2)">Clear</button>
       </div>
@@ -7876,6 +7876,7 @@ function renderAimpDays(){
   }).join('');
 }
 let _aimpLastPlan = null;
+let _aimpTargetDay = null; // when set, AI meals show a "Add to <day>" button for the planner
 async function runAiMealPlan(){
   const cal = parseInt(document.getElementById('aimp-cal').value)||2000;
   const meals = Math.max(3, Math.min(6, parseInt(document.getElementById('aimp-meals').value)||3));
@@ -7920,7 +7921,8 @@ function renderAimpResults(plan){
               <div style="font-size:11px;color:var(--muted)">${Math.round(m.calories||0)} kcal · P:${Math.round(m.protein||0)}g C:${Math.round(m.carbs||0)}g F:${Math.round(m.fat||0)}g</div>
             </div>
           </div>
-          <div style="display:flex;gap:6px;margin-top:8px">
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            ${_aimpTargetDay ? `<button onclick="aimpAddToPlannerDay(${di},${mi})" style="background:${uColor};color:#050508;border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:800">📅 Add to ${_aimpTargetDay}</button>` : ''}
             <button onclick="aimpLogToday(${di},${mi})" style="background:transparent;color:${uColor};border:1px solid ${uColor};border-radius:7px;padding:5px 10px;font-size:11px;font-weight:800">+ Log Today</button>
             <button onclick="aimpSaveToMine(${di},${mi})" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700">⭐ Save to Mine</button>
             <button onclick="aimpPushShared(${di},${mi})" style="background:rgba(57,191,91,.1);color:var(--lime);border:1px solid rgba(57,191,91,.3);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700">🔗 DM Shared</button>
@@ -7960,6 +7962,13 @@ function aimpPushShared(di,mi){
   const obj = aimpMealToObj(di,mi);
   pushToFamily('meals', obj);
   toast('Added to DM Shared 🔗');
+}
+function aimpAddToPlannerDay(di,mi){
+  if(!_aimpTargetDay){ toast('No planner day selected'); return; }
+  const obj = aimpMealToObj(di,mi);
+  planAddMeal(_aimpTargetDay, obj);
+  toast(obj.name+' added to '+_aimpTargetDay);
+  if(typeof renderPlanner==='function') renderPlanner();
 }
 
 
@@ -12011,9 +12020,10 @@ function pamPick(meal){
   renderPlanner();
 }
 function openPamAi(){
-  // route to the existing AI meal plan generator
+  // route to the existing AI meal plan generator, remembering the planner day
+  _aimpTargetDay = pamDay;
   closeModal('modal-plan-addmeal');
-  if(typeof openAiMealPlan==='function'){ openAiMealPlan(); toast('Generate ideas, then ⭐ save to add them here'); }
+  if(typeof openAiMealPlan==='function'){ openAiMealPlan(); toast('Generate ideas, then 📅 add them to '+pamDay); }
   else { pamSource='mine'; openModal('modal-plan-addmeal'); }
 }
 function removePlanMealDay(day, idx){
