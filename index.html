@@ -1509,6 +1509,45 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- Log Body Stats Modal -->
+<!-- Edit profile modal -->
+<div class="modal-overlay" id="modal-edit-profile">
+<div class="modal" style="max-height:92vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:20px;font-weight:800" id="ep-title">Edit Profile</div>
+    <button onclick="closeModal('modal-edit-profile')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Update your details. Max heart rate and zones can auto-calculate from your age.</div>
+
+  <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:6px">NAME</div>
+  <input class="inp" id="ep-name" placeholder="Display name" style="margin-bottom:12px">
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+    <div><div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">AGE</div><input class="inp" id="ep-age" type="number" inputmode="numeric" oninput="epRecalc()"></div>
+    <div><div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">WEIGHT (kg)</div><input class="inp" id="ep-weight" type="number" inputmode="decimal"></div>
+  </div>
+  <div style="margin-bottom:14px">
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">DAILY CALORIE GOAL</div>
+    <input class="inp" id="ep-cal" type="number" inputmode="numeric">
+  </div>
+
+  <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:6px">MAX HEART RATE</div>
+  <div id="ep-hr-formulas" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <div style="font-size:12px;color:var(--muted)">Or set manually:</div>
+    <input class="inp" id="ep-maxhr" type="number" inputmode="numeric" placeholder="bpm" oninput="epSetManualMax()" style="width:90px">
+    <span style="font-size:12px;color:var(--muted)">bpm</span>
+  </div>
+
+  <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:6px">TRAINING ZONES <span style="font-weight:500">(auto from max HR)</span></div>
+  <div id="ep-zones" style="margin-bottom:14px"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+    <button class="btn-secondary" onclick="closeModal('modal-edit-profile')">Cancel</button>
+    <button class="btn-primary" onclick="saveEditProfile()">Save profile</button>
+  </div>
+</div>
+</div>
+
 <div class="modal-overlay" id="modal-body-stats">
 <div class="modal">
   <div style="font-size:20px;font-weight:800;margin-bottom:6px">Log Body Stats</div>
@@ -1739,6 +1778,42 @@ const USERS = {
   Michelle: {color:'#FF8C42', initials:'Mi', devices:['Whoop Band 4.0','Apple Watch Series 8'], hrMin:120, hrMax:150, calorieGoal:1900, weight:65, age:42},
   Amy: {color:'#6C63FF', initials:'A', devices:['Xiaomi Smart Band 10 (via Apple Health)'], hrMin:130, hrMax:165, calorieGoal:2100, weight:58, age:20}
 };
+
+// ── Editable profile overrides (persist over the USERS defaults) ──
+// Editable fields: name(display), age, weight, calorieGoal, maxHR, hrFormula, zones[]
+function loadProfileOverrides(){ try{ return JSON.parse(localStorage.getItem('fgym_profile_overrides')||'{}'); }catch(e){ return {}; } }
+function saveProfileOverrides(o){ try{ localStorage.setItem('fgym_profile_overrides', JSON.stringify(o)); }catch(e){} }
+// Merge saved overrides into USERS so every existing USERS[...] read picks them up.
+function applyProfileOverrides(){
+  const ov = loadProfileOverrides();
+  Object.keys(ov).forEach(name=>{
+    if(USERS[name]) Object.assign(USERS[name], ov[name]);
+  });
+}
+// Max-HR formulas
+function maxHRClassic(age){ return Math.round(220 - age); }            // 220 − age
+function maxHRTanaka(age){ return Math.round(208 - 0.7*age); }         // more accurate for 40+
+function userMaxHR(u){
+  if(u.maxHR) return u.maxHR;
+  return (u.hrFormula==='tanaka') ? maxHRTanaka(u.age||40) : maxHRClassic(u.age||40);
+}
+// Build 5 zones as % of max HR (lower bounds): Z1 50%, Z2 60%, Z3 70%, Z4 80%, Z5 90%
+function zonesFromMax(maxHR){
+  const p = [0.50,0.60,0.70,0.80,0.90];
+  const bounds = p.map(x=>Math.round(maxHR*x));
+  return [
+    {name:'Zone 1 · Rest',     lo:bounds[0], hi:bounds[1]-1},
+    {name:'Zone 2 · Fat Burn', lo:bounds[1], hi:bounds[2]-1},
+    {name:'Zone 3 · Cardio',   lo:bounds[2], hi:bounds[3]-1},
+    {name:'Zone 4 · Peak',     lo:bounds[3], hi:bounds[4]-1},
+    {name:'Zone 5 · Max',      lo:bounds[4], hi:maxHR},
+  ];
+}
+function userZones(u){
+  if(u.zones && u.zones.length===5) return u.zones;
+  return zonesFromMax(userMaxHR(u));
+}
+applyProfileOverrides();
 
 const MUSCLE_GROUPS = ['Chest','Back','Legs','Shoulders','Arms','Core','Glutes','Traps','Forearms','Cardio','Full Body','Barbell','Free Weights','Kettlebell','Calisthenics','Functional','Mobility','Yoga','Pilates','Boxing','HIIT','Technogym','Farmer Carries','Medicine Ball','Dumbbell','Old School','Swimming','Walking','Karting','Motocross','Mountain Bike'];
 
@@ -8750,36 +8825,47 @@ function renderProfile(){
       privacyEl.innerHTML = renderPrivacyPanel(activeUser);
     }
   }
-  document.getElementById('profile-cards').innerHTML = Object.entries(USERS).map(([name,u])=>`
+  document.getElementById('profile-cards').innerHTML = Object.entries(USERS).map(([name,u])=>{
+    const isMe = name===activeUser;
+    const mhr = userMaxHR(u);
+    return `
     <div class="card" style="margin-bottom:10px;border-left:3px solid ${u.color}">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
         <div class="avatar" style="width:44px;height:44px;font-size:15px;background:${u.color}22;color:${u.color};border:1.5px solid ${u.color}44">${u.initials}</div>
-        <div>
-          <div style="font-size:16px;font-weight:800">${name}</div>
-          <div style="font-size:12px;color:var(--muted)">${u.devices.join(' · ')}</div>
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:800">${u.displayName||name}</div>
+          <div style="font-size:12px;color:var(--muted)">${u.age?u.age+' yrs · ':''}${u.weight?u.weight+'kg':''}</div>
         </div>
+        ${isMe?`<button onclick="openEditProfile('${name}')" style="background:rgba(59,116,191,.15);color:var(--dm-blue);border:1px solid rgba(59,116,191,.4);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700">✎ Edit</button>`:''}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">
         <div style="background:var(--soft);border-radius:8px;padding:8px">
-          <div style="color:var(--muted)">HR Zone Target</div>
-          <div style="font-weight:700;margin-top:2px">${u.hrMin}–${u.hrMax} bpm</div>
+          <div style="color:var(--muted)">Max HR</div>
+          <div style="font-weight:700;margin-top:2px">${mhr} bpm</div>
+        </div>
+        <div style="background:var(--soft);border-radius:8px;padding:8px">
+          <div style="color:var(--muted)">Fat-burn zone</div>
+          <div style="font-weight:700;margin-top:2px">${userZones(u)[1].lo}–${userZones(u)[1].hi}</div>
         </div>
         <div style="background:var(--soft);border-radius:8px;padding:8px">
           <div style="color:var(--muted)">Calorie Goal</div>
-          <div style="font-weight:700;margin-top:2px">${u.calorieGoal} kcal</div>
+          <div style="font-weight:700;margin-top:2px">${u.calorieGoal}</div>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
+  const _zu = USERS[activeUser];
+  const _zones = userZones(_zu);
+  const _zcols=['#4CAF50','#8BC34A','#FFC107','#FF9800','#F44336'];
   document.getElementById('hr-zone-settings').innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Based on your max HR of <strong style="color:var(--text)">${userMaxHR(_zu)} bpm</strong>. Change it via ✎ Edit on your card above.</div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      ${['Zone 1 · Rest','Zone 2 · Fat Burn','Zone 3 · Cardio','Zone 4 · Peak','Zone 5 · Max'].map((z,i)=>{
-        const ranges=['50–100','100–130','130–150','150–170','170–200'];
-        const colors=['#4CAF50','#8BC34A','#FFC107','#FF9800','#F44336'];
+      ${_zones.map((z,i)=>{
         return `<div style="display:flex;align-items:center;gap:10px">
-          <div style="width:12px;height:12px;border-radius:50%;background:${colors[i]};flex-shrink:0"></div>
-          <div style="flex:1;font-size:13px;font-weight:700">${z}</div>
-          <div style="font-size:12px;color:var(--muted)">${ranges[i]} bpm</div>
+          <div style="width:12px;height:12px;border-radius:50%;background:${_zcols[i]};flex-shrink:0"></div>
+          <div style="flex:1;font-size:13px;font-weight:700">${z.name}</div>
+          <div style="font-size:12px;color:var(--muted)">${z.lo}–${z.hi} bpm</div>
         </div>`;
       }).join('')}
     </div>
@@ -8814,6 +8900,105 @@ function renderProfile(){
     </div>`;
   renderVideoSettings();
   renderConnectedServices();
+}
+
+// ── Edit profile + max-HR calculator ──
+let _epUser = null, _epDraft = null;
+function openEditProfile(name){
+  _epUser = name;
+  const u = USERS[name];
+  _epDraft = {
+    displayName: u.displayName||name,
+    age: u.age||40, weight: u.weight||0, calorieGoal: u.calorieGoal||2000,
+    hrFormula: u.hrFormula||'classic',   // 'classic' | 'tanaka' | 'manual'
+    maxHR: u.maxHR||null,
+    zones: (u.zones && u.zones.length===5) ? JSON.parse(JSON.stringify(u.zones)) : null
+  };
+  document.getElementById('ep-title').textContent = 'Edit ' + (u.displayName||name);
+  document.getElementById('ep-name').value = _epDraft.displayName;
+  document.getElementById('ep-age').value = _epDraft.age;
+  document.getElementById('ep-weight').value = _epDraft.weight;
+  document.getElementById('ep-cal').value = _epDraft.calorieGoal;
+  document.getElementById('ep-maxhr').value = _epDraft.maxHR || '';
+  epRenderFormulas();
+  epRenderZones();
+  openModal('modal-edit-profile');
+}
+function epCurrentMax(){
+  const age = parseInt(document.getElementById('ep-age').value)||40;
+  if(_epDraft.hrFormula==='manual' && _epDraft.maxHR) return _epDraft.maxHR;
+  return _epDraft.hrFormula==='tanaka' ? maxHRTanaka(age) : maxHRClassic(age);
+}
+function epRenderFormulas(){
+  const age = parseInt(document.getElementById('ep-age').value)||40;
+  const opts = [
+    {key:'classic', label:'220 − age', val:maxHRClassic(age), note:'Standard formula'},
+    {key:'tanaka',  label:'208 − 0.7 × age', val:maxHRTanaka(age), note:'More accurate for 40+'},
+  ];
+  document.getElementById('ep-hr-formulas').innerHTML = opts.map(o=>{
+    const on = _epDraft.hrFormula===o.key;
+    return `<button onclick="epPickFormula('${o.key}')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-align:left;border:1px solid ${on?'var(--lime)':'var(--border)'};background:${on?'rgba(57,191,91,.12)':'var(--soft)'};color:var(--text)">
+      <div style="flex:1"><div style="font-size:13px;font-weight:700">${o.label}</div><div style="font-size:11px;color:var(--muted)">${o.note}</div></div>
+      <div style="font-size:17px;font-weight:800;color:${on?'var(--lime)':'var(--muted)'}">${o.val}<span style="font-size:10px;font-weight:600"> bpm</span></div>
+      ${on?'<span style="color:var(--lime);font-weight:900">✓</span>':''}
+    </button>`;
+  }).join('');
+}
+function epPickFormula(key){
+  _epDraft.hrFormula = key;
+  _epDraft.maxHR = null;
+  document.getElementById('ep-maxhr').value = '';
+  _epDraft.zones = null; // recompute from new max
+  epRenderFormulas(); epRenderZones();
+}
+function epSetManualMax(){
+  const v = parseInt(document.getElementById('ep-maxhr').value);
+  if(v){ _epDraft.hrFormula='manual'; _epDraft.maxHR=v; _epDraft.zones=null; epRenderFormulas(); epRenderZones(); }
+}
+function epRecalc(){
+  if(_epDraft.hrFormula!=='manual'){ _epDraft.zones=null; epRenderFormulas(); epRenderZones(); }
+}
+function epRenderZones(){
+  const max = epCurrentMax();
+  const zones = (_epDraft.zones && _epDraft.zones.length===5) ? _epDraft.zones : zonesFromMax(max);
+  const cols = ['#4CAF50','#8BC34A','#FFC107','#FF9800','#F44336'];
+  document.getElementById('ep-zones').innerHTML = zones.map((z,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="width:11px;height:11px;border-radius:50%;background:${cols[i]};flex-shrink:0"></div>
+      <div style="flex:1;font-size:13px;font-weight:700">${z.name}</div>
+      <input class="inp" type="number" value="${z.lo}" onchange="epEditZone(${i},'lo',this.value)" style="width:62px;text-align:center;padding:5px">
+      <span style="color:var(--muted);font-size:12px">–</span>
+      <input class="inp" type="number" value="${z.hi}" onchange="epEditZone(${i},'hi',this.value)" style="width:62px;text-align:center;padding:5px">
+    </div>`).join('') +
+    `<div style="font-size:11px;color:var(--muted);margin-top:8px">Auto-built from max HR ${max} bpm. Edit any number to override.</div>`;
+}
+function epEditZone(i, field, val){
+  const max = epCurrentMax();
+  if(!_epDraft.zones) _epDraft.zones = zonesFromMax(max);
+  _epDraft.zones[i][field] = parseInt(val)||0;
+  // no full re-render needed; keep the typed value
+}
+function saveEditProfile(){
+  if(!_epUser) return;
+  const name = (document.getElementById('ep-name').value||'').trim() || _epUser;
+  const age = parseInt(document.getElementById('ep-age').value)||40;
+  const weight = parseFloat(document.getElementById('ep-weight').value)||0;
+  const cal = parseInt(document.getElementById('ep-cal').value)||2000;
+  const max = epCurrentMax();
+  const zones = (_epDraft.zones && _epDraft.zones.length===5) ? _epDraft.zones : zonesFromMax(max);
+  const ov = loadProfileOverrides();
+  ov[_epUser] = {
+    displayName: name, age, weight, calorieGoal: cal,
+    hrFormula: _epDraft.hrFormula, maxHR: (_epDraft.hrFormula==='manual'? max : null),
+    zones,
+    // keep hrMin/hrMax in sync with the fat-burn zone so older reads still work
+    hrMin: zones[1].lo, hrMax: zones[3].hi
+  };
+  saveProfileOverrides(ov);
+  applyProfileOverrides();
+  closeModal('modal-edit-profile');
+  renderProfile();
+  toast('Profile updated');
 }
 
 function renderConnectedServices(){
