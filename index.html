@@ -1537,6 +1537,31 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- Log Body Stats Modal -->
+<!-- AI meal plan modal -->
+<div class="modal-overlay" id="modal-ai-mealplan">
+<div class="modal" style="max-height:92vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:20px;font-weight:800">✨ AI Meal Plan</div>
+    <button onclick="closeModal('modal-ai-mealplan')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Generates meal ideas to fit your calorie goal and diet. Tap a meal to log it today or send it to DM Shared.</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <div><div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">DAILY CALORIES</div><input class="inp" id="aimp-cal" type="number" inputmode="numeric"></div>
+    <div><div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">MEALS / DAY</div><input class="inp" id="aimp-meals" type="number" inputmode="numeric" value="3" min="3" max="6"></div>
+  </div>
+  <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">DIET</div>
+  <div id="aimp-diet-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+  <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">DAYS</div>
+  <div id="aimp-days-btns" style="display:flex;gap:6px;margin-bottom:14px"></div>
+
+  <button onclick="runAiMealPlan()" id="aimp-go" style="width:100%;background:rgba(59,116,191,.16);color:var(--dm-blue);border:1px solid var(--dm-blue);border-radius:11px;padding:12px;font-size:14px;font-weight:800;margin-bottom:12px">✨ Generate ideas</button>
+
+  <div id="aimp-results"></div>
+  <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:10px">Suggestions come from YMove's recipe database to fit your targets — always check ingredients against allergies and your own judgement.</div>
+</div>
+</div>
+
 <!-- Edit profile modal -->
 <div class="modal-overlay" id="modal-edit-profile">
 <div class="modal" style="max-height:92vh;overflow-y:auto">
@@ -7387,6 +7412,7 @@ function renderMealPlan(){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:16px;font-weight:800">Weekly Meal Plan</div>
       <div style="display:flex;gap:6px">
+        <button onclick="openAiMealPlan()" style="background:rgba(59,116,191,.16);color:var(--dm-blue);border:1px solid var(--dm-blue);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:800">✨ AI Suggest</button>
         <button onclick="saveCurrentPlanAs()" style="background:rgba(57,191,91,.16);color:var(--lime);border:1px solid var(--lime);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:800">⭐ Save plan</button>
         <button onclick="clearMealPlan()" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;border:1px solid rgba(255,77,77,.2)">Clear</button>
       </div>
@@ -7468,6 +7494,131 @@ function clearMealPlan(){
   renderMealPlan();
   toast('Meal plan cleared');
 }
+
+// ══════════════════ AI MEAL PLAN (YMove) ══════════════════
+// Maps our diet keys → YMove's diet enum
+const AIMP_DIET_MAP = { none:'balanced', lowcarb:'low_carb', keto:'keto', vegan:'vegan', vegetarian:'vegetarian', mediterranean:'mediterranean', highprotein:'high_protein', slimmingworld:'balanced' };
+const AIMP_DIETS = [
+  {key:'balanced',label:'Balanced',icon:'🍽️'},
+  {key:'high_protein',label:'High protein',icon:'💪'},
+  {key:'low_carb',label:'Low carb',icon:'🥑'},
+  {key:'keto',label:'Keto',icon:'🥓'},
+  {key:'vegan',label:'Vegan',icon:'🌱'},
+  {key:'vegetarian',label:'Vegetarian',icon:'🥦'},
+  {key:'mediterranean',label:'Mediterranean',icon:'🫒'},
+  {key:'paleo',label:'Paleo',icon:'🍖'},
+];
+let _aimp = { diet:'balanced', days:3 };
+function openAiMealPlan(){
+  const settings = getNutSettings();
+  document.getElementById('aimp-cal').value = settings.cal || 2000;
+  document.getElementById('aimp-meals').value = 3;
+  // prefill diet from the person's profile
+  const profileDiet = (settings.diet && AIMP_DIET_MAP[settings.diet]) ? AIMP_DIET_MAP[settings.diet] : 'balanced';
+  _aimp.diet = profileDiet; _aimp.days = 3;
+  renderAimpDiets(); renderAimpDays();
+  document.getElementById('aimp-results').innerHTML = '';
+  openModal('modal-ai-mealplan');
+}
+function renderAimpDiets(){
+  document.getElementById('aimp-diet-btns').innerHTML = AIMP_DIETS.map(d=>{
+    const on = _aimp.diet===d.key;
+    return `<button onclick="_aimp.diet='${d.key}';renderAimpDiets()" style="padding:7px 11px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid ${on?'var(--dm-blue)':'var(--border)'};background:${on?'rgba(59,116,191,.15)':'var(--soft)'};color:${on?'var(--dm-blue)':'var(--muted)'}">${d.icon} ${d.label}</button>`;
+  }).join('');
+}
+function renderAimpDays(){
+  document.getElementById('aimp-days-btns').innerHTML = [1,3,5,7].map(n=>{
+    const on = _aimp.days===n;
+    return `<button onclick="_aimp.days=${n};renderAimpDays()" style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:800;border:1px solid ${on?'var(--dm-blue)':'var(--border)'};background:${on?'rgba(59,116,191,.15)':'var(--soft)'};color:${on?'var(--dm-blue)':'var(--muted)'}">${n} day${n>1?'s':''}</button>`;
+  }).join('');
+}
+let _aimpLastPlan = null;
+async function runAiMealPlan(){
+  const cal = parseInt(document.getElementById('aimp-cal').value)||2000;
+  const meals = Math.max(3, Math.min(6, parseInt(document.getElementById('aimp-meals').value)||3));
+  const days = _aimp.days;
+  const res = document.getElementById('aimp-results');
+  const btn = document.getElementById('aimp-go');
+  if(typeof YMOVE_API_KEY==='undefined' || !YMOVE_API_KEY){ res.innerHTML='<div style="color:var(--red);font-size:12px;padding:10px">YMove API key not set.</div>'; return; }
+  btn.textContent='✨ Generating…'; btn.disabled=true;
+  res.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Building your plan…</div>';
+  try{
+    const q = `?calories=${cal}&diet=${_aimp.diet}&meals=${meals}&days=${days}`;
+    const r = await fetch('https://exercise-api.ymove.app/api/v2/mealplans/generate'+q, { headers:{ 'X-API-Key':YMOVE_API_KEY } });
+    if(!r.ok){ throw new Error('HTTP '+r.status); }
+    const json = await r.json();
+    const plan = json && json.data;
+    if(!plan || !plan.days || !plan.days.length){ res.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px">No plan returned — try different settings.</div>'; return; }
+    _aimpLastPlan = plan;
+    renderAimpResults(plan);
+  }catch(e){
+    res.innerHTML = `<div style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12px;color:var(--muted)">Couldn't reach the meal-plan service (${escapeHtml(e.message||'error')}). This needs an internet connection and a working YMove plan — try again, or check your subscription tier supports meal plans.</div>`;
+  }finally{
+    btn.textContent='✨ Generate ideas'; btn.disabled=false;
+  }
+}
+function renderAimpResults(plan){
+  const res = document.getElementById('aimp-results');
+  const uColor = USERS[activeUser].color;
+  res.innerHTML = plan.days.map((day,di)=>{
+    const dayMeals = day.meals||[];
+    const dayCals = Math.round((day.totals&&day.totals.calories)|| dayMeals.reduce((a,m)=>a+(m.calories||0),0));
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:13px;font-weight:800">Day ${day.dayIndex||di+1}</div>
+        <div style="font-size:11px;color:var(--muted)">${dayCals} kcal</div>
+      </div>
+      ${dayMeals.map((m,mi)=>`
+        <div style="background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700">${escapeHtml(m.type||'meal')}</div>
+              <div style="font-size:13px;font-weight:700">${escapeHtml(m.name||'Meal')}</div>
+              <div style="font-size:11px;color:var(--muted)">${Math.round(m.calories||0)} kcal · P:${Math.round(m.protein||0)}g C:${Math.round(m.carbs||0)}g F:${Math.round(m.fat||0)}g</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button onclick="aimpLogToday(${di},${mi})" style="background:transparent;color:${uColor};border:1px solid ${uColor};border-radius:7px;padding:5px 10px;font-size:11px;font-weight:800">+ Log Today</button>
+            <button onclick="aimpSaveToMine(${di},${mi})" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700">⭐ Save to Mine</button>
+            <button onclick="aimpPushShared(${di},${mi})" style="background:rgba(57,191,91,.1);color:var(--lime);border:1px solid rgba(57,191,91,.3);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700">🔗 DM Shared</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+// Convert a YMove plan meal → our meal object
+function aimpMealToObj(di, mi){
+  const m = _aimpLastPlan.days[di].meals[mi];
+  const slot = ({breakfast:'breakfast',lunch:'lunch',dinner:'dinner',snack:'snack'})[m.type] || 'lunch';
+  return {
+    name: m.name||'Meal', cat: slot,
+    cals: Math.round(m.calories||0), protein: Math.round(m.protein||0),
+    carbs: Math.round(m.carbs||0), fat: Math.round(m.fat||0), fibre:0, sugar:0,
+    ingredients: (m.foods||[]).map(f=>({ name:f.name, per100:{cal:0,pro:0,carb:0,fat:0,fibre:0,sugar:0,sodium:0}, unitId:'g', amount:0 })),
+    owner: activeUser, sharedWith: [], aiSuggested:true
+  };
+}
+function aimpLogToday(di,mi){
+  const obj = aimpMealToObj(di,mi);
+  const todayMeals = getTodayMeals();
+  const now = new Date();
+  todayMeals.push({...obj, time: now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes()});
+  saveTodayMeals(todayMeals);
+  toast(obj.name+' logged!');
+}
+function aimpSaveToMine(di,mi){
+  const obj = aimpMealToObj(di,mi);
+  const mine = loadSavedMeals(activeUser);
+  mine.unshift(obj);
+  saveSavedMeals(activeUser, mine);
+  toast('Saved to your meals ⭐');
+}
+function aimpPushShared(di,mi){
+  const obj = aimpMealToObj(di,mi);
+  pushToFamily('meals', obj);
+  toast('Added to DM Shared 🔗');
+}
+
 
 // ── Nutrition settings ──
 let currentNutGoal = 'lean';
