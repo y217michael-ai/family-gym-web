@@ -2041,7 +2041,7 @@ const EXERCISES = [
   {name:'Med Ball Crunch', muscle:'Medicine Ball', sets:3, reps:20, weight:8, hipSafe:true, desc:'Hold ball at chest while crunching — weighted ab work'},
   {name:'Med Ball Dead Ball Carry', muscle:'Medicine Ball', sets:4, reps:40, weight:15, hipSafe:true, desc:'Bear hug heavy dead ball for 40 metres — no handles'},
   {name:'Med Ball Burpee Slam', muscle:'Medicine Ball', sets:4, reps:8, weight:8, hipSafe:true, desc:'Burpee into slam — cardio and power combined'},
-  {name:'Med Ball Partner Pass', muscle:'Medicine Ball', sets:3, reps:20, weight:8, hipSafe:true, desc:'Back to back twist pass with a partner — great for family sessions'},
+  {name:'Med Ball Partner Pass', muscle:'Medicine Ball', sets:3, reps:20, weight:8, hipSafe:true, desc:'Back to back twist pass with a partner — great for partner sessions'},
   {name:'Med Ball Wall Ball', muscle:'Medicine Ball', sets:4, reps:15, weight:9, hipSafe:false, desc:'Squat then throw to wall target — hip caution Mike'},
 
   // ── DUMBBELL ──
@@ -2792,7 +2792,7 @@ function confirmDeleteAllMine(){
   routines = routines.filter(r=>r.owner!==activeUser || r.prebuilt);
   saveRoutines();
   renderHome();
-  toast('All your routines deleted — rebuild from the Family tab anytime');
+  toast('All your routines deleted — rebuild from the Routines tab anytime');
 }
 
 function setRoutineView(view){
@@ -3136,7 +3136,7 @@ function routineCard(r, isMine){
   const exercises = r.exercises || [];
   const totalSets = exercises.reduce((a,e)=>a+(e.sets||0),0);
   const estMin = Math.round(exercises.reduce((a,e)=>a+(e.sets||0)*2.5,0));
-  const sharedNames = isMine ? ((r.sharedWith||[]).join(', ') || 'just you') : (r.owner||'family');
+  const sharedNames = isMine ? ((r.sharedWith||[]).join(', ') || 'just you') : (r.owner||'DM');
   const sharedLabel = isMine ? 'Shared with '+sharedNames : 'From '+sharedNames;
   return `<div class="card" style="margin-bottom:12px;border-left:3px solid ${r.color};cursor:pointer" onclick="openRoutineDetail(${r.id})">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
@@ -3170,7 +3170,7 @@ function openRoutineDetail(id){
         ${(r.muscles||[]).includes('Legs') ? '<span style="background:rgba(57,191,91,.15);color:var(--lime);border:1px solid rgba(57,191,91,.3);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800">FULL LEG</span>' : ''}
       </div>
       <div style="font-size:26px;font-weight:800;margin-bottom:10px">${r.name}</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">By ${r.owner||'family'}${(r.sharedWith&&r.sharedWith.length)?' · Shared with '+r.sharedWith.join(', '):''}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">By ${r.owner||'DM'}${(r.sharedWith&&r.sharedWith.length)?' · Shared with '+r.sharedWith.join(', '):''}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px">
         <div class="card-sm" style="text-align:center"><div style="font-size:22px;font-weight:800;color:${r.color}">${exercises.length}</div><div style="font-size:10px;color:var(--muted)">Exercises</div></div>
         <div class="card-sm" style="text-align:center"><div style="font-size:22px;font-weight:800;color:${r.color}">${totalSets}</div><div style="font-size:10px;color:var(--muted)">Total Sets</div></div>
@@ -3575,7 +3575,7 @@ function deleteRoutine(id){
   if(!r) return;
   // Prebuilt routines — never delete, just remove from your view
   if(r.prebuilt){
-    toast("Prebuilt routines can't be deleted — they're always available from the Family tab");
+    toast("Prebuilt routines can't be deleted — they're always available from the Routines tab");
     return;
   }
   // Only owner can delete
@@ -8721,8 +8721,8 @@ function renderAdminPanel(){
   const users = ['Michelle','Amy'];
   return `
     <div class="card" style="margin-top:16px;border-color:rgba(57,191,91,.3)">
-      <div style="font-size:16px;font-weight:800;margin-bottom:4px">👑 Admin — Family Overview</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">As admin you can see all family data regardless of privacy settings.</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px">👑 Admin — Team Overview</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">As admin you can see all team data regardless of privacy settings.</div>
       ${users.map(u => {
         const s = getPrivacySettings(u);
         const col = USERS[u]?.color || '#888';
