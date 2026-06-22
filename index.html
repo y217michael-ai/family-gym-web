@@ -5101,11 +5101,11 @@ function renderTempoCircuits(){
         <button onclick="renameTempoCircuit(${ci})" title="Rename" style="background:transparent;border:none;color:var(--muted);font-size:13px">✎</button>
         ${tempoSetup.circuits.length>1?`<button onclick="removeTempoCircuit(${ci})" style="background:transparent;border:none;color:var(--muted);font-size:16px">🗑</button>`:''}
       </div>
-      ${collapsed ? '' : `${exHtml}
+      ${collapsed ? '' : exHtml}
       <div style="display:flex;gap:6px;margin-top:8px">
         <button onclick="openTempoAutofill(${ci})" style="flex:1;background:transparent;color:var(--michelle);border:1px dashed var(--michelle);border-radius:8px;padding:8px;font-size:12px;font-weight:700">✨ Auto-fill</button>
         <button onclick="openTempoPicker(${ci})" style="flex:1;background:transparent;color:var(--michelle);border:1px dashed var(--michelle);border-radius:8px;padding:8px;font-size:12px;font-weight:700">+ Add exercise</button>
-      </div>`}
+      </div>
     </div>`;
   }).join('');
 }
@@ -5183,10 +5183,10 @@ function applyTafCombo(i){
   // name the circuit after the combo if it's still the default
   const cur = tempoSetup.circuits[tafState.circuit];
   if(/^Circuit [A-Z]$/.test(cur.name)) cur.name = c.label;
-  cur._collapsed = true; // show clean summary; tap to view
+  cur._collapsed = false; // keep open so Add/Auto-fill stay visible
   closeModal('modal-tempo-autofill');
   renderTempoCircuits(); renderTempoPlanSummary(); renderTempoRounds();
-  toast('Filled with '+picks.length+' exercises — tap the circuit to view');
+  toast('Filled with '+picks.length+' exercises');
 }
 
 // ── Plan summary (total reps + est time) ──
