@@ -4518,7 +4518,7 @@ function renderPreview(){
         </div>
       </div>
       ${ex.desc?`<div style="font-size:13px;color:var(--muted);background:var(--soft);border-radius:10px;padding:10px;margin-bottom:14px">${ex.desc}</div>`:''}
-      ${ex.video?`<a href="${ex.video}" target="_blank" style="display:inline-block;color:var(--lime);font-size:12px;text-decoration:underline;margin-bottom:14px">▶ Watch form video</a>`:'<div style="font-size:11px;color:var(--muted);margin-bottom:14px;font-style:italic">Form video will appear here once your animation library is connected</div>'}
+      ${runnerVideoBlock(ex)}
     </div>
     <!-- Auto-play toggle -->
     <button onclick="togglePreviewPlay()" style="width:100%;background:${playing?'rgba(255,77,77,.12)':'rgba(57,191,91,.18)'};color:${playing?'var(--red)':'var(--lime)'};border:1px solid ${playing?'rgba(255,77,77,.3)':'rgba(57,191,91,.3)'};border-radius:10px;padding:10px;font-size:13px;font-weight:700;margin-bottom:8px">${playing?'⏸ Pause auto-play':'▶ Auto-play through workout'}</button>
@@ -5470,7 +5470,8 @@ function startTempoCountdown(){
   const tick = ()=>{
     if(n>3){
       body.innerHTML = `${circuitLine}<div style="font-size:13px;color:var(--muted);margin-bottom:6px">GET READY · exercise ${s.exIndex+1}/${s.exTotal}</div>
-        <div style="font-size:22px;font-weight:800;color:var(--babyblue);margin-bottom:18px">${s.exercise.name}</div>
+        <div style="font-size:22px;font-weight:800;color:var(--babyblue);margin-bottom:10px">${s.exercise.name}</div>
+        <div style="margin-bottom:14px">${runnerVideoBlock(s.exercise)}</div>
         <div style="font-size:72px;font-weight:900;color:var(--michelle)">${n}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:10px">${tempoSetup.reps} reps · ${tempoSetup.secsPerRep.toFixed(1)}s per rep</div>`;
       if(n===10) tSpeak('Get ready. '+s.exercise.name);
