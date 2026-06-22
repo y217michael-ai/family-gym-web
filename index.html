@@ -846,6 +846,7 @@ if('serviceWorker' in navigator){
     <div style="flex:1;height:6px;background:var(--soft);border-radius:3px;overflow:hidden">
       <div id="tempo-progress" style="height:100%;background:var(--michelle);width:0%;transition:width .3s"></div>
     </div>
+    <div id="tempo-group-badge" style="display:none;font-size:11px;font-weight:800;color:var(--michelle);background:rgba(255,140,66,.15);border:1px solid var(--michelle);border-radius:7px;padding:3px 8px;white-space:nowrap"></div>
     <div id="tempo-round-label" style="font-size:12px;color:var(--muted);font-weight:700"></div>
   </div>
   <div id="tempo-stats" style="display:flex;gap:8px;padding:0 16px 4px;max-width:480px;margin:0 auto;width:100%">
@@ -906,9 +907,36 @@ if('serviceWorker' in navigator){
     <div style="display:flex;gap:6px;flex-wrap:wrap" id="tempo-roundrest-btns"></div>
   </div>
 
+  <!-- Group session (synced start; live control comes with the native app) -->
+  <div style="background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:800">👥 Group Session</div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer">
+        <input type="checkbox" id="tempo-group-on" onchange="toggleGroupSession()" style="width:15px;height:15px;accent-color:var(--michelle)">
+        Train together
+      </label>
+    </div>
+    <div id="tempo-group-body" style="display:none">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">One person hosts, everyone runs the same workout in sync. Each person chooses headphones or screen-only below.</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button id="grp-host-btn" onclick="grpSetRole('host')" style="flex:1;padding:9px;border-radius:9px;font-size:12px;font-weight:800;border:1px solid var(--michelle);background:rgba(255,140,66,.16);color:var(--michelle)">🎙️ Host it</button>
+        <button id="grp-join-btn" onclick="grpSetRole('join')" style="flex:1;padding:9px;border-radius:9px;font-size:12px;font-weight:800;border:1px solid var(--border);background:#16161F;color:var(--muted)">🔗 Join</button>
+      </div>
+      <div id="grp-host-panel" style="text-align:center;padding:8px 0">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Your session code — share it with the others</div>
+        <div id="grp-code-display" style="font-size:34px;font-weight:800;letter-spacing:6px;color:var(--michelle)">----</div>
+      </div>
+      <div id="grp-join-panel" style="display:none">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Enter the host's 4-digit code</div>
+        <input class="inp" id="grp-join-code" type="number" inputmode="numeric" placeholder="0000" maxlength="4" style="text-align:center;font-size:24px;letter-spacing:8px;font-weight:800">
+      </div>
+      <div style="background:rgba(169,220,245,.08);border:1px solid rgba(169,220,245,.25);border-radius:8px;padding:8px;margin-top:10px;font-size:10px;color:var(--babyblue)">ℹ️ Everyone presses Start together. Live host control (pause/skip for all) arrives with the native app.</div>
+    </div>
+  </div>
+
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:8px;cursor:pointer">
     <input type="checkbox" id="tempo-speak" checked style="width:16px;height:16px;accent-color:var(--michelle)">
-    Speak the rep count out loud
+    🎧 Voice cues in my headphones (off = screen-only, silent)
   </label>
 
   <div id="tempo-plan-summary" style="font-size:11px;color:var(--michelle);margin-bottom:12px;text-align:center"></div>
@@ -4879,9 +4907,41 @@ function openTempoSetup(){
   renderTempoReps(); renderTempoSecs(); renderTempoRounds();
   renderTempoExRest(); renderTempoRoundRest(); renderTempoCircuits();
   document.getElementById('tempo-speak').checked = tempoSetup.speak;
+  // reset group session UI each open
+  document.getElementById('tempo-group-on').checked = false;
+  document.getElementById('tempo-group-body').style.display = 'none';
+  groupSession.active = false; groupSession.role = 'host';
   renderTempoPlanSummary();
   openModal('modal-tempo-setup');
 }
+
+// ── Group session (synced start now; live backend control drops in at native stage) ──
+// This object is the seam: today it just holds role + code + start time.
+// Later, a backend layer can subscribe to the same code and push host events.
+let groupSession = { active:false, role:'host', code:null, startAt:null };
+function toggleGroupSession(){
+  groupSession.active = document.getElementById('tempo-group-on').checked;
+  document.getElementById('tempo-group-body').style.display = groupSession.active ? 'block' : 'none';
+  if(groupSession.active && groupSession.role==='host' && !groupSession.code){
+    grpSetRole('host'); // generate a code
+  }
+}
+function grpSetRole(role){
+  groupSession.role = role;
+  const hostBtn = document.getElementById('grp-host-btn');
+  const joinBtn = document.getElementById('grp-join-btn');
+  const hostPanel = document.getElementById('grp-host-panel');
+  const joinPanel = document.getElementById('grp-join-panel');
+  const on = (el,c)=>{ el.style.border='1px solid '+(c?'var(--michelle)':'var(--border)'); el.style.background=c?'rgba(255,140,66,.16)':'#16161F'; el.style.color=c?'var(--michelle)':'var(--muted)'; };
+  on(hostBtn, role==='host'); on(joinBtn, role==='join');
+  hostPanel.style.display = role==='host' ? 'block' : 'none';
+  joinPanel.style.display = role==='join' ? 'block' : 'none';
+  if(role==='host'){
+    groupSession.code = String(Math.floor(1000 + Math.random()*9000));
+    document.getElementById('grp-code-display').textContent = groupSession.code;
+  }
+}
+
 
 // ── Reps / tempo ──
 function renderTempoReps(){
@@ -5212,6 +5272,17 @@ function buildTempoPlan(){
 function startTempoRunner(){
   const hasEx = tempoSetup.circuits.some(c=>c.exercises.length);
   if(!hasEx){ toast('Add at least one exercise first'); return; }
+  // Group session validation
+  let group = null;
+  if(groupSession.active){
+    if(groupSession.role==='join'){
+      const code = (document.getElementById('grp-join-code').value||'').trim();
+      if(!/^\d{4}$/.test(code)){ toast('Enter the 4-digit code from the host'); return; }
+      group = { role:'follower', code };
+    } else {
+      group = { role:'host', code:groupSession.code };
+    }
+  }
   tempoSetup.speak = document.getElementById('tempo-speak').checked;
   closeModal('modal-tempo-setup');
   tBeep(660,0.05,0.15);
@@ -5220,10 +5291,18 @@ function startTempoRunner(){
     plan, step:0, rep:0, phase:'countdown',
     startTime: Date.now(), cals:0,
     speak: tempoSetup.speak,
+    group,
     weightKg: (USERS[activeUser] && USERS[activeUser].weight) || 80,
     totalRounds: tempoSetup.rounds
   };
   document.getElementById('tempo-overlay').style.display='flex';
+  const gb = document.getElementById('tempo-group-badge');
+  if(gb){
+    if(tempoRun.group){
+      gb.style.display='block';
+      gb.textContent = (tempoRun.group.role==='host'?'🎙️ Hosting · ':'🔗 Joined · ') + tempoRun.group.code;
+    } else { gb.style.display='none'; }
+  }
   startTempoCountdown();
 }
 
