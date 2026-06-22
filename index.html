@@ -1200,8 +1200,9 @@ if('serviceWorker' in navigator){
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
     <button onclick="tafManualAdd()" style="background:#16161F;color:var(--text);border:1px solid var(--border);border-radius:11px;padding:12px;font-size:13px;font-weight:700">✏️ Add by hand</button>
-    <button onclick="tafFillNow()" style="background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:11px;padding:12px;font-size:13px;font-weight:800">✨ Fill circuit</button>
+    <button onclick="tafFillNow()" style="background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:11px;padding:12px;font-size:13px;font-weight:800">✨ Get 3 options</button>
   </div>
+  <div id="taf-options"></div>
   <button class="btn-secondary" onclick="closeModal('modal-tempo-autofill')" style="width:100%">Cancel</button>
 </div>
 </div>
@@ -5171,6 +5172,8 @@ function openTempoAutofill(ci){
   document.getElementById('taf-count-range').value = 4;
   document.getElementById('taf-count').textContent = 4;
   renderTafStyles(); renderTafGroups(); renderTafDiff();
+  const optsEl = document.getElementById('taf-options'); if(optsEl) optsEl.innerHTML='';
+  _tafOptions = [];
   openModal('modal-tempo-autofill');
 }
 function renderTafStyles(){
@@ -5239,33 +5242,62 @@ function tafManualAdd(){
   closeModal('modal-tempo-autofill');
   openTempoPicker(ci);
 }
-function tafFillNow(){
-  if(!tafState.groups.length){ toast('Pick at least one group, or use Add by hand'); return; }
-  const count = parseInt(document.getElementById('taf-count-range').value)||4;
+// Build one balanced selection of `count` exercises from the chosen groups, using a seed for variety
+function tafBuildPicks(count, seed){
   let pool = EXERCISES.filter(e=>tafState.groups.includes(e.muscle));
   if(getHipSafePref(activeUser)) pool = pool.filter(e=>e.hipSafe);
-  // difficulty filter when exercises carry a difficulty tag (fallback: keep all)
   const diffRank = {beginner:1,intermediate:2,advanced:3};
   if(pool.some(e=>e.difficulty)){
     const want = diffRank[tafState.difficulty]||2;
-    const filtered = pool.filter(e=>!e.difficulty || (diffRank[e.difficulty]||2)<=want+ (tafState.difficulty==='advanced'?0:0));
+    const filtered = pool.filter(e=>!e.difficulty || (diffRank[e.difficulty]||2)<=want);
     if(filtered.length) pool = filtered;
   }
-  if(!pool.length){ toast('No exercises found for that grouping'); return; }
-  // spread picks across the chosen groups for balance
+  if(!pool.length) return [];
+  // seeded shuffle so each option differs
+  let s = seed||1;
+  const rand = ()=>{ s = (s*9301+49297)%233280; return s/233280; };
   const byGroup = {};
-  tafState.groups.forEach(g=>{ byGroup[g] = pool.filter(e=>e.muscle===g); });
-  const picks = [];
-  let gi=0, guard=0;
+  tafState.groups.forEach(g=>{ byGroup[g] = pool.filter(e=>e.muscle===g).slice(); });
+  Object.values(byGroup).forEach(arr=>{ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rand()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } });
+  const picks=[]; let gi=0, guard=0;
   const groupsWithEx = tafState.groups.filter(g=>byGroup[g] && byGroup[g].length);
   while(picks.length<count && guard<300 && groupsWithEx.length){
     const g = groupsWithEx[gi % groupsWithEx.length];
     const avail = byGroup[g].filter(e=>!picks.some(p=>p.name===e.name));
-    if(avail.length){ const pick=avail[Math.floor(Math.random()*avail.length)]; picks.push({name:pick.name, muscle:pick.muscle}); }
+    if(avail.length){ const pick=avail[Math.floor(rand()*avail.length)]; picks.push({name:pick.name, muscle:pick.muscle}); }
     gi++; guard++;
   }
-  if(!picks.length){ toast('Could not fill — try other groups'); return; }
-  tempoSetup.circuits[tafState.circuit].exercises = picks;
+  return picks;
+}
+let _tafOptions = [];
+function tafFillNow(){
+  if(!tafState.groups.length){ toast('Pick at least one group, or use Add by hand'); return; }
+  const count = parseInt(document.getElementById('taf-count-range').value)||4;
+  // build 3 distinct options
+  _tafOptions = [0,1,2].map(i=>tafBuildPicks(count, Date.now()+i*9173+i)).filter(o=>o.length);
+  // de-dup identical option lists
+  const seen = new Set(); _tafOptions = _tafOptions.filter(o=>{ const k=o.map(e=>e.name).sort().join('|'); if(seen.has(k))return false; seen.add(k); return true; });
+  if(!_tafOptions.length){ toast('No exercises found for that grouping'); return; }
+  renderTafOptions();
+}
+function renderTafOptions(){
+  const el = document.getElementById('taf-options');
+  if(!el) return;
+  el.innerHTML = `<div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin:6px 0 8px">CHOOSE AN OPTION</div>` +
+    _tafOptions.map((opt,oi)=>`
+    <div style="border:1px solid var(--border);border-radius:11px;padding:10px 12px;margin-bottom:8px;background:#16161F">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:13px;font-weight:800">Option ${String.fromCharCode(65+oi)} <span style="font-size:11px;color:var(--muted);font-weight:600">${opt.length} exercises</span></div>
+        <button onclick="tafChooseOption(${oi})" style="background:rgba(255,140,66,.16);color:var(--michelle);border:1px solid var(--michelle);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:800">Use this</button>
+      </div>
+      <div style="font-size:11px;color:var(--babyblue);line-height:1.5">${opt.map(e=>escapeHtml(e.name)).join(' · ')}</div>
+    </div>`).join('') +
+    `<button onclick="tafFillNow()" style="width:100%;background:var(--soft);color:var(--text);border:1px dashed var(--border);border-radius:10px;padding:10px;font-size:12px;font-weight:700;margin-top:2px">🔀 Shuffle — new options</button>`;
+  el.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function tafChooseOption(oi){
+  const picks = _tafOptions[oi]; if(!picks) return;
+  tempoSetup.circuits[tafState.circuit].exercises = picks.slice();
   const cur = tempoSetup.circuits[tafState.circuit];
   if(/^Circuit [A-Z]$/.test(cur.name)) cur.name = tafState.groups.slice(0,2).join(' + ');
   cur._collapsed = false;
