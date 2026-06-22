@@ -983,6 +983,18 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- Equipment picker end -->
+
+<!-- Exercise media modal (YMove HD video + instructions, YouTube fallback) -->
+<div class="modal-overlay" id="modal-ex-media">
+<div class="modal" style="max-height:92vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-size:18px;font-weight:800" id="exm-title">Exercise</div>
+    <button onclick="closeModal('modal-ex-media')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div id="exm-body"></div>
+</div>
+</div>
+
 <div class="modal-overlay" id="modal-history-detail">
 <div class="modal" style="max-height:90vh">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -6152,7 +6164,7 @@ function filterLibrary(){
           </div>
           <div style="display:flex;gap:6px;margin-top:8px">
             <button onclick="showMuscleModal('${safeName}','${ex.muscle}')" style="background:rgba(108,99,255,.15);color:#6C63FF;border:1px solid rgba(108,99,255,.3);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700">💪 Muscles</button>
-            <a href="${getVideoUrl(ex)}" target="_blank" rel="noopener noreferrer" style="background:rgba(255,0,0,.15);color:#FF4444;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;border:1px solid rgba(255,0,0,.2);text-decoration:none;display:inline-flex;align-items:center">▶ Video</a>
+            <button onclick="openExerciseMedia('${safeName}')" style="background:rgba(255,0,0,.15);color:#FF4444;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;border:1px solid rgba(255,0,0,.2);display:inline-flex;align-items:center">▶ Video</button>
           </div>
         </div>
       </div>
@@ -9111,7 +9123,110 @@ function getVideoUrl(ex){
     'Power Walk': 'power walking technique tutorial fitness',
   };
   const query = overrides[ex.name] || (ex.name + ' exercise tutorial how to');
-  return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
+  return 'https://www.youtube.com/results' + '?search_query=' + encodeURIComponent(query);
+}
+
+// ════════════════════════════════════════════════
+//  YMOVE EXERCISE MEDIA — live HD video + instructions
+// ════════════════════════════════════════════════
+// We cache the matched exercise's METADATA (id, title, instructions) but NEVER
+// the video/thumbnail URLs (they expire in 48h per YMove's terms). Video URLs
+// are fetched fresh each time the modal opens.
+const YMOVE_EX_BASE = 'https://exercise-api.ymove.app/api/v2';
+const _ymoveMatchCache = {};   // exName -> { id, title, instructions, importantPoints, equipment } | 'none'
+
+function _ymoveHeaders(){ return { 'X-API-Key': YMOVE_API_KEY }; }
+
+// Find the YMove exercise id that best matches one of our library names.
+async function ymoveFindMatch(ex){
+  const key = ex.name;
+  if(_ymoveMatchCache[key]) return _ymoveMatchCache[key]==='none' ? null : _ymoveMatchCache[key];
+  if(typeof YMOVE_API_KEY==='undefined' || !YMOVE_API_KEY){ return null; }
+  try{
+    // browse-mode search (no video, doesn't burn the monthly cap) to find the id
+    const url = YMOVE_EX_BASE + '/exercises?search=' + encodeURIComponent(ex.name) + '&includeVideos=false&pageSize=5';
+    const res = await fetch(url, { headers:_ymoveHeaders() });
+    if(!res.ok) return null;
+    const json = await res.json();
+    const list = (json && json.data) || [];
+    if(!list.length){ _ymoveMatchCache[key]='none'; return null; }
+    // pick the closest title match
+    const norm = s=>(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').trim();
+    const target = norm(ex.name);
+    let best = list[0], bestScore = -1;
+    list.forEach(c=>{
+      const t = norm(c.title);
+      let score = 0;
+      if(t===target) score = 100;
+      else if(t.includes(target) || target.includes(t)) score = 60;
+      else { const a=new Set(t.split(' ')), b=target.split(' '); score = b.filter(w=>a.has(w)).length*10; }
+      if(score>bestScore){ bestScore=score; best=c; }
+    });
+    if(bestScore < 10){ _ymoveMatchCache[key]='none'; return null; }
+    const match = { id:best.id, slug:best.slug, title:best.title, instructions:best.instructions||[], importantPoints:best.importantPoints||[], equipment:best.equipment||'' };
+    _ymoveMatchCache[key] = match;
+    return match;
+  }catch(e){ return null; }
+}
+// Fetch fresh signed video URLs for a matched exercise id (never cached).
+async function ymoveFetchVideo(id){
+  try{
+    const res = await fetch(YMOVE_EX_BASE + '/exercises/' + encodeURIComponent(id), { headers:_ymoveHeaders() });
+    if(!res.ok) return null;
+    const json = await res.json();
+    const d = json && json.data;
+    if(!d) return null;
+    return { videoUrl:d.videoUrl||null, videoHlsUrl:d.videoHlsUrl||null, thumbnailUrl:d.thumbnailUrl||null,
+             instructions:d.instructions||[], importantPoints:d.importantPoints||[], title:d.title, durationSecs:d.videoDurationSecs };
+  }catch(e){ return null; }
+}
+
+// Open the exercise media modal. Tries YMove HD video; falls back to YouTube.
+async function openExerciseMedia(exName){
+  const ex = (typeof EXERCISES!=='undefined' ? EXERCISES.find(e=>e.name===exName) : null) || { name:exName, desc:'' };
+  document.getElementById('exm-title').textContent = ex.name;
+  const body = document.getElementById('exm-body');
+  const ytUrl = getVideoUrl(ex);
+  body.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:13px">Loading HD video…</div></div>`;
+  openModal('modal-ex-media');
+
+  const match = await ymoveFindMatch(ex);
+  let media = null;
+  if(match) media = await ymoveFetchVideo(match.id);
+
+  // Build instructions block (prefer YMove's; fall back to our desc)
+  const instr = (media && media.instructions && media.instructions.length) ? media.instructions
+              : (match && match.instructions && match.instructions.length) ? match.instructions : null;
+  const cues = (media && media.importantPoints && media.importantPoints.length) ? media.importantPoints
+              : (match && match.importantPoints && match.importantPoints.length) ? match.importantPoints : null;
+
+  const instrBlock = instr ? `
+    <div style="font-size:12px;color:var(--muted);font-weight:800;letter-spacing:.5px;margin:14px 0 6px">HOW TO DO IT</div>
+    <ol style="margin:0;padding-left:18px;font-size:13px;line-height:1.6">${instr.map(s=>`<li>${escapeHtml(s)}</li>`).join('')}</ol>` : '';
+  const cuesBlock = cues ? `
+    <div style="font-size:12px;color:var(--lime);font-weight:800;letter-spacing:.5px;margin:14px 0 6px">FORM CUES</div>
+    <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.6">${cues.map(s=>`<li>${escapeHtml(s)}</li>`).join('')}</ul>` : '';
+
+  if(media && (media.videoUrl || media.videoHlsUrl)){
+    const src = media.videoUrl || media.videoHlsUrl;
+    body.innerHTML = `
+      <div style="background:#000;border-radius:12px;overflow:hidden;margin-bottom:10px">
+        <video src="${src}" ${media.thumbnailUrl?`poster="${media.thumbnailUrl}"`:''} controls autoplay muted loop playsinline style="width:100%;max-height:60vh;object-fit:contain;background:#000"></video>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px">HD demonstration${ex.desc?` · ${escapeHtml(ex.desc)}`:''}</div>
+      ${instrBlock}${cuesBlock}
+      <a href="${ytUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:14px;font-size:12px;color:var(--muted);text-decoration:underline">More on YouTube ↗</a>`;
+  } else {
+    // No YMove match (or video stripped by cap) → YouTube fallback
+    body.innerHTML = `
+      <div style="background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:22px;text-align:center;margin-bottom:10px">
+        <div style="font-size:34px;margin-bottom:8px">▶️</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px">No HD clip for this one</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">${escapeHtml(ex.desc||'Watch a demonstration on YouTube.')}</div>
+        <a href="${ytUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:rgba(255,0,0,.15);color:#FF4444;border:1px solid rgba(255,0,0,.3);border-radius:9px;padding:9px 18px;font-size:13px;font-weight:800;text-decoration:none">▶ Watch on YouTube</a>
+      </div>
+      ${instrBlock}${cuesBlock}`;
+  }
 }
 
 // ════════════════════════════════════════════════
