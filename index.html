@@ -940,7 +940,7 @@ if('serviceWorker' in navigator){
     <div style="font-size:20px;font-weight:800">🏋️ Your Gyms</div>
     <button onclick="closeModal('modal-equipment')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
   </div>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Pick the gym you're training at — workouts filter to its equipment. Build new ones anytime; the whole family can use them.</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Pick the gym you're training at — workouts filter to its equipment. Build new ones anytime; everyone can use them.</div>
   <div id="gym-list" style="margin-bottom:12px"></div>
   <button onclick="openGymBuilder()" style="width:100%;background:rgba(57,191,91,.16);color:var(--lime);border:1px solid var(--lime);border-radius:11px;padding:12px;font-size:14px;font-weight:800">＋ Build a new gym</button>
 </div>
@@ -1682,7 +1682,7 @@ if('serviceWorker' in navigator){
     <button class="btn-secondary" onclick="mbSaveToLibrary()" style="font-size:13px">⭐ Save to my meals</button>
     <button class="btn-primary" id="mb-log-btn" onclick="mbLogMeal()" style="font-size:13px">Log this meal</button>
   </div>
-  <div style="font-size:10px;color:var(--muted);text-align:center">Saving keeps it in your library to re-log or share with the family.</div>
+  <div style="font-size:10px;color:var(--muted);text-align:center">Saving keeps it in your library to re-log or share with DM Shared.</div>
 </div>
 </div>
 
@@ -6904,7 +6904,7 @@ function renderSavedMeals(){
   // Mine / Family sub-tabs
   const viewTabs = `<div style="display:flex;gap:6px;margin-bottom:12px">
     <button onclick="_savedMealsView='mine';renderSavedMeals()" style="flex:1;padding:8px;border-radius:9px;font-size:13px;font-weight:800;border:1px solid ${_savedMealsView==='mine'?uColor:'var(--border)'};background:${_savedMealsView==='mine'?uColor+'1A':'var(--soft)'};color:${_savedMealsView==='mine'?uColor:'var(--muted)'}">👤 Mine</button>
-    <button onclick="_savedMealsView='family';renderSavedMeals()" style="flex:1;padding:8px;border-radius:9px;font-size:13px;font-weight:800;border:1px solid ${_savedMealsView==='family'?'var(--lime)':'var(--border)'};background:${_savedMealsView==='family'?'rgba(57,191,91,.12)':'var(--soft)'};color:${_savedMealsView==='family'?'var(--lime)':'var(--muted)'}">👨‍👩‍👧 Family pool (${familyPool('meals').length})</button>
+    <button onclick="_savedMealsView='family';renderSavedMeals()" style="flex:1;padding:8px;border-radius:9px;font-size:13px;font-weight:800;border:1px solid ${_savedMealsView==='family'?'var(--lime)':'var(--border)'};background:${_savedMealsView==='family'?'rgba(57,191,91,.12)':'var(--soft)'};color:${_savedMealsView==='family'?'var(--lime)':'var(--muted)'}">🔗 DM Shared (${familyPool('meals').length})</button>
   </div>`;
 
   if(_savedMealsView==='family'){ el.innerHTML = viewTabs + renderFamilyMeals(); return; }
@@ -6931,7 +6931,7 @@ function renderSavedMeals(){
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button onclick="logSavedMealToday(${i})" style="background:transparent;color:${uColor};border:1px solid ${uColor};border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800">+ Log Today</button>
             ${m.ingredients&&m.ingredients.length?`<button onclick="mbEditSaved(${i})" style="background:var(--soft);color:var(--text);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid var(--border)">✎ Edit</button>`:''}
-            <button onclick="pushMealToFamily(${i})" style="background:rgba(57,191,91,.12);color:var(--lime);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid rgba(57,191,91,.3)">👨‍👩‍👧 Add to Family</button>
+            <button onclick="pushMealToFamily(${i})" style="background:rgba(57,191,91,.12);color:var(--lime);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid rgba(57,191,91,.3)">🔗 Add to DM Shared</button>
             <button onclick="openAssignMeal(${i})" style="background:var(--soft);color:var(--text);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;border:1px solid var(--border)">📅 Plan</button>
             <button onclick="deleteSavedMeal(${i})" style="background:rgba(255,77,77,.1);color:var(--red);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;border:1px solid rgba(255,77,77,.2)">✕</button>
           </div>
@@ -6959,9 +6959,9 @@ function renderFamilyMeals(){
   const pool = familyPool('meals');
   if(!pool.length){
     return `<div class="card-sm" style="text-align:center;padding:26px;border:1px dashed var(--border)">
-      <div style="font-size:32px;margin-bottom:8px">👨‍👩‍👧</div>
-      <div style="font-size:14px;font-weight:700;margin-bottom:4px">The family pool is empty</div>
-      <div style="font-size:12px;color:var(--muted)">From your saved meals, tap "Add to Family" to share one here for everyone.</div>
+      <div style="font-size:32px;margin-bottom:8px">🔗</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">DM Shared is empty</div>
+      <div style="font-size:12px;color:var(--muted)">From your saved meals, tap "Add to DM Shared" to share one here for everyone.</div>
     </div>`;
   }
   return pool.map((m,i)=>`
@@ -6969,7 +6969,7 @@ function renderFamilyMeals(){
       <div style="display:flex;align-items:flex-start;gap:10px">
         <div style="font-size:24px;flex-shrink:0">${CAT_ICONS[m.cat]||'🍽️'}</div>
         <div style="flex:1">
-          <div style="font-size:15px;font-weight:800;margin-bottom:3px">${escapeHtml(m.name)} <span style="font-size:10px;font-weight:700;color:var(--lime);background:rgba(57,191,91,.1);border:1px solid rgba(57,191,91,.3);border-radius:6px;padding:1px 6px">added by ${m.addedBy||'family'}</span></div>
+          <div style="font-size:15px;font-weight:800;margin-bottom:3px">${escapeHtml(m.name)} <span style="font-size:10px;font-weight:700;color:var(--lime);background:rgba(57,191,91,.1);border:1px solid rgba(57,191,91,.3);border-radius:6px;padding:1px 6px">added by ${m.addedBy||'DM'}</span></div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${m.cals} kcal · P:${m.protein||0}g C:${m.carbs||0}g F:${m.fat||0}g${m.fibre?' · Fibre:'+m.fibre+'g':''}</div>
           ${m.ingredients&&m.ingredients.length?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px">${m.ingredients.length} ingredient${m.ingredients.length>1?'s':''}: ${m.ingredients.map(x=>escapeHtml(x.name)).slice(0,4).join(', ')}${m.ingredients.length>4?'…':''}</div>`:''}
           <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -6985,9 +6985,9 @@ function pushMealToFamily(i){
   const m = loadSavedMeals(activeUser)[i];
   if(!m) return;
   // avoid obvious duplicate (same name + cals already in pool)
-  if(familyPool('meals').some(x=>x.name===m.name && x.cals===m.cals && x.addedBy===activeUser)){ toast('Already in the family pool'); return; }
+  if(familyPool('meals').some(x=>x.name===m.name && x.cals===m.cals && x.addedBy===activeUser)){ toast('Already in DM Shared'); return; }
   pushToFamily('meals', m);
-  toast('Added to family pool 👨‍👩‍👧');
+  toast('Added to DM Shared 🔗');
   renderSavedMeals();
 }
 function saveFamilyMealToMine(i){
@@ -7015,10 +7015,10 @@ function logFamilyMealToday(i){
 function deleteFamilyMeal(i){
   const m = familyPool('meals')[i];
   if(!m) return;
-  if(!confirm('Remove "'+m.name+'" from the family pool for everyone?')) return;
+  if(!confirm('Remove "'+m.name+'" from DM Shared for everyone?')) return;
   removeFromFamily('meals', m.familyId);
   renderSavedMeals();
-  toast('Removed from family pool');
+  toast('Removed from DM Shared');
 }
 
 function logSavedMealToday(i){
