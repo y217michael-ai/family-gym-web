@@ -182,28 +182,7 @@ if('serviceWorker' in navigator){
     </div>
   </div>
 
-  <!-- Device connections -->
-  <div class="card" style="margin-bottom:14px">
-    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:10px">CONNECTED DEVICES</div>
-    <div id="device-list"></div>
-  </div>
-
-  <!-- Heart rate zone (simulated) -->
-  <div class="card" style="margin-bottom:14px" id="hr-widget">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:700">Heart Rate</div>
-      <div style="font-size:11px;color:var(--muted)" id="hr-zone-label">Zone 2 — Fat Burn</div>
-    </div>
-    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px">
-      <div style="font-size:38px;font-weight:800;color:var(--lime);font-variant-numeric:tabular-nums" id="hr-display">128</div>
-      <div style="font-size:14px;color:var(--muted)">bpm</div>
-      <div style="margin-left:auto;font-size:12px;color:var(--muted)" id="hr-calories">~420 kcal today</div>
-    </div>
-    <div class="hr-bar"><div class="hr-marker" id="hr-marker" style="left:38%;background:var(--lime)"></div></div>
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px">
-      <span>50</span><span>100</span><span>130</span><span>160</span><span>180</span><span>200</span>
-    </div>
-  </div>
+  <!-- (Connected devices + heart rate moved to Profile › Bluetooth & Devices) -->
 
   <!-- Routine view tabs -->
   <div style="display:flex;background:var(--surface);border-radius:12px;padding:4px;margin-bottom:12px" id="routine-view-tabs"></div>
@@ -382,10 +361,34 @@ if('serviceWorker' in navigator){
   <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Devices & Integrations</div>
   <div id="device-settings"></div>
 
-  <!-- Connected Services (placeholder — activates with the native app) -->
-  <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Connected Services</div>
+  <!-- Bluetooth & Devices -->
+  <div style="font-size:16px;font-weight:800;margin:18px 0 10px">📶 Bluetooth & Devices</div>
   <div class="card" style="margin-bottom:14px">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Once DM Gym App is a native app on your phone, connect these once and your real data (heart rate, recovery, sleep, weight) flows in automatically.</div>
+    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:10px">CONNECTED DEVICES</div>
+    <div id="device-list"></div>
+  </div>
+
+  <!-- Heart rate (live from connected wearables in the native app) -->
+  <div class="card" style="margin-bottom:14px" id="hr-widget">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700">Heart Rate</div>
+      <div style="font-size:11px;color:var(--muted)" id="hr-zone-label">Zone 2 — Fat Burn</div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px">
+      <div style="font-size:38px;font-weight:800;color:var(--lime);font-variant-numeric:tabular-nums" id="hr-display">128</div>
+      <div style="font-size:14px;color:var(--muted)">bpm</div>
+      <div style="margin-left:auto;font-size:12px;color:var(--muted)" id="hr-calories">~420 kcal today</div>
+    </div>
+    <div class="hr-bar"><div class="hr-marker" id="hr-marker" style="left:38%;background:var(--lime)"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px">
+      <span>50</span><span>100</span><span>130</span><span>160</span><span>180</span><span>200</span>
+    </div>
+  </div>
+
+  <!-- Connected Services (placeholder — activates with the native app) -->
+  <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Health Data Sources</div>
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Once DM Gym App is a native app on your phone, connect these once and your real data (heart rate, recovery, sleep, weight) flows in automatically from Apple Health, Whoop, Wahoo and Withings.</div>
     <div id="connected-services"></div>
   </div>
 
@@ -2622,6 +2625,26 @@ function switchUser(user){
 }
 
 // ══════════════════ HOME ══════════════════
+// Devices + heart rate (rendered in Profile › Bluetooth & Devices)
+function renderDevicesAndHR(){
+  const u = USERS[activeUser];
+  const dl = document.getElementById('device-list');
+  if(dl){
+    dl.innerHTML = u.devices.map(d=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+        <div style="width:8px;height:8px;border-radius:50%;background:#4CAF50;flex-shrink:0"></div>
+        <div style="flex:1;font-size:13px;font-weight:600">${d}</div>
+        <div style="font-size:11px;color:var(--muted)">Connected</div>
+      </div>
+    `).join('')+`
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0">
+        <div style="width:8px;height:8px;border-radius:50%;background:#4CAF50;flex-shrink:0"></div>
+        <div style="flex:1;font-size:13px;font-weight:600">Apple Health</div>
+        <div style="font-size:11px;color:var(--muted)">Syncing</div>
+      </div>`;
+  }
+}
+
 function renderHome(){
   const u = USERS[activeUser];
   // Avatar
@@ -2638,20 +2661,8 @@ function renderHome(){
   document.getElementById('stat-shared').textContent = shared.length;
   document.getElementById('stat-week').textContent = getWeekCount(activeUser);
 
-  // Devices
-  const dl = document.getElementById('device-list');
-  dl.innerHTML = u.devices.map(d=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
-      <div style="width:8px;height:8px;border-radius:50%;background:#4CAF50;flex-shrink:0"></div>
-      <div style="flex:1;font-size:13px;font-weight:600">${d}</div>
-      <div style="font-size:11px;color:var(--muted)">Connected</div>
-    </div>
-  `).join('')+`
-    <div style="display:flex;align-items:center;gap:10px;padding:7px 0">
-      <div style="width:8px;height:8px;border-radius:50%;background:#4CAF50;flex-shrink:0"></div>
-      <div style="flex:1;font-size:13px;font-weight:600">Apple Health</div>
-      <div style="font-size:11px;color:var(--muted)">Syncing</div>
-    </div>`;
+  // Devices + heart rate now live in Profile › Bluetooth & Devices
+  renderDevicesAndHR();
 
   // ── Routine view tab bar ──
   const uColor2 = USERS[activeUser].color;
@@ -5953,9 +5964,12 @@ function startHRSimulation(){
     baseHR += (Math.random()-.5)*4;
     baseHR = Math.max(50,Math.min(180,baseHR));
     const hr = Math.round(baseHR);
-    document.getElementById('hr-display').textContent = hr;
+    const hrEl = document.getElementById('hr-display');
+    const markerEl = document.getElementById('hr-marker');
+    if(!hrEl || !markerEl) return; // HR widget not on screen (only in Profile)
+    hrEl.textContent = hr;
     const pct = (hr-50)/(200-50);
-    document.getElementById('hr-marker').style.left = (pct*100)+'%';
+    markerEl.style.left = (pct*100)+'%';
     // Zone label
     let zone='', col='var(--lime)';
     if(hr<100){zone='Zone 1 — Rest';col='#4CAF50';}
@@ -5964,10 +5978,11 @@ function startHRSimulation(){
     else if(hr<170){zone='Zone 4 — Peak';col='#FF9800';}
     else{zone='Zone 5 — Max';col='#F44336';}
     document.getElementById('hr-zone-label').textContent = zone;
-    document.getElementById('hr-marker').style.background = col;
-    document.getElementById('hr-display').style.color = col;
+    markerEl.style.background = col;
+    hrEl.style.color = col;
     const cals = Math.round(tick/6*7.2);
-    document.getElementById('hr-calories').textContent = '~'+cals+' kcal today';
+    const calEl = document.getElementById('hr-calories');
+    if(calEl) calEl.textContent = '~'+cals+' kcal today';
   },2000);
 }
 
@@ -8724,6 +8739,8 @@ function renderAdminPanel(){
 }
 
 function renderProfile(){
+  // Bluetooth & Devices (moved here from home)
+  renderDevicesAndHR();
   // Inject privacy/admin panels after profile cards
   const privacyEl = document.getElementById('profile-privacy');
   if(privacyEl){
