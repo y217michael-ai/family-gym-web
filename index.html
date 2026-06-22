@@ -2741,6 +2741,33 @@ function inferExerciseEquip(ex){
   if(/leverage|machine/.test(n) && !needs.length) add('multistation');
   return needs;
 }
+// Infer a difficulty level (beginner | intermediate | advanced) from the exercise.
+// Mirrors the equipment inference: machines & bodyweight basics lean beginner,
+// free-weight compounds lean intermediate, technical/Olympic/skill moves lean advanced.
+// An exercise's own `difficulty` field (if ever set) always wins.
+function inferDifficulty(ex){
+  if(ex && ex.difficulty) return ex.difficulty;
+  const n = ((ex&&ex.name)||'').toLowerCase();
+  // ADVANCED — Olympic lifts, high-skill, heavy compound, demanding unilateral/plyo
+  if(/snatch|clean ?(&|and)? ?jerk|\bclean\b|power clean|hang clean|jerk|muscle ?up|pistol|planche|front lever|human flag|handstand push|deficit deadlift|sumo deadlift|good morning|pin (squat|press)|box jump|depth jump|plyo|bulgarian|overhead squat|zercher|turkish get ?up|kipping|weighted (pull|chin|dip)|nordic/.test(n)) return 'advanced';
+  // BEGINNER — machines, cables, supported, bodyweight basics, isolation
+  if(/machine|cable|pulldown|seated row|leg press|leg curl|leg extension|pec deck|pec fly|smith|assisted|chest press|shoulder press machine|calf raise|crunch|sit[- ]?up|plank|glute bridge|bird dog|superman|wall sit|step[- ]?up|band|resistance band|stretch|foam roll|march|dead ?bug|clamshell|leg raise|knee raise|lat raise|lateral raise|front raise|rear delt|face pull|bicep curl|tricep (pushdown|extension)|hammer curl|concentration curl|wrist curl|shrug/.test(n)) return 'beginner';
+  // ADVANCED-ish barbell skill lifts not caught above
+  if(/barbell (back |front )?squat|barbell bench|barbell row|barbell overhead|barbell ohp|romanian deadlift|\brdl\b|\bdeadlift\b|hip thrust(?!.*machine)|barbell hip/.test(n)) return 'intermediate';
+  // INTERMEDIATE — most free-weight compounds & standard pulls/presses
+  if(/squat|deadlift|bench press|overhead press|\bohp\b|press|row|lunge|dip|pull[- ]?up|chin[- ]?up|push[- ]?up|dumbbell|kettlebell|goblet|thruster|swing|clean|carry|farmer/.test(n)) return 'intermediate';
+  // default
+  return 'intermediate';
+}
+// Filter a pool to a chosen difficulty: include everything at or below the target
+// (so 'advanced' shows all, 'beginner' shows only beginner). Returns the original
+// pool if filtering would leave too little to build a workout.
+function applyDifficultyFilter(pool, difficulty){
+  const rank = {beginner:1,intermediate:2,advanced:3};
+  const want = rank[difficulty]||2;
+  const filtered = pool.filter(e=>(rank[inferDifficulty(e)]||2) <= want);
+  return filtered.length >= 3 ? filtered : pool;
+}
 // Does an exercise fit the active gym? true if no gym, or gym has at least one
 // piece of kit the exercise can use (bodyweight exercises always fit).
 function exerciseFitsGym(ex){
@@ -3698,6 +3725,7 @@ function autofillManual(){
   const cfg = DIFFICULTY_CFG[difficulty] || DIFFICULTY_CFG.intermediate;
   let pool = EXERCISES.filter(e=>nrAuto.muscles.includes(e.muscle));
   if(getHipSafePref(activeUser)) pool = pool.filter(e=>e.hipSafe);
+  pool = applyDifficultyFilter(pool, difficulty);
   if(pool.length < 3){ toast('Not enough exercises for that selection'); return; }
   // temporarily use genState.difficulty for rest calc inside builder helpers
   const prevDiff = genState.difficulty; genState.difficulty = difficulty;
@@ -4437,6 +4465,7 @@ function generateWorkouts(){
   let pool = EXERCISES.filter(e=>groups.includes(e.muscle));
   if(hipSafe) pool = pool.filter(e=>e.hipSafe);
   pool = applyGymFilter(pool);
+  pool = applyDifficultyFilter(pool, difficulty);
   const resultsEl = document.getElementById('gen-results');
   if(pool.length < 3){
     resultsEl.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:14px;text-align:center">Only ${pool.length} exercise${pool.length===1?'':'s'} available for ${groups.join(' + ')}${hipSafe?' (hip-safe)':''}. Try another group or turn off the hip-safe filter.</div>`;
@@ -5445,12 +5474,7 @@ function tafManualAdd(){
 function tafBuildPicks(count, seed){
   let pool = EXERCISES.filter(e=>tafState.groups.includes(e.muscle));
   if(getHipSafePref(activeUser)) pool = pool.filter(e=>e.hipSafe);
-  const diffRank = {beginner:1,intermediate:2,advanced:3};
-  if(pool.some(e=>e.difficulty)){
-    const want = diffRank[tafState.difficulty]||2;
-    const filtered = pool.filter(e=>!e.difficulty || (diffRank[e.difficulty]||2)<=want);
-    if(filtered.length) pool = filtered;
-  }
+  pool = applyDifficultyFilter(pool, tafState.difficulty);
   if(!pool.length) return [];
   // seeded shuffle so each option differs
   let s = seed||1;
