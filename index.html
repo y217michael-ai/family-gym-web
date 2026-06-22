@@ -1056,6 +1056,37 @@ if('serviceWorker' in navigator){
 </div>
 </div>
 
+<!-- Wahoo info panel -->
+<div class="modal-overlay" id="modal-wahoo-info">
+<div class="modal" style="max-height:92vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:20px;font-weight:800">🚴 Wahoo Cloud API</div>
+    <button onclick="closeModal('modal-wahoo-info')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="display:inline-block;font-size:11px;font-weight:800;color:#4CAF50;background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.35);border-radius:7px;padding:4px 10px;margin-bottom:14px">✓ Approved for DM Gym App</div>
+
+  <div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:14px">Wahoo has approved your developer application. That's the green light — here's what it means and what happens next.</div>
+
+  <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">WHAT IT'LL DO</div>
+  <div style="background:var(--soft);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.6">
+    📡 Your <b>TICKR X records phone-free</b> on the track — no phone needed in your pocket during motocross.<br><br>
+    🚴 Afterwards, the <b>full ride flows in automatically</b> — GPS route, power, heart rate, duration — straight into your history. No manual entry.
+  </div>
+
+  <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">WHERE IT STANDS</div>
+  <div style="background:var(--soft);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.6">
+    The connection switches on once DM Gym App has its <b>small backend server</b> in place. It can't run from the current web app because the secure login and the ride-delivery webhook both need a server (a plain web page can't keep a secret or receive Wahoo's ride data).<br><br>
+    <span style="color:var(--muted)">This is the same backend step that also lights up Apple Health, Whoop, Withings, and live group sessions — one piece unlocks them all.</span>
+  </div>
+
+  <div style="background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.25);border-radius:10px;padding:10px;font-size:12px;color:var(--muted);line-height:1.5">
+    ✓ The approval stays valid — there's a full integration plan saved for when you build the backend. Nothing's lost by waiting until the native-app stage.
+  </div>
+
+  <button onclick="closeModal('modal-wahoo-info')" class="btn-secondary" style="width:100%;margin-top:14px">Got it</button>
+</div>
+</div>
+
 <!-- Edit a single exercise's video link -->
 <div class="modal-overlay" id="modal-edit-videolink">
 <div class="modal" style="max-width:420px">
@@ -9409,23 +9440,30 @@ function renderConnectedServices(){
   const el = document.getElementById('connected-services');
   if(!el) return;
   const services = [
-    {key:'bluetooth', name:'Bluetooth HR Strap', icon:'📡', desc:'Live heart rate (e.g. Wahoo TICKR) during sessions'},
-    {key:'wahoo', name:'Wahoo (Cloud API)', icon:'🚴', desc:'Rides, offline workouts, HR & GPS — also syncs via Apple Health'},
-    {key:'apple', name:'Apple Health', icon:'❤️', desc:'Heart rate, steps, workouts, sleep'},
-    {key:'whoop', name:'Whoop', icon:'🟥', desc:'Strain, recovery, HRV, sleep'},
-    {key:'withings', name:'Withings', icon:'⚖️', desc:'Weight, body composition, BP'},
+    {key:'bluetooth', name:'Bluetooth HR Strap', icon:'📡', desc:'Live heart rate (e.g. Wahoo TICKR) during sessions', status:'soon'},
+    {key:'wahoo', name:'Wahoo (Cloud API)', icon:'🚴', desc:'Full rides — GPS, power, HR — via the offline ride webhook', status:'approved'},
+    {key:'apple', name:'Apple Health', icon:'❤️', desc:'Heart rate, steps, workouts, sleep', status:'soon'},
+    {key:'whoop', name:'Whoop', icon:'🟥', desc:'Strain, recovery, HRV, sleep', status:'soon'},
+    {key:'withings', name:'Withings', icon:'⚖️', desc:'Weight, body composition, BP', status:'soon'},
   ];
-  el.innerHTML = services.map(s=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:11px;margin-bottom:8px;opacity:.65">
+  el.innerHTML = services.map(s=>{
+    const approved = s.status==='approved';
+    const badge = approved
+      ? `<div style="font-size:10px;font-weight:800;color:#4CAF50;background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.35);border-radius:6px;padding:5px 9px;white-space:nowrap">✓ Approved</div>`
+      : `<div style="font-size:10px;font-weight:800;color:var(--muted);background:var(--soft);border:1px solid var(--border);border-radius:6px;padding:5px 9px;white-space:nowrap">Coming with the app</div>`;
+    const tap = approved ? `onclick="openWahooInfo()" style="cursor:pointer"` : '';
+    return `<div ${tap} style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid ${approved?'rgba(76,175,80,.3)':'var(--border)'};border-radius:11px;margin-bottom:8px;opacity:${approved?'1':'.65'}${approved?';cursor:pointer':''}">
       <div style="font-size:22px">${s.icon}</div>
       <div style="flex:1">
-        <div style="font-size:14px;font-weight:800">${s.name}</div>
+        <div style="font-size:14px;font-weight:800">${s.name}${approved?' <span style="font-size:11px;color:var(--muted);font-weight:600">· tap for details</span>':''}</div>
         <div style="font-size:11px;color:var(--muted)">${s.desc}</div>
       </div>
-      <div style="font-size:10px;font-weight:800;color:var(--muted);background:var(--soft);border:1px solid var(--border);border-radius:6px;padding:5px 9px;white-space:nowrap">Coming with the app</div>
-    </div>`).join('') +
-    `<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px">These switch on once the native app is built. Bluetooth straps give live HR; on Android this can work in the browser too. Whoop &amp; Withings connect to their own accounts; Apple Health is a one-tap permission.<br><br>📡 <b>Wahoo TICKR X for motocross:</b> it stores your ride in its own memory with no phone needed. Two ways the data comes in: the simple route is via Apple Health, or connect the <b>Wahoo Cloud API</b> directly for the full ride (offline workouts, GPS, power) — that needs a one-time Wahoo developer approval.</div>`;
+      ${badge}
+    </div>`;
+  }).join('') +
+    `<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px">Most switch on once the native app is built. Bluetooth straps give live HR; on Android this can work in the browser too. Whoop &amp; Withings connect to their own accounts; Apple Health is a one-tap permission.<br><br>🚴 <b>Wahoo Cloud API — approved ✓</b> for DM Gym App. Your developer app is live; the connection activates once the small backend is in place (it can't run from a plain web page because OAuth and ride webhooks need a server). 📡 <b>TICKR X for motocross</b> records phone-free and the full ride — GPS, power, HR — arrives via the offline ride webhook once connected.</div>`;
 }
+function openWahooInfo(){ openModal('modal-wahoo-info'); }
 
 function renderVideoSettings(){
   const el = document.getElementById('video-settings'); if(!el) return;
