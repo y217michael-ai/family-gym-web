@@ -398,7 +398,25 @@ if('serviceWorker' in navigator){
     <div style="font-size:13px;font-weight:700;margin-bottom:6px">🎬 HD video (YMove)</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Tap to check the app can reach YMove and pull an HD demo. If this fails on your live site, videos can't load and we'll need to route them through a small backend.</div>
     <button onclick="testYMoveConnection()" style="width:100%;background:rgba(59,116,191,.16);color:var(--dm-blue);border:1px solid var(--dm-blue);border-radius:10px;padding:11px;font-size:13px;font-weight:800;margin-bottom:8px">🔌 Test YMove connection</button>
-    <div id="ymove-test-result" style="font-size:12px"></div>
+    <div id="ymove-test-result" style="font-size:12px;margin-bottom:12px"></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Check a specific exercise — see what YMove returns for it:</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <input class="inp" id="ymove-check-name" placeholder="e.g. Bench Press" style="flex:1">
+      <button onclick="checkYMoveExercise()" style="background:rgba(59,116,191,.16);color:var(--dm-blue);border:1px solid var(--dm-blue);border-radius:10px;padding:0 16px;font-size:13px;font-weight:800">Check</button>
+    </div>
+    <div id="ymove-check-result" style="font-size:12px"></div>
+  </div>
+
+  <!-- My own videos (filmed / YouTube links) -->
+  <div class="card" style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-size:13px;font-weight:700">🎬 Use my own videos</div>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="myvideos-toggle" onchange="toggleMyVideos()" style="width:18px;height:18px;accent-color:var(--lime)">
+      </label>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">When on, the ▶ Watch demo buttons show your own saved videos first — clips you filmed and uploaded to YouTube (set them Unlisted), or any demo links you pick. Falls back to YMove/YouTube where you haven't added one.</div>
+    <button onclick="openVideoLinksBulk()" style="width:100%;background:rgba(57,191,91,.14);color:var(--lime);border:1px solid rgba(57,191,91,.35);border-radius:10px;padding:11px;font-size:13px;font-weight:800">🎬 Manage my exercise videos</button>
   </div>
   <div class="card" style="margin-bottom:14px">
     <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Connect your animation library (e.g. Gym-Animations). Drop the MP4s into a folder and the app shows a form demo on every exercise.</div>
@@ -1035,6 +1053,42 @@ if('serviceWorker' in navigator){
     <button onclick="closeModal('modal-ex-media')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
   </div>
   <div id="exm-body"></div>
+</div>
+</div>
+
+<!-- Edit a single exercise's video link -->
+<div class="modal-overlay" id="modal-edit-videolink">
+<div class="modal" style="max-width:420px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:18px;font-weight:800">🎬 Video link</div>
+    <button onclick="closeModal('modal-edit-videolink')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:4px" id="evl-exname">Exercise</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Paste a YouTube link — either a clip you filmed and uploaded (set it to Unlisted), or any demo video you like. Leave blank to remove.</div>
+  <input class="inp" id="evl-url" placeholder="https://youtu.be/..." style="margin-bottom:6px">
+  <div id="evl-preview" style="margin-bottom:12px"></div>
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+    <button class="btn-secondary" onclick="closeModal('modal-edit-videolink')">Cancel</button>
+    <button class="btn-primary" onclick="saveEditVideoLink()">Save link</button>
+  </div>
+</div>
+</div>
+
+<!-- Bulk manage all video links -->
+<div class="modal-overlay" id="modal-videolinks-bulk">
+<div class="modal" style="max-height:92vh;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:18px;font-weight:800">🎬 My Exercise Videos</div>
+    <button onclick="closeModal('modal-videolinks-bulk')" style="background:var(--soft);border-radius:8px;padding:6px 10px;font-size:16px">✕</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Paste a YouTube link for any exercise. Filmed ones (uploaded Unlisted) or curated demos both work. Filter to find an exercise fast.</div>
+  <input class="inp" id="vlb-search" placeholder="Search exercises…" oninput="renderVideoLinksBulk()" style="margin-bottom:6px">
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <button onclick="vlbFilter='all';renderVideoLinksBulk()" id="vlb-f-all" style="flex:1;padding:7px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--lime);background:rgba(57,191,91,.12);color:var(--lime)">All</button>
+    <button onclick="vlbFilter='has';renderVideoLinksBulk()" id="vlb-f-has" style="flex:1;padding:7px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">With video</button>
+    <button onclick="vlbFilter='none';renderVideoLinksBulk()" id="vlb-f-none" style="flex:1;padding:7px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--soft);color:var(--muted)">Missing</button>
+  </div>
+  <div id="vlb-list" style="max-height:60vh;overflow-y:auto"></div>
 </div>
 </div>
 
@@ -6484,6 +6538,7 @@ function filterLibrary(){
           <div style="display:flex;gap:6px;margin-top:8px">
             <button onclick="showMuscleModal('${safeName}','${ex.muscle}')" style="background:rgba(108,99,255,.15);color:#6C63FF;border:1px solid rgba(108,99,255,.3);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700">💪 Muscles</button>
             <button onclick="openExerciseMedia('${safeName}')" style="background:rgba(255,0,0,.15);color:#FF4444;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;border:1px solid rgba(255,0,0,.2);display:inline-flex;align-items:center">▶ Video</button>
+            ${myVideosEnabled()?`<button onclick="openEditVideoLink('${safeName}')" style="background:rgba(57,191,91,.12);color:var(--lime);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;border:1px solid rgba(57,191,91,.25);display:inline-flex;align-items:center">${getCustomVideoLink(ex.name)?'✎ My vid':'＋ Add vid'}</button>`:''}
           </div>
         </div>
       </div>
@@ -9374,6 +9429,7 @@ function renderConnectedServices(){
 
 function renderVideoSettings(){
   const el = document.getElementById('video-settings'); if(!el) return;
+  const mvt = document.getElementById('myvideos-toggle'); if(mvt) mvt.checked = myVideosEnabled();
   const cfg = loadVideoConfig();
   const gMike = videoGenderForUser('Mike');
   const gMich = videoGenderForUser('Michelle');
@@ -9699,27 +9755,43 @@ async function ymoveFindMatch(ex){
   const key = ex.name;
   if(_ymoveMatchCache[key]) return _ymoveMatchCache[key]==='none' ? null : _ymoveMatchCache[key];
   if(typeof YMOVE_API_KEY==='undefined' || !YMOVE_API_KEY){ return null; }
+  const norm = s=>(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+  // Qualifier words to drop — they narrow our names but YMove uses the base movement
+  const QUALIFIERS = /\b(banded|band|modified|shallow|wide|narrow|close|assisted|single|seated|standing|incline|decline|kneeling|alternating|alt|slow|tempo|paused|deficit|elevated|negative|eccentric|isometric|machine|cable|barbell|dumbbell|kettlebell|smith|hip safe|hipsafe|left|right|each side)\b/g;
+  const baseName = norm(ex.name).replace(QUALIFIERS,' ').replace(/\s+/g,' ').trim();
+  const tryQueries = [ex.name];
+  if(baseName && baseName!==norm(ex.name)) tryQueries.push(baseName);
+  // also try last two words (often the core movement, e.g. "hip thrust")
+  const words = norm(ex.name).split(' ');
+  if(words.length>2) tryQueries.push(words.slice(-2).join(' '));
+
+  const target = norm(ex.name);
+  const targetBase = baseName || target;
   try{
-    // browse-mode search (no video, doesn't burn the monthly cap) to find the id
-    const url = YMOVE_EX_BASE + '/exercises?search=' + encodeURIComponent(ex.name) + '&includeVideos=false&pageSize=5';
-    const res = await fetch(url, { headers:_ymoveHeaders() });
-    if(!res.ok) return null;
-    const json = await res.json();
-    const list = (json && json.data) || [];
-    if(!list.length){ _ymoveMatchCache[key]='none'; return null; }
-    // pick the closest title match
-    const norm = s=>(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').trim();
-    const target = norm(ex.name);
-    let best = list[0], bestScore = -1;
-    list.forEach(c=>{
-      const t = norm(c.title);
-      let score = 0;
-      if(t===target) score = 100;
-      else if(t.includes(target) || target.includes(t)) score = 60;
-      else { const a=new Set(t.split(' ')), b=target.split(' '); score = b.filter(w=>a.has(w)).length*10; }
-      if(score>bestScore){ bestScore=score; best=c; }
-    });
-    if(bestScore < 10){ _ymoveMatchCache[key]='none'; return null; }
+    let best=null, bestScore=-1;
+    for(const q of tryQueries){
+      if(!q) continue;
+      const url = YMOVE_EX_BASE + '/exercises?search=' + encodeURIComponent(q) + '&includeVideos=false&pageSize=8';
+      const res = await fetch(url, { headers:_ymoveHeaders() });
+      if(!res.ok) continue;
+      const json = await res.json();
+      const list = (json && json.data) || [];
+      list.forEach(c=>{
+        const t = norm(c.title);
+        let score = 0;
+        if(t===target || t===targetBase) score = 100;
+        else if(t.includes(targetBase) || targetBase.includes(t)) score = 70;
+        else if(t.includes(target) || target.includes(t)) score = 60;
+        else {
+          const a=new Set(t.split(' ')), b=targetBase.split(' ');
+          const overlap = b.filter(w=>w.length>2 && a.has(w)).length;
+          score = overlap * 20;  // looser: each shared meaningful word counts more
+        }
+        if(score>bestScore){ bestScore=score; best=c; }
+      });
+      if(bestScore>=70) break; // good enough, stop searching
+    }
+    if(!best || bestScore < 20){ _ymoveMatchCache[key]='none'; return null; }
     const match = { id:best.id, slug:best.slug, title:best.title, instructions:best.instructions||[], importantPoints:best.importantPoints||[], equipment:best.equipment||'' };
     _ymoveMatchCache[key] = match;
     return match;
@@ -9744,6 +9816,45 @@ async function openExerciseMedia(exName){
   document.getElementById('exm-title').textContent = ex.name;
   const body = document.getElementById('exm-body');
   const ytUrl = getVideoUrl(ex);
+
+  // My own video takes priority when the mode is switched on in Profile
+  if(myVideosEnabled()){
+    const link = getCustomVideoLink(ex.name);
+    if(link){
+      const embed = youtubeEmbed(link);
+      openModal('modal-ex-media');
+      if(embed){
+        body.innerHTML = `
+          <div style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000;margin-bottom:10px">
+            <iframe src="${embed}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          </div>
+          <div style="font-size:11px;color:var(--muted)">Your saved video${ex.desc?` · ${escapeHtml(ex.desc)}`:''}</div>
+          <button onclick="openEditVideoLink('${ex.name.replace(/'/g,"\\'")}')" style="margin-top:10px;background:var(--soft);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-weight:700;padding:7px 12px">✎ Edit link</button>`;
+      } else {
+        // non-YouTube link — offer to open it
+        body.innerHTML = `
+          <div style="background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:22px;text-align:center;margin-bottom:10px">
+            <div style="font-size:34px;margin-bottom:8px">🎬</div>
+            <div style="font-size:14px;font-weight:700;margin-bottom:10px">Your saved video</div>
+            <a href="${link}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:rgba(57,191,91,.16);color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:9px 18px;font-size:13px;font-weight:800;text-decoration:none">▶ Open video</a>
+          </div>
+          <button onclick="openEditVideoLink('${ex.name.replace(/'/g,"\\'")}')" style="background:var(--soft);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-weight:700;padding:7px 12px">✎ Edit link</button>`;
+      }
+      return;
+    }
+    // mode on but no link yet → offer to add one
+    openModal('modal-ex-media');
+    body.innerHTML = `
+      <div style="background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:22px;text-align:center;margin-bottom:10px">
+        <div style="font-size:34px;margin-bottom:8px">🎬</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px">No video saved for this yet</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Add your own YouTube or filmed link for ${escapeHtml(ex.name)}.</div>
+        <button onclick="openEditVideoLink('${ex.name.replace(/'/g,"\\'")}')" style="background:rgba(57,191,91,.16);color:var(--lime);border:1px solid var(--lime);border-radius:9px;padding:9px 18px;font-size:13px;font-weight:800">＋ Add a video link</button>
+      </div>
+      <a href="${ytUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;font-size:12px;color:var(--muted);text-decoration:underline">Or search YouTube ↗</a>`;
+    return;
+  }
+
   body.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:13px">Loading HD video…</div></div>`;
   openModal('modal-ex-media');
 
@@ -9816,6 +9927,39 @@ async function testYMoveConnection(){
   }
 }
 
+// Diagnostic: show exactly what YMove returns for a specific exercise name,
+// and whether our matcher would land a video on it.
+async function checkYMoveExercise(){
+  const el = document.getElementById('ymove-check-result');
+  const name = (document.getElementById('ymove-check-name').value||'').trim();
+  if(!name){ el.innerHTML='<div style="color:var(--muted)">Type an exercise name first.</div>'; return; }
+  el.innerHTML = '<div style="color:var(--muted)">Searching YMove…</div>';
+  try{
+    const res = await fetch(YMOVE_EX_BASE + '/exercises?search=' + encodeURIComponent(name) + '&includeVideos=false&pageSize=8', { headers:{ 'X-API-Key':YMOVE_API_KEY } });
+    if(!res.ok){ el.innerHTML = '<div style="color:var(--red)">✗ YMove error '+res.status+'.</div>'; return; }
+    const json = await res.json();
+    const list = (json && json.data) || [];
+    // run our actual matcher (clear cache first so it re-runs)
+    delete _ymoveMatchCache[name];
+    const match = await ymoveFindMatch({name});
+    let html = '';
+    if(!list.length){
+      html += '<div style="color:#b9760f">⚠ YMove returned no results for "'+escapeHtml(name)+'". This exercise likely isn\'t in their 698 — it\'ll use the YouTube fallback.</div>';
+    } else {
+      html += '<div style="color:var(--muted);margin-bottom:4px">YMove has these similar exercises:</div>';
+      html += '<div style="background:var(--soft);border-radius:8px;padding:8px;margin-bottom:6px">'+list.slice(0,5).map(c=>`<div style="font-size:12px;padding:2px 0">• ${escapeHtml(c.title)}</div>`).join('')+'</div>';
+      if(match){
+        html += '<div style="color:#4CAF50">✓ We\'d match it to "'+escapeHtml(match.title)+'" and show its HD video.</div>';
+      } else {
+        html += '<div style="color:#b9760f">⚠ Results exist but none matched closely enough — it\'ll fall back to YouTube. Tell me the exact YMove name above and I can map it.</div>';
+      }
+    }
+    el.innerHTML = html;
+  }catch(e){
+    el.innerHTML = '<div style="color:var(--red)">✗ Couldn\'t reach YMove ('+escapeHtml(e.message||'error')+').</div>';
+  }
+}
+
 // ════════════════════════════════════════════════
 //  VIDEO PIPELINE — local exercise animation library
 // ════════════════════════════════════════════════
@@ -9862,7 +10006,108 @@ function videoGenderForUser(user){
   if(user==='Michelle' || user==='Amy') return 'female';
   return 'male';
 }
+// ── My own exercise videos (YouTube / filmed-and-uploaded links) ──
+// Stored as { exerciseName: "https://youtu.be/..." }. Shared across the household.
+function loadCustomVideoLinks(){
+  try{ return JSON.parse(localStorage.getItem('fgym_videolinks')||'{}'); }catch(e){ return {}; }
+}
+function saveCustomVideoLinks(map){ try{ localStorage.setItem('fgym_videolinks', JSON.stringify(map)); }catch(e){} }
+function setCustomVideoLink(name, url){
+  const m = loadCustomVideoLinks();
+  if(url && url.trim()) m[name] = url.trim(); else delete m[name];
+  saveCustomVideoLinks(m);
+}
+function getCustomVideoLink(name){ return loadCustomVideoLinks()[name] || null; }
+// Is the "my own videos" mode switched on in Profile?
+function myVideosEnabled(){
+  try{ return localStorage.getItem('fgym_myvideos_on')==='1'; }catch(e){ return false; }
+}
+function setMyVideosEnabled(on){ try{ localStorage.setItem('fgym_myvideos_on', on?'1':'0'); }catch(e){} }
+function toggleMyVideos(){
+  const on = document.getElementById('myvideos-toggle').checked;
+  setMyVideosEnabled(on);
+  toast(on ? 'Using your own videos first' : 'Back to YMove/YouTube videos');
+}
+// Turn a YouTube URL into an embeddable form; returns null if it isn't YouTube.
+function youtubeEmbed(url){
+  if(!url) return null;
+  let id = null;
+  let m = url.match(/[?&]v=([\w-]{11})/);          if(m) id=m[1];
+  if(!id){ m = url.match(/youtu\.be\/([\w-]{11})/); if(m) id=m[1]; }
+  if(!id){ m = url.match(/youtube\.com\/embed\/([\w-]{11})/); if(m) id=m[1]; }
+  if(!id){ m = url.match(/youtube\.com\/shorts\/([\w-]{11})/); if(m) id=m[1]; }
+  return id ? ('https://www.youtube.com/embed/'+id) : null;
+}
+
 function setVideoGender(user, g){ localStorage.setItem('fgym_videogender_'+user, g); }
+
+// ── Edit a single exercise's video link ──
+let _evlExercise = null;
+function openEditVideoLink(name){
+  _evlExercise = name;
+  document.getElementById('evl-exname').textContent = name;
+  document.getElementById('evl-url').value = getCustomVideoLink(name) || '';
+  evlPreview();
+  document.getElementById('evl-url').oninput = evlPreview;
+  openModal('modal-edit-videolink');
+}
+function evlPreview(){
+  const url = document.getElementById('evl-url').value;
+  const embed = youtubeEmbed(url);
+  const el = document.getElementById('evl-preview');
+  if(embed){
+    el.innerHTML = `<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000"><iframe src="${embed}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>`;
+  } else if(url && url.trim()){
+    el.innerHTML = `<div style="font-size:11px;color:var(--muted)">Not a YouTube link — it'll open in a new tab when tapped.</div>`;
+  } else { el.innerHTML = ''; }
+}
+function saveEditVideoLink(){
+  if(!_evlExercise) return;
+  const url = document.getElementById('evl-url').value;
+  setCustomVideoLink(_evlExercise, url);
+  closeModal('modal-edit-videolink');
+  toast(url && url.trim() ? 'Video link saved' : 'Video link removed');
+  // refresh whichever screen is open
+  if(document.getElementById('modal-videolinks-bulk').classList.contains('active')) renderVideoLinksBulk();
+}
+
+// ── Bulk manage all video links ──
+let vlbFilter = 'all';
+function openVideoLinksBulk(){
+  vlbFilter='all';
+  document.getElementById('vlb-search').value='';
+  renderVideoLinksBulk();
+  openModal('modal-videolinks-bulk');
+}
+function renderVideoLinksBulk(){
+  // filter button styles
+  ['all','has','none'].forEach(f=>{
+    const b=document.getElementById('vlb-f-'+f); if(!b) return;
+    const on = vlbFilter===f;
+    b.style.border = '1px solid '+(on?'var(--lime)':'var(--border)');
+    b.style.background = on?'rgba(57,191,91,.12)':'var(--soft)';
+    b.style.color = on?'var(--lime)':'var(--muted)';
+  });
+  const q = (document.getElementById('vlb-search').value||'').toLowerCase();
+  const links = loadCustomVideoLinks();
+  let list = (typeof EXERCISES!=='undefined'?EXERCISES:[]).slice();
+  if(q) list = list.filter(e=>e.name.toLowerCase().includes(q));
+  if(vlbFilter==='has') list = list.filter(e=>links[e.name]);
+  if(vlbFilter==='none') list = list.filter(e=>!links[e.name]);
+  const el = document.getElementById('vlb-list');
+  if(!list.length){ el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">No exercises match.</div>'; return; }
+  el.innerHTML = list.slice(0,200).map(e=>{
+    const has = !!links[e.name];
+    const safe = e.name.replace(/'/g,"\\'");
+    return `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--soft)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(e.name)}</div>
+        <div style="font-size:10px;color:${has?'var(--lime)':'var(--muted)'}">${has?'✓ video saved':'no video'}</div>
+      </div>
+      <button onclick="openEditVideoLink('${safe}')" style="background:${has?'var(--soft)':'rgba(57,191,91,.12)'};color:${has?'var(--text)':'var(--lime)'};border:1px solid ${has?'var(--border)':'rgba(57,191,91,.3)'};border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;flex-shrink:0">${has?'✎ Edit':'＋ Add'}</button>
+    </div>`;
+  }).join('') + (list.length>200?`<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px">Showing first 200 — search to narrow.</div>`:'');
+}
 
 // The main resolver. Returns a playable local MP4 URL, or null if the library
 // isn't enabled / this exercise has no mapped file yet.
