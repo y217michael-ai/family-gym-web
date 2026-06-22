@@ -395,6 +395,12 @@ if('serviceWorker' in navigator){
   <!-- Exercise video library -->
   <div style="font-size:16px;font-weight:800;margin:18px 0 10px">Exercise Form Videos</div>
   <div class="card" style="margin-bottom:14px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px">🎬 HD video (YMove)</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Tap to check the app can reach YMove and pull an HD demo. If this fails on your live site, videos can't load and we'll need to route them through a small backend.</div>
+    <button onclick="testYMoveConnection()" style="width:100%;background:rgba(59,116,191,.16);color:var(--dm-blue);border:1px solid var(--dm-blue);border-radius:10px;padding:11px;font-size:13px;font-weight:800;margin-bottom:8px">🔌 Test YMove connection</button>
+    <div id="ymove-test-result" style="font-size:12px"></div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
     <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Connect your animation library (e.g. Gym-Animations). Drop the MP4s into a folder and the app shows a form demo on every exercise.</div>
     <div id="video-settings"></div>
   </div>
@@ -4619,16 +4625,17 @@ function currentRunnerEx(){ return runner.workout.exercises[runner.exIdx]; }
 // Inline form-demo video for the runner. Uses the local library if enabled,
 // otherwise falls back to the exercise's existing video link.
 function runnerVideoBlock(ex){
+  if(!ex || !ex.name) return '';
   const vsrc = localVideoSrc(ex);
+  // If a local MP4 library is configured and has this clip, show it inline (free, offline)
   if(vsrc){
     return `<video src="${vsrc}" autoplay loop muted playsinline
       onerror="this.style.display='none'"
       style="width:100%;max-width:280px;max-height:200px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid var(--border);margin:0 auto 14px;display:block"></video>`;
   }
-  if(ex.video){
-    return `<a href="${ex.video}" target="_blank" style="display:inline-block;color:var(--lime);font-size:13px;margin-bottom:14px">▶ Watch form video</a><br>`;
-  }
-  return '';
+  // Otherwise a lightweight button that opens the YMove HD demo (or YouTube fallback)
+  const safe = ex.name.replace(/'/g,"\\'");
+  return `<button onclick="openExerciseMedia('${safe}')" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,0,0,.14);color:#FF5555;border:1px solid rgba(255,0,0,.3);border-radius:10px;padding:8px 16px;font-size:13px;font-weight:800;margin-bottom:14px">▶ Watch demo</button><br>`;
 }
 
 // Badge shown in the runner when an exercise is part of a superset/tri-set/giant set
@@ -4658,6 +4665,7 @@ function renderRunner(){
       <div style="text-align:center;width:100%">
         <div style="font-size:13px;color:${accent};font-weight:800;letter-spacing:1px;text-transform:uppercase">${isWarm?'🔥 Warm-up':'🧊 Cool-down'} · ${runner.prepIdx+1}/${list.length}</div>
         <div style="font-size:26px;font-weight:800;margin:12px 0 6px">${step.name}</div>
+        ${step.name?runnerVideoBlock(step):''}
         ${step.desc?`<div style="font-size:14px;color:var(--muted);margin-bottom:8px">${step.desc}</div>`:''}
         ${step.mins?`<div style="font-size:13px;color:${accent};margin-bottom:20px">~${step.mins} min</div>`:'<div style="margin-bottom:20px"></div>'}
         <div style="text-align:left;background:var(--soft);border-radius:12px;padding:12px;margin-bottom:20px;border:1px solid var(--border)">
@@ -4703,7 +4711,8 @@ function renderRunner(){
         ${runnerGroupBadge(ex)}
         <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Exercise ${exNum}/${exTotal} · Set ${setNum}/${totalSets}</div>
         <div style="font-size:26px;font-weight:800;margin:8px 0 4px;color:var(--babyblue)">${ex.name}</div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:18px">${logEntry.weight} kg</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${logEntry.weight} kg</div>
+        ${runnerVideoBlock(ex)}
         <div style="font-size:13px;color:var(--muted);margin-bottom:6px">REPS DONE</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:24px">
           <button onclick="runnerAdjust('reps',-1)" style="width:56px;height:56px;border-radius:16px;background:var(--soft);border:1px solid var(--border);color:var(--text);font-size:26px;font-weight:800">−</button>
@@ -9741,6 +9750,36 @@ async function openExerciseMedia(exName){
         <a href="${ytUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:rgba(255,0,0,.15);color:#FF4444;border:1px solid rgba(255,0,0,.3);border-radius:9px;padding:9px 18px;font-size:13px;font-weight:800;text-decoration:none">▶ Watch on YouTube</a>
       </div>
       ${instrBlock}${cuesBlock}`;
+  }
+}
+
+// Diagnostic: verify YMove is reachable from wherever the app is hosted.
+async function testYMoveConnection(){
+  const el = document.getElementById('ymove-test-result');
+  if(!el) return;
+  el.innerHTML = '<div style="color:var(--muted)">Testing… contacting YMove…</div>';
+  if(typeof YMOVE_API_KEY==='undefined' || !YMOVE_API_KEY){
+    el.innerHTML = '<div style="color:var(--red)">✗ No API key set in the app.</div>'; return;
+  }
+  try{
+    const sr = await fetch(YMOVE_EX_BASE + '/exercises?search=bench%20press&includeVideos=false&pageSize=1', { headers:{ 'X-API-Key':YMOVE_API_KEY } });
+    if(sr.status===401 || sr.status===403){
+      el.innerHTML = '<div style="color:var(--red)">✗ Reached YMove, but the key was rejected ('+sr.status+'). It may be invalid or your plan inactive.</div>'; return;
+    }
+    if(!sr.ok){ el.innerHTML = '<div style="color:var(--red)">✗ Reached YMove but got error '+sr.status+'.</div>'; return; }
+    const sj = await sr.json();
+    const first = sj && sj.data && sj.data[0];
+    if(!first){ el.innerHTML = '<div style="color:#b9760f">⚠ Connected, but the test search matched nothing. Connection works.</div>'; return; }
+    const vr = await fetch(YMOVE_EX_BASE + '/exercises/' + encodeURIComponent(first.id), { headers:{ 'X-API-Key':YMOVE_API_KEY } });
+    const vj = await vr.json();
+    const d = vj && vj.data;
+    if(d && (d.videoUrl || d.videoHlsUrl)){
+      el.innerHTML = '<div style="color:#4CAF50">✓ Connected and pulled an HD video for "'+escapeHtml(d.title||first.title)+'". Videos should work on this device.</div>';
+    } else {
+      el.innerHTML = '<div style="color:#b9760f">⚠ Connected, but no video URL came back (possibly over the monthly video cap). Metadata works; video may not.</div>';
+    }
+  }catch(e){
+    el.innerHTML = `<div style="color:var(--red)">✗ Couldn't reach YMove from the browser — usually a CORS block (the API refusing direct browser calls) or no internet. If it's CORS, videos must be routed through a small backend/proxy, which is the native-app step.<br><br><span style="color:var(--muted)">Technical: ${escapeHtml(e.message||'fetch failed')}</span></div>`;
   }
 }
 
